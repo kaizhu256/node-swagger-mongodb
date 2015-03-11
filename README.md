@@ -56,7 +56,7 @@ instruction
         // require modules
         local.fs = require('fs');
         local.http = require('http');
-        local.jslint_lite = require('cms2');
+        local.cms2 = require('cms2');
         local.url = require('url');
         // init assets
         local['/'] = (String() +
@@ -83,17 +83,6 @@ instruction
     'body > div {\n' +
         'margin-top: 20px;\n' +
     '}\n' +
-    'textarea {\n' +
-        'font-family: monospace;\n' +
-        'height: 8em;\n' +
-        'width: 100%;\n' +
-    '}\n' +
-    '.csslintOutputPre {\n' +
-        'color: #f00;\n' +
-    '}\n' +
-    '.jslintOutputPre {\n' +
-        'color: #f00;\n' +
-    '}\n' +
     '.testReportDiv {\n' +
         'display: none;\n' +
     '}\n' +
@@ -107,28 +96,6 @@ instruction
         '{{envDict.npm_package_name}} [{{envDict.npm_package_version}}]\n' +
     '</h1>\n' +
     '<h3>{{envDict.npm_package_description}}</h3>\n' +
-    '<div>edit or paste script below to\n' +
-    '<a href="http://www.jslint.com/lint.html#options" target="_blank">\n' +
-    'jslint</a>\n' +
-    '</div>\n' +
-'<textarea class="jslintInputTextarea">\n' +
-'/*jslint browser: true */\n' +
-'console.log("hello");\n' +
-'</textarea>\n' +
-    '<pre class="jslintOutputPre"></pre>\n' +
-    '<div>edit or paste script below to\n' +
-    '<a \
-href="https://github.com/CSSLint/csslint/wiki/Command-line-interface#options" \
-target="_blank">\n' +
-    'csslint</a>\n' +
-    '</div>\n' +
-'<textarea class="csslintInputTextarea">\n' +
-'/*csslint box-model: false */\n' +
-'body {\n' +
-  'margin: 0px;\n' +
-'}\n' +
-'</textarea>\n' +
-    '<pre class="csslintOutputPre"></pre>\n' +
     '<div class="testReportDiv"></div>\n' +
     '<script src="/assets/cms2.js"></script>\n' +
     '<script src="/assets/utility2.js"></script>\n' +
@@ -140,13 +107,6 @@ target="_blank">\n' +
         'npm_package_name: "{{envDict.npm_package_name}}",\n' +
         'npm_package_version: "{{envDict.npm_package_version}}"\n' +
     '};\n' +
-    'document.querySelector(\n' +
-        '".csslintInputTextarea"\n' +
-    ').addEventListener("keyup", window.jslint_lite.jslintTextarea);\n' +
-    'document.querySelector(\n' +
-        '".jslintInputTextarea"\n' +
-    ').addEventListener("keyup", window.jslint_lite.jslintTextarea);\n' +
-    'window.jslint_lite.jslintTextarea();\n' +
     '</script>\n' +
 '</body>\n' +
 '</html>\n' +
@@ -266,7 +226,7 @@ shExampleSh
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "cms2": "index.js" },
     "dependencies": {
-        "swagger-ui-lite": "^2.1.8-M1-2015-03-11-b"
+        "swagger-ui-lite": "^2.1.8-M1-2015-03-11-b",
         "utility2": "2015.3.8-11"
     },
     "description": "yet another lightweight content-management-system \

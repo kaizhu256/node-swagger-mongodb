@@ -33,9 +33,7 @@
             ? window.utility2
             : require('utility2');
         // init jslint_lite
-        local.jslint_lite = local.modeJs === 'browser'
-            ? window.jslint_lite
-            : require('./index.js');
+        local.jslint_lite = local.utility2.local.jslint_lite;
         // init istanbul_lite
         local.istanbul_lite = local.utility2.local.istanbul_lite;
         // init tests
@@ -60,59 +58,6 @@
                 }, onError);
             });
         };
-        local.testCase_jslintAndPrint_default = function (onError) {
-            /*
-                this function will test jslintAndPrint's
-                default handling behavior
-            */
-            local.utility2.testMock([
-                // suppress console.error
-                [console, { error: local.utility2.nop }]
-            ], onError, function (onError) {
-                // test csslint failed handling behavior
-                local.jslint_lite.jslintAndPrint('syntax error', 'failed.css');
-                // validate error occurred
-                local.utility2.assert(
-                    local.jslint_lite.errorText,
-                    local.jslint_lite.errorText
-                );
-                // test jslint failed handling behavior
-                local.jslint_lite.jslintAndPrint('syntax error', 'failed.js');
-                // validate error occurred
-                local.utility2.assert(
-                    local.jslint_lite.errorText,
-                    local.jslint_lite.errorText
-                );
-                // test csslint passed handling behavior
-                local.jslint_lite.jslintAndPrint(
-                    'body { font: normal; }',
-                    'passed.css'
-                );
-                // validate no error occurred
-                local.utility2.assert(
-                    !local.jslint_lite.errorText,
-                    local.jslint_lite.errorText
-                );
-                // test jslint passed handling behavior
-                local.jslint_lite.jslintAndPrint('{}', 'passed.js');
-                // validate no error occurred
-                local.utility2.assert(
-                    !local.jslint_lite.errorText,
-                    local.jslint_lite.errorText
-                );
-                // test /* jslint-ignore-begin */ ... /* jslint-ignore-end */
-                // handling behavior
-                local.jslint_lite.jslintAndPrint('/* jslint-ignore-begin */\n' +
-                    'syntax error\n' +
-                    '/* jslint-ignore-end */\n', 'passed.js');
-                // validate no error occurred
-                local.utility2.assert(
-                    !local.jslint_lite.errorText,
-                    local.jslint_lite.errorText
-                );
-                onError();
-            });
-        };
     }());
     switch (local.modeJs) {
 
@@ -133,7 +78,6 @@
         // export local
         global.local = local;
         // require modules
-        local.jslint_lite = require('./index.js');
         local.fs = require('fs');
         local.path = require('path');
         local.utility2 = require('utility2');

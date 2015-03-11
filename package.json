@@ -3,9 +3,10 @@
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "cms2": "index.js" },
     "dependencies": {
+        "swagger-ui-lite": "^2.1.8-M1-2015-03-11-b",
         "utility2": "2015.3.8-11"
     },
-    "description": "yet another content-management-system backed by mongodb with swagger-ui api",
+    "description": "yet another lightweight content-management-system backed by mongodb with swagger-ui api",
     "devDependencies": {
         "phantomjs-lite": "^2015.1.4-103"
     },
@@ -14,7 +15,7 @@
         "browser",
         "cms",
         "lightweight",
-        "lint",
+        "lite",
         "mongo",
         "mongodb",
         "utility2",
