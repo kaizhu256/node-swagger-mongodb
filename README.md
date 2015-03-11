@@ -1,23 +1,23 @@
-jslint-lite [![NPM](https://img.shields.io/npm/v/jslint-lite.svg?style=flat-square)](https://www.npmjs.org/package/jslint-lite)
-===========
-lightweight web module for jslint and csslint with zero npm dependencies
+cms2 [![NPM](https://img.shields.io/npm/v/cms2.svg?style=flat-square)](https://www.npmjs.org/package/cms2)
+====
+yet another content-management-system backed by mongodb with swagger-ui api
 
 
 
-# build-status [![travis-ci.org build-status](https://api.travis-ci.org/kaizhu256/node-jslint-lite.svg)](https://travis-ci.org/kaizhu256/node-jslint-lite)
+# build-status [![travis-ci.org build-status](https://api.travis-ci.org/kaizhu256/node-cms2.svg)](https://travis-ci.org/kaizhu256/node-cms2)
 
-[![build commit status](https://kaizhu256.github.io/node-jslint-lite/build/build.badge.svg)](https://travis-ci.org/kaizhu256/node-jslint-lite)
+[![build commit status](https://kaizhu256.github.io/node-cms2/build/build.badge.svg)](https://travis-ci.org/kaizhu256/node-cms2)
 
 | git-branch | test-server | test-report | coverage | build-artifacts |
 |:----------:|:-----------:|:-----------:|:--------:|:---------------:|
-|[master](https://github.com/kaizhu256/node-jslint-lite/tree/master) | [![heroku.com test-server](https://kaizhu256.github.io/node-jslint-lite/heroku-logo.75x25.png)](https://hrku01-jslint-lite-master.herokuapp.com) | [![test-report](https://kaizhu256.github.io/node-jslint-lite/build..master..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-jslint-lite/build..master..travis-ci.org/test-report.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-jslint-lite/build..master..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-jslint-lite/build..master..travis-ci.org/coverage.html/node-jslint-lite/index.html) | [![build-artifacts](https://kaizhu256.github.io/node-jslint-lite/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-jslint-lite/tree/gh-pages/build..master..travis-ci.org)|
-|[beta](https://github.com/kaizhu256/node-jslint-lite/tree/beta) | [![heroku.com test-server](https://kaizhu256.github.io/node-jslint-lite/heroku-logo.75x25.png)](https://hrku01-jslint-lite-beta.herokuapp.com) | [![test-report](https://kaizhu256.github.io/node-jslint-lite/build..beta..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-jslint-lite/build..beta..travis-ci.org/test-report.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-jslint-lite/build..beta..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-jslint-lite/build..beta..travis-ci.org/coverage.html/node-jslint-lite/index.html) | [![build-artifacts](https://kaizhu256.github.io/node-jslint-lite/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-jslint-lite/tree/gh-pages/build..beta..travis-ci.org)|
-|[alpha](https://github.com/kaizhu256/node-jslint-lite/tree/alpha) | [![heroku.com test-server](https://kaizhu256.github.io/node-jslint-lite/heroku-logo.75x25.png)](https://hrku01-jslint-lite-alpha.herokuapp.com) | [![test-report](https://kaizhu256.github.io/node-jslint-lite/build..alpha..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-jslint-lite/build..alpha..travis-ci.org/test-report.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-jslint-lite/build..alpha..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-jslint-lite/build..alpha..travis-ci.org/coverage.html/node-jslint-lite/index.html) | [![build-artifacts](https://kaizhu256.github.io/node-jslint-lite/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-jslint-lite/tree/gh-pages/build..alpha..travis-ci.org)|
+|[master](https://github.com/kaizhu256/node-cms2/tree/master) | [![heroku.com test-server](https://kaizhu256.github.io/node-cms2/heroku-logo.75x25.png)](https://hrku01-cms2-master.herokuapp.com) | [![test-report](https://kaizhu256.github.io/node-cms2/build..master..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-cms2/build..master..travis-ci.org/test-report.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-cms2/build..master..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-cms2/build..master..travis-ci.org/coverage.html/node-cms2/index.html) | [![build-artifacts](https://kaizhu256.github.io/node-cms2/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-cms2/tree/gh-pages/build..master..travis-ci.org)|
+|[beta](https://github.com/kaizhu256/node-cms2/tree/beta) | [![heroku.com test-server](https://kaizhu256.github.io/node-cms2/heroku-logo.75x25.png)](https://hrku01-cms2-beta.herokuapp.com) | [![test-report](https://kaizhu256.github.io/node-cms2/build..beta..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-cms2/build..beta..travis-ci.org/test-report.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-cms2/build..beta..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-cms2/build..beta..travis-ci.org/coverage.html/node-cms2/index.html) | [![build-artifacts](https://kaizhu256.github.io/node-cms2/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-cms2/tree/gh-pages/build..beta..travis-ci.org)|
+|[alpha](https://github.com/kaizhu256/node-cms2/tree/alpha) | [![heroku.com test-server](https://kaizhu256.github.io/node-cms2/heroku-logo.75x25.png)](https://hrku01-cms2-alpha.herokuapp.com) | [![test-report](https://kaizhu256.github.io/node-cms2/build..alpha..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-cms2/build..alpha..travis-ci.org/test-report.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-cms2/build..alpha..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-cms2/build..alpha..travis-ci.org/coverage.html/node-cms2/index.html) | [![build-artifacts](https://kaizhu256.github.io/node-cms2/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-cms2/tree/gh-pages/build..alpha..travis-ci.org)|
 
 
 
 # live test-server
-[![heroku.com test-server](https://kaizhu256.github.io/node-jslint-lite/build/screen-capture.herokuTest.slimerjs.png)](https://hrku01-jslint-lite-beta.herokuapp.com)
+[![heroku.com test-server](https://kaizhu256.github.io/node-cms2/build/screen-capture.herokuTest.slimerjs.png)](https://hrku01-cms2-beta.herokuapp.com)
 
 
 
@@ -32,7 +32,7 @@ this node script will serve a web-page with interactive jslint
 instruction
     1. save this script as example.js
     2. run the shell command:
-          $ npm install jslint-lite && node example.js
+          $ npm install cms2 && node example.js
     3. open a browser to http://localhost:1337
     4. edit or paste script in browser to jslint
 */
@@ -56,7 +56,7 @@ instruction
         // require modules
         local.fs = require('fs');
         local.http = require('http');
-        local.jslint_lite = require('jslint-lite');
+        local.jslint_lite = require('cms2');
         local.url = require('url');
         // init assets
         local['/'] = (String() +
@@ -130,7 +130,7 @@ target="_blank">\n' +
 '</textarea>\n' +
     '<pre class="csslintOutputPre"></pre>\n' +
     '<div class="testReportDiv"></div>\n' +
-    '<script src="/assets/jslint-lite.js"></script>\n' +
+    '<script src="/assets/cms2.js"></script>\n' +
     '<script src="/assets/utility2.js"></script>\n' +
     '<script src="/test/test.js"></script>\n' +
     '<script>\n' +
@@ -164,8 +164,8 @@ target="_blank">\n' +
                 return '0.0.1';
             }
         });
-        local['/assets/jslint-lite.js'] =
-            local.jslint_lite['/assets/jslint-lite.js'];
+        local['/assets/cms2.js'] =
+            local.jslint_lite['/assets/cms2.js'];
         local['/assets/utility2.css'] =
             '';
         local['/assets/utility2.js'] =
@@ -177,7 +177,7 @@ target="_blank">\n' +
             switch (local.url.parse(request.url).pathname) {
             // serve assets
             case '/':
-            case '/assets/jslint-lite.js':
+            case '/assets/cms2.js':
             case '/assets/utility2.css':
             case '/assets/utility2.js':
             case '/test/test.js':
@@ -208,9 +208,9 @@ target="_blank">\n' +
 }());
 ```
 #### output from shell
-[![screen-capture](https://kaizhu256.github.io/node-jslint-lite/build/screen-capture.testExampleJs.png)](https://travis-ci.org/kaizhu256/node-jslint-lite)
+[![screen-capture](https://kaizhu256.github.io/node-cms2/build/screen-capture.testExampleJs.png)](https://travis-ci.org/kaizhu256/node-cms2)
 #### output from phantomjs-lite
-[![screen-capture](https://kaizhu256.github.io/node-jslint-lite/build/screen-capture.testExampleJs.slimerjs.png)](https://hrku01-jslint-lite-beta.herokuapp.com)
+[![screen-capture](https://kaizhu256.github.io/node-cms2/build/screen-capture.testExampleJs.slimerjs.png)](https://hrku01-cms2-beta.herokuapp.com)
 
 
 
@@ -220,7 +220,7 @@ target="_blank">\n' +
 # example.sh
 
 # this shell script will
-    # npm install jslint-lite
+    # npm install cms2
     # create foo.js
     # create bar.css
     # jslint foo.js and bar.css
@@ -230,8 +230,8 @@ target="_blank">\n' +
     # 2. view jslint in console
 
 shExampleSh() {
-    # npm install jslint-lite
-    npm install jslint-lite || return $?
+    # npm install cms2
+    npm install cms2 || return $?
 
     # create foo.js
     printf "console.log('hello');" > foo.js || return $?
@@ -240,12 +240,12 @@ shExampleSh() {
     printf "body { margin: 0px; }" > bar.css || return $?
 
     # jslint foo.js and bar.css
-    node_modules/.bin/jslint-lite foo.js bar.css || :
+    node_modules/.bin/cms2 foo.js bar.css || :
 }
 shExampleSh
 ```
 #### output from shell
-[![screen-capture](https://kaizhu256.github.io/node-jslint-lite/build/screen-capture.testExampleSh.png)](https://travis-ci.org/kaizhu256/node-jslint-lite)
+[![screen-capture](https://kaizhu256.github.io/node-cms2/build/screen-capture.testExampleSh.png)](https://travis-ci.org/kaizhu256/node-cms2)
 
 
 
@@ -255,7 +255,7 @@ shExampleSh
 
 
 # package-listing
-[![screen-capture](https://kaizhu256.github.io/node-jslint-lite/build/screen-capture.gitLsTree.png)](https://github.com/kaizhu256/node-jslint-lite)
+[![screen-capture](https://kaizhu256.github.io/node-cms2/build/screen-capture.gitLsTree.png)](https://github.com/kaizhu256/node-cms2)
 
 
 
@@ -264,32 +264,35 @@ shExampleSh
 {
     "_packageJson": true,
     "author": "kai zhu <kaizhu256@gmail.com>",
-    "bin": { "jslint-lite": "index.js" },
-    "description": "lightweight web module for jslint and csslint \
-with zero npm dependencies",
+    "bin": { "cms2": "index.js" },
+    "dependencies": {
+        "swagger-ui-lite": "^2.1.8-M1-2015-03-11-b"
+        "utility2": "2015.3.8-11"
+    },
+    "description": "yet another lightweight content-management-system \
+backed by mongodb with swagger-ui api",
     "devDependencies": {
-        "utility2": "2015.3.8-11",
         "phantomjs-lite": "^2015.1.4-103"
     },
     "engines": { "node": ">=0.10 <=0.12" },
     "keywords": [
         "browser",
-        "csslint",
-        "eshint",
-        "eslint",
-        "jshint",
-        "jslint",
+        "cms",
         "lightweight",
-        "lint",
+        "lite",
+        "mongo",
+        "mongodb",
         "utility2",
+        "swagger",
+        "swagger-ui",
         "web"
     ],
     "license": "MIT",
-    "name": "jslint-lite",
+    "name": "cms2",
     "os": ["darwin", "linux"],
     "repository" : {
         "type" : "git",
-        "url" : "https://github.com/kaizhu256/node-jslint-lite.git"
+        "url" : "https://github.com/kaizhu256/node-cms2.git"
     },
     "scripts": {
         "build2": "node_modules/.bin/utility2 shRun shBuild",
@@ -305,14 +308,12 @@ node_modules/.bin/utility2 shRun shNpmTest test.js"
 
 
 # todo
-- npm publish 2015.3.8-11
-- update screen-capture href in README.md
 - none
 
 
 
 # changelog of last 50 commits
-[![screen-capture](https://kaizhu256.github.io/node-jslint-lite/build/screen-capture.gitLog.png)](https://github.com/kaizhu256/node-jslint-lite/commits)
+[![screen-capture](https://kaizhu256.github.io/node-cms2/build/screen-capture.gitLog.png)](https://github.com/kaizhu256/node-cms2/commits)
 
 
 
@@ -343,14 +344,14 @@ shBuild() {
     MODE_BUILD=npmTest shRunScreenCapture npm test || return $?
 
     # deploy app to heroku
-    shRun shHerokuDeploy hrku01-jslint-lite-$CI_BRANCH || return $?
+    shRun shHerokuDeploy hrku01-cms2-$CI_BRANCH || return $?
 
     # test deployed app to heroku
     if [ "$CI_BRANCH" = alpha ] ||
         [ "$CI_BRANCH" = beta ] ||
         [ "$CI_BRANCH" = master ]
     then
-        local TEST_URL="https://hrku01-jslint-lite-$CI_BRANCH.herokuapp.com" || \
+        local TEST_URL="https://hrku01-cms2-$CI_BRANCH.herokuapp.com" || \
             return $?
         TEST_URL="$TEST_URL?modeTest=phantom&_testSecret={{_testSecret}}" || \
             return $?
