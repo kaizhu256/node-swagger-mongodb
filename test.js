@@ -28,10 +28,12 @@
                     'browser';
             }
         }());
+        // init cms2
+        local.cms2 = local.modeJs === 'browser'
+            ? window.cms2
+            : require('./index.js');
         // init utility2
-        local.utility2 = local.modeJs === 'browser'
-            ? window.utility2
-            : require('utility2');
+        local.utility2 = local.cms2.local.utility2;
         // init jslint_lite
         local.jslint_lite = local.utility2.local.jslint_lite;
         // init istanbul_lite
@@ -99,16 +101,6 @@
                     '_testSecret={{_testSecret}}&' +
                     'timeoutDefault=' + local.utility2.timeoutDefault
             }, onParallel);
-            // test standalone script handling behavior
-            onParallel.counter += 1;
-            local.utility2.phantomTest({
-                url: 'http://localhost:' +
-                    local.utility2.envDict.npm_config_server_port +
-                    '/test/script.html' +
-                    '?modeTest=phantom&' +
-                    '_testSecret={{_testSecret}}&' +
-                    'timeoutDefault=' + local.utility2.timeoutDefault
-            }, onParallel);
             onParallel();
         };
         // init assets
@@ -124,26 +116,17 @@
                 .replace((/\\n' \+(\s*?)'/g), '$1'), {
                     envDict: local.utility2.envDict
                 });
-        local['/assets/jslint-lite.js'] =
+        local['/assets/cms2.js'] =
             local.istanbul_lite.instrumentInPackage(
-                local.jslint_lite['/assets/jslint-lite.js'],
+                local.cms2['/assets/cms2.js'],
                 __dirname + '/index.js',
-                'jslint-lite'
+                'cms2'
             );
-        local['/assets/utility2.css'] =
-            local.utility2['/assets/utility2.css'];
-        local['/assets/utility2.js'] =
-            local.utility2['/assets/utility2.js'];
-        local['/test/script.html'] =
-            '<script src="/assets/utility2.js"></script>\n' +
-            '<script src="/assets/jslint-lite.js"></script>\n' +
-            '<script>window.jslint_lite.jslintTextarea()</script>\n' +
-            '<script src="/test/test.js"></script>\n';
         local['/test/test.js'] =
             local.istanbul_lite.instrumentInPackage(
                 local.fs.readFileSync(__filename, 'utf8'),
                 __filename,
-                'jslint-lite'
+                'cms2'
             );
         // init server-middlewares
         local.serverMiddlewareList = [
@@ -154,10 +137,6 @@
                 switch (request.urlPathNormalized) {
                 // serve assets
                 case '/':
-                case '/assets/jslint-lite.js':
-                case '/assets/utility2.css':
-                case '/assets/utility2.js':
-                case '/test/script.html':
                 case '/test/test.js':
                     response.end(local[request.urlPathNormalized]);
                     break;
@@ -166,7 +145,7 @@
                     onNext();
                 }
             }
-        ];
+        ].concat(local.cms2.serverMiddlewareList);
         // run server-test
         local.utility2.testRunServer(local);
         // init dir

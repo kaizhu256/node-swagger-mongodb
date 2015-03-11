@@ -97,8 +97,8 @@ instruction
     '</h1>\n' +
     '<h3>{{envDict.npm_package_description}}</h3>\n' +
     '<div class="testReportDiv"></div>\n' +
-    '<script src="/assets/cms2.js"></script>\n' +
     '<script src="/assets/utility2.js"></script>\n' +
+    '<script src="/assets/cms2.js"></script>\n' +
     '<script src="/test/test.js"></script>\n' +
     '<script>\n' +
     'window.utility2 = window.utility2 || {};\n' +
