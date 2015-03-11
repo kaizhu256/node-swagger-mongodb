@@ -1,0 +1,36 @@
+{
+    "_packageJson": true,
+    "author": "kai zhu <kaizhu256@gmail.com>",
+    "bin": { "jslint-lite": "index.js" },
+    "description": "lightweight web module for jslint and csslint with zero npm dependencies",
+    "devDependencies": {
+        "utility2": "2015.3.8-11",
+        "phantomjs-lite": "^2015.1.4-103"
+    },
+    "engines": { "node": ">=0.10 <=0.12" },
+    "keywords": [
+        "browser",
+        "csslint",
+        "eshint",
+        "eslint",
+        "jshint",
+        "jslint",
+        "lightweight",
+        "lint",
+        "utility2",
+        "web"
+    ],
+    "license": "MIT",
+    "name": "jslint-lite",
+    "os": ["darwin", "linux"],
+    "repository" : {
+        "type" : "git",
+        "url" : "https://github.com/kaizhu256/node-jslint-lite.git"
+    },
+    "scripts": {
+        "build2": "node_modules/.bin/utility2 shRun shBuild",
+        "start": "npm_config_mode_auto_restart=1 node_modules/.bin/utility2 shRun node test.js",
+        "test": "node_modules/.bin/utility2 shRun shReadmePackageJsonExport && node_modules/.bin/utility2 shRun shNpmTest test.js"
+    },
+    "version": "2015.3.8-11"
+}
