@@ -107,11 +107,9 @@ try {
             Object.keys(options.paths || {}).forEach(function (path) {
                 Object.keys(options.paths[path] || {}).forEach(function (method) {
                     var pathMethod;
+                    // delete meta data from swaggerJson
+                    delete local.cms2.swaggerJson.paths[path][method].meta;
                     pathMethod = options.paths[path][method];
-                    // update summary with operationId
-                    pathMethod.summary =
-                        local.cms2.swaggerJson.paths[path][method].summary =
-                        pathMethod.operationId + ' - ' + pathMethod.summary;
                     pathMethod.method = method;
                     pathMethod.path = path;
                     pathMethod.requestHandlerKey = method.toUpperCase() + ' ' +
@@ -129,9 +127,9 @@ try {
             options = { paths: {} };
             options.paths['/' + modelName] = {
                 put: {
-                    operationId: modelName + 'Update',
+                    operationId: modelName + 'Upsert',
                     parameters: [{
-                        description: 'update ' + modelName + ' object',
+                        description: modelName + ' object',
                         in: 'body',
                         name: 'body',
                         required: true,
@@ -139,6 +137,7 @@ try {
                             $ref: '#/definitions/' + modelName
                         }
                     }],
+                    summary: modelName + 'Upsert - upsert ' + modelName + ' object',
                     tags: [modelName]
                 }
             };
@@ -146,23 +145,23 @@ try {
                 delete: {
                     operationId: modelName + 'DeleteById',
                     parameters: [{
-                        description: modelName + '-id',
+                        description: modelName + ' id',
                         in: 'path',
                         name: '_id',
                         required: true
                     }],
-                    summary: 'delete ' + modelName + ' object by id',
+                    summary: modelName + 'DeleteById - delete ' + modelName + ' object by id',
                     tags: [modelName]
                 },
                 get: {
                     operationId: modelName + 'GetById',
                     parameters: [{
-                        description: modelName + '-id',
+                        description: modelName + ' id',
                         in: 'path',
                         name: '_id',
                         required: true
                     }],
-                    summary: 'get ' + modelName + ' object by id',
+                    summary: modelName + 'GetById - get ' + modelName + ' object by id',
                     tags: [modelName]
                 }
             };
@@ -350,10 +349,10 @@ try {
         response.end(JSON.stringify(response.responseJson));
         break;
     default:
-        nextMiddleware(error);
+        local.cms2.serverMiddlewareError(error, request, response, nextMiddleware);
     }
 } catch (errorCaught) {
-    nextMiddleware(errorCaught);
+    local.cms2.serverMiddlewareError(errorCaught, request, response, nextMiddleware);
 }
 /* jslint-indent-end */
 
@@ -385,6 +384,26 @@ try {
             // jslint-hack
             local.utility2.nop(request, response);
             nextMiddleware();
+        };
+        local.cms2.serverMiddlewareError = function (error, request, response, nextMiddleware) {
+            /*
+                this function handles errors according to http://jsonapi.org/format/#errors
+            */
+            // jslint-hack
+            local.utility2.nop(request);
+            if (!error) {
+                nextMiddleware();
+                return;
+            }
+            if (!response.headersSent) {
+                response.statusCode = response.statusCode || 500;
+            }
+            response.end(JSON.stringify({ errors: [{
+                code: error.code,
+                message: error.message,
+                stack: error.stack,
+                status: 500
+            }] }));
         };
         // init mongodb client
         local.utility2.onReady.counter += 1;
@@ -438,7 +457,7 @@ try {
                             required: true,
                             type: 'string'
                         }],
-                        summary: 'login new session',
+                        summary: 'userLogin login new session',
                         tags: ['user']
                     }
                 },
@@ -452,7 +471,7 @@ try {
                             required: true,
                             type: 'string'
                         }],
-                        summary: 'logout current session',
+                        summary: 'userLogout - logout current session',
                         tags: ['user']
                     }
                 }
