@@ -3,6 +3,7 @@
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "cms2": "index.js" },
     "dependencies": {
+        "mongodb": "^2.0.21",
         "swagger-ui-lite": "^2.1.8-M1-2015-03-11-b",
         "utility2": "2015.3.8-11"
     },

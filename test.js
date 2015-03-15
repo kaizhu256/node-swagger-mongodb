@@ -82,6 +82,7 @@
         // require modules
         local.fs = require('fs');
         local.path = require('path');
+        local.url = require('url');
         local.utility2 = require('utility2');
         // init tests
         local.testCase_testPage_default = function (onError) {
@@ -134,18 +135,18 @@
                 /*
                     this function will run the main test-middleware
                 */
-                switch (request.urlPathNormalized) {
+                switch (request.urlParsed.pathnameNormalized) {
                 // serve assets
                 case '/':
                 case '/test/test.js':
-                    response.end(local[request.urlPathNormalized]);
+                    response.end(local[request.urlParsed.pathnameNormalized]);
                     break;
                 // default to next middleware
                 default:
                     onNext();
                 }
             }
-        ].concat(local.cms2.serverMiddlewareList);
+        ].concat([local.cms2.serverMiddleware]);
         // run server-test
         local.utility2.testRunServer(local);
         // init dir

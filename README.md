@@ -209,7 +209,7 @@ shExampleSh
 
 
 
-## npm dependencies
+## npm-dependencies
 - none
 
 
@@ -268,6 +268,7 @@ node_modules/.bin/utility2 shRun shNpmTest test.js"
 
 
 # todo
+- add formData swagger parameter type
 - none
 
 
