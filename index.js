@@ -51,129 +51,121 @@
 
     // run node js-env code
     case 'node':
-        local.cms2.swaggerRequestHandlerCrudDefault = function (
-            request,
-            response,
-            nextMiddleware
-        ) {
+        local.cms2.swaggerPathUpdate = function (options) {
             /*
-                this function will run the default swagger crud request-handler
+                this function will update swaggerJson.paths with options.paths
             */
-            // jslint-hack
-            local.utility2.nop(request, response);
-            nextMiddleware();
-            var modeNext, onNext;
-            modeNext = 0;
-            onNext = function (error) {
-
-
-
-/* jslint-indent-begin 16 */
-/*jslint maxlen: 112, regexp: true*/
-try {
-    modeNext = error instanceof Error
-        ? NaN
-        : modeNext + 1;
-    switch (modeNext) {
-    case 1:
-        onNext();
-        break;
-    default:
-        nextMiddleware(error);
-    }
-} catch (errorCaught) {
-    nextMiddleware(errorCaught);
-}
-/* jslint-indent-end */
-
-
-
-            };
-            onNext();
-        };
-        local.cms2.swaggerUpdate = function (options) {
-            /*
-                this function will update swaggerJson with options
-            */
-            // update swaggerJson with options
-            local.utility2.objectOverride(
-                local.cms2.swaggerJson,
-                // json-copy to prevent side-effect propagation
-                local.utility2.jsonCopy(options),
-                2
-            );
-            // init swaggerRequestHandlerDict
-            local.cms2.swaggerRequestHandlerDict = local.cms2.swaggerRequestHandlerDict || {};
-            Object.keys(options.paths || {}).forEach(function (path) {
-                Object.keys(options.paths[path] || {}).forEach(function (method) {
-                    var pathMethod;
-                    // delete meta data from swaggerJson
-                    delete local.cms2.swaggerJson.paths[path][method].meta;
+            var pathMethod, tmp;
+            // init default crud
+            if (options.crudDefault) {
+                local.utility2.objectOverride(options, {
+                    paths: {
+                        '/{{model}}': {
+                            post: {
+                                operationId: '{{modelCamelCase}}CreateOrReplace',
+                                parameters: [{
+                                    description: '{{model}} object',
+                                    in: 'body',
+                                    name: 'body',
+                                    required: true,
+                                    schema: {
+                                        $ref: '#/definitions/{{model}}'
+                                    }
+                                }],
+                                summary: '{{modelCamelCase}}CreateOrReplace - ' +
+                                    'create or replace {{model}} object',
+                                tags: ['{{model}}']
+                            },
+                            put: {
+                                operationId: '{{modelCamelCase}}CreateOrUpdate',
+                                parameters: [{
+                                    description: '{{model}} object',
+                                    in: 'body',
+                                    name: 'body',
+                                    required: true,
+                                    schema: {
+                                        $ref: '#/definitions/{{model}}'
+                                    }
+                                }],
+                                summary: '{{modelCamelCase}}CreateOrUpdate - ' +
+                                    'create or update {{model}} object',
+                                tags: ['{{model}}']
+                            }
+                        },
+                        '/{{model}}/{id}': {
+                            delete: {
+                                operationId: '{{modelCamelCase}}DeleteById',
+                                parameters: [{
+                                    description: '{{model}} id',
+                                    in: 'path',
+                                    name: 'id',
+                                    required: true
+                                }],
+                                summary: '{{modelCamelCase}}DeleteById - delete ' +
+                                    '{{model}} object by id',
+                                tags: ['{{model}}']
+                            },
+                            get: {
+                                operationId: '{{modelCamelCase}}GetById',
+                                parameters: [{
+                                    description: '{{model}} id',
+                                    in: 'path',
+                                    name: 'id',
+                                    required: true
+                                }],
+                                summary: '{{modelCamelCase}}GetById - get ' +
+                                    '{{model}} object by id',
+                                tags: ['{{model}}']
+                            }
+                        }
+                    }
+                }, 2);
+            }
+            // init extra options properties
+            options.collection = options.collection || options.model;
+            options.modelCamelCase = options.model[0].toLowerCase() + options.model.slice(1);
+            // textFormat modify options.paths
+            tmp = options.paths;
+            options.paths = {};
+            Object.keys(tmp).forEach(function (key) {
+                options.paths[local.utility2.textFormat(key, options)] = tmp[key];
+            });
+            // recursively textFormat options.paths
+            local.utility2.objectTraverse(options.paths, function (element) {
+                Object.keys(typeof element === 'object'
+                    ? element
+                    : {}).forEach(function (key) {
+                    if (typeof element[key] === 'string') {
+                        element[key] = local.utility2.textFormat(element[key], options);
+                    }
+                });
+            });
+            Object.keys(options.paths).forEach(function (path) {
+                Object.keys(options.paths[path]).forEach(function (method) {
                     pathMethod = options.paths[path][method];
+                    tmp = pathMethod.requestHandler;
+                    delete pathMethod.requestHandler;
+                    // init swaggerJson.paths[path]
+                    local.cms2.swaggerJson.paths[path] =
+                        local.cms2.swaggerJson.paths[path] || {};
+                    // save pathMethod to swaggerJson.paths[path]
+                    local.cms2.swaggerJson.paths[path][method] =
+                        // json-copy to prevent side-effect propagation
+                        local.utility2.jsonCopy(pathMethod);
+                    // init internal properties
                     pathMethod.method = method;
                     pathMethod.path = path;
-                    pathMethod.requestHandlerKey = method.toUpperCase() + ' ' +
-                        path.replace((/\{\S*?\}/g), '');
+                    pathMethod.requestHandler = tmp;
+                    pathMethod.requestHandlerKey =
+                        method.toLowerCase() + ' ' + path.replace((/\{\S*?\}/), '');
+                    // init swaggerRequestHandlerDict
+                    local.cms2.swaggerRequestHandlerDict =
+                        local.cms2.swaggerRequestHandlerDict || {};
+                    // save pathMethod to swaggerRequestHandlerDict
                     local.cms2.swaggerRequestHandlerDict[pathMethod.requestHandlerKey] =
                         pathMethod;
                 });
             });
-        };
-        local.cms2.swaggerUpdateCrudDefault = function (modelName) {
-            /*
-                this function will update swaggerJson with default crud for modelName
-            */
-            var options;
-            options = { paths: {} };
-            options.paths['/' + modelName] = {
-                put: {
-                    operationId: modelName + 'Upsert',
-                    parameters: [{
-                        description: modelName + ' object',
-                        in: 'body',
-                        name: 'body',
-                        required: true,
-                        schema: {
-                            $ref: '#/definitions/' + modelName
-                        }
-                    }],
-                    summary: modelName + 'Upsert - upsert ' + modelName + ' object',
-                    tags: [modelName]
-                }
-            };
-            options.paths['/' + modelName + '/{_id}'] = {
-                delete: {
-                    operationId: modelName + 'DeleteById',
-                    parameters: [{
-                        description: modelName + ' id',
-                        in: 'path',
-                        name: '_id',
-                        required: true
-                    }],
-                    summary: modelName + 'DeleteById - delete ' + modelName + ' object by id',
-                    tags: [modelName]
-                },
-                get: {
-                    operationId: modelName + 'GetById',
-                    parameters: [{
-                        description: modelName + ' id',
-                        in: 'path',
-                        name: '_id',
-                        required: true
-                    }],
-                    summary: modelName + 'GetById - get ' + modelName + ' object by id',
-                    tags: [modelName]
-                }
-            };
-            local.cms2.swaggerUpdate(options);
-            Object.keys(options.paths).forEach(function (path) {
-                Object.keys(options.paths[path]).forEach(function (method) {
-                    local.cms2.swaggerRequestHandlerDict[
-                        options.paths[path][method].requestHandlerKey
-                    ].requestHandler = local.cms2.swaggerRequestHandlerCrudDefault;
-                });
-            });
-
         };
         // export cms2
         module.exports = local.cms2;
@@ -217,14 +209,73 @@ try {
                 '/swagger-ui.throbber.gif');
         local.cms2.swaggerJson = {
             basePath: local.cms2.swaggerBasePath,
+            definitions: {
+                // http://jsonapi.org/format/#errors
+                JsonApiError: {
+                    properties: {
+                        code: { type: 'string' },
+                        detail: { type: 'string' },
+                        href: { type: 'string' },
+                        id: { type: 'string' },
+                        links: {
+                            items: { type: 'string' },
+                            type: 'array'
+                        },
+                        paths: {
+                            items: { type: 'string' },
+                            type: 'array'
+                        },
+                        status: { type: 'integer' },
+                        title: { type: 'string' }
+                    }
+                },
+                // http://jsonapi.org/format/#document-structure-meta
+                JsonApiMeta: {
+                    properties: {}
+                },
+                // http://jsonapi.org/format/#document-structure-meta
+                JsonApiLinks: {
+                    properties: {
+                        self: { type: 'string' },
+                        related: { type: 'string' }
+                    }
+                },
+                // http://jsonapi.org/format/#document-structure-resource-objects
+                JsonApiResource: {
+                    properties: {
+                        id: { type: 'string' },
+                        type: { type: 'string' }
+                    }
+                },
+                // http://jsonapi.org/format/#document-structure-top-level
+                JsonApiResponseData: {
+                    properties: {
+                        data: { $ref: '#/definitions/JsonApiResource' },
+                        links: { $ref: '#/definitions/JsonApiLinks' },
+                        meta: { $ref: '#/definitions/JsonApiMeta' }
+                    }
+                },
+                // http://jsonapi.org/format/#document-structure-top-level
+                JsonApiResponseErrors: {
+                    properties: {
+                        errors: {
+                            items: { $ref: '#/definitions/JsonApiError' },
+                            type: 'array'
+                        }
+                    }
+                }
+            },
             info: {
                 description: 'demo of cms2 swagger-api',
-                title: 'cms2 api'
+                title: 'cms2 api',
+                version: '0.1'
             },
+            paths: {},
             swagger: '2.0'
         };
         // init serverMiddleware
         local.cms2.serverMiddleware = function (request, response, nextMiddleware) {
+            //debugprint
             var modeNext, onNext, onParallel, swagger, tmp;
             modeNext = 0;
             onNext = function (error) {
@@ -232,7 +283,7 @@ try {
 
 
 /* jslint-indent-begin 16 */
-/*jslint maxlen: 112, regexp: true*/
+/*jslint maxlen: 212, regexp: true*/
 try {
     modeNext = error instanceof Error
         ? NaN
@@ -270,8 +321,8 @@ try {
             }
             // lookup swagger request-handler
             while (true) {
-                swagger = request.swagger = request.swagger || local.cms2
-                        .swaggerRequestHandlerDict[request.method.toUpperCase() + ' ' + tmp];
+                swagger = swagger || local.cms2
+                        .swaggerRequestHandlerDict[request.method.toLowerCase() + ' ' + tmp];
                 if (swagger || !(/[^\/]/).test(tmp)) {
                     break;
                 }
@@ -284,9 +335,8 @@ try {
             return;
         }
         // json-copy to prevent side-effect propagation
-        swagger = local.utility2.jsonCopy(swagger);
-        swagger.requestHandler = request.swagger.requestHandler;
-        request.swagger = swagger;
+        swagger = request.swagger = local.utility2.jsonCopy(swagger);
+        response.responseJson = {};
         onNext();
         break;
     // init swagger.parameterDict
@@ -327,7 +377,6 @@ try {
         break;
     // run serverMiddlewareSwaggerHookBefore
     case 4:
-        response.responseJson = {};
         local.cms2.serverMiddlewareSwaggerHookBefore(request, response, onNext);
         break;
     // run swagger-api
@@ -387,7 +436,7 @@ try {
         };
         local.cms2.serverMiddlewareError = function (error, request, response, nextMiddleware) {
             /*
-                this function handles errors according to http://jsonapi.org/format/#errors
+                this function will handle errors according to http://jsonapi.org/format/#errors
             */
             // jslint-hack
             local.utility2.nop(request);
@@ -400,9 +449,10 @@ try {
             }
             response.end(JSON.stringify({ errors: [{
                 code: error.code,
-                message: error.message,
-                stack: error.stack,
-                status: 500
+                id: local.utility2.uuid4(),
+                title: error.message,
+                detail: error.stack,
+                status: response.statusCode
             }] }));
         };
         // init mongodb client
@@ -416,10 +466,10 @@ try {
                 local.utility2.onReady();
             }
         );
-        // init user collection
-        local.cms2.swaggerUpdate({
+        // init User collection
+        local.utility2.objectOverride(local.cms2.swaggerJson, {
             definitions: {
-                user: {
+                User: {
                     properties: {
                         roleList: {
                             items: { type: 'string' },
@@ -428,20 +478,25 @@ try {
                         passwordHash: { type: 'string' },
                         passwordSalt: { type: 'string' },
                         usernameList: {
-                            items: { type: 'username' },
+                            items: { $ref: '#/definitions/Username' },
                             type: 'array'
                         }
                     }
                 },
-                username: {
+                Username: {
                     properties: {
                         name: { type: 'string' },
                         type: { type: 'string' }
                     }
                 }
-            },
+            }
+        }, 2);
+        local.cms2.swaggerPathUpdate({
+            collection: 'User',
+            crudDefault: true,
+            model: 'User',
             paths: {
-                '/user/login': {
+                '/User/login': {
                     post: {
                         operationId: 'userLogin',
                         parameters: [{
@@ -457,11 +512,11 @@ try {
                             required: true,
                             type: 'string'
                         }],
-                        summary: 'userLogin login new session',
-                        tags: ['user']
+                        summary: 'userLogin - login new session',
+                        tags: ['User']
                     }
                 },
-                '/user/logout': {
+                '/User/logout': {
                     delete: {
                         operationId: 'userLogout',
                         parameters: [{
@@ -472,18 +527,17 @@ try {
                             type: 'string'
                         }],
                         summary: 'userLogout - logout current session',
-                        tags: ['user']
+                        tags: ['User']
                     }
                 }
             },
             tags: [
                 {
-                    description: 'user api',
-                    name: 'user'
+                    description: 'User api',
+                    name: 'User'
                 }
             ]
         });
-        local.cms2.swaggerUpdateCrudDefault('user');
         break;
     }
 }());

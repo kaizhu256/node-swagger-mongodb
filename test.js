@@ -1,7 +1,7 @@
 /*jslint
     browser: true,
     maxerr: 4,
-    maxlen: 80,
+    maxlen: 96,
     node: true,
     nomen: true,
     stupid: true,
@@ -52,10 +52,7 @@
                     // validate error occurred
                     local.utility2.assert(error instanceof Error, error);
                     // validate 404 http statusCode
-                    local.utility2.assert(
-                        error.statusCode === 404,
-                        error.statusCode
-                    );
+                    local.utility2.assert(error.statusCode === 404, error.statusCode);
                     onError();
                 }, onError);
             });
@@ -108,15 +105,10 @@
         local['/'] =
             local.utility2.textFormat(local.fs
                 .readFileSync(__dirname + '/README.md', 'utf8')
-                .replace(
-                    (/[\S\s]+?(<!DOCTYPE html>[\S\s]+?<\/html>)[\S\s]+/),
-                    '$1'
-                )
+                .replace((/[\S\s]+?(<!DOCTYPE html>[\S\s]+?<\/html>)[\S\s]+/), '$1')
                 // parse '\' line-continuation
                 .replace((/\\\n/g), '')
-                .replace((/\\n' \+(\s*?)'/g), '$1'), {
-                    envDict: local.utility2.envDict
-                });
+                .replace((/\\n' \+(\s*?)'/g), '$1'), { envDict: local.utility2.envDict });
         local['/assets/cms2.js'] =
             local.istanbul_lite.instrumentInPackage(
                 local.cms2['/assets/cms2.js'],
@@ -156,10 +148,7 @@
             case '.js':
             case '.json':
                 // jslint the file
-                local.jslint_lite.jslintAndPrint(
-                    local.fs.readFileSync(file, 'utf8'),
-                    file
-                );
+                local.jslint_lite.jslintAndPrint(local.fs.readFileSync(file, 'utf8'), file);
                 break;
             }
             // if the file is modified, then restart the process
