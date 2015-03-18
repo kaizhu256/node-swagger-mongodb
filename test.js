@@ -1,6 +1,6 @@
 /*jslint
     browser: true,
-    maxerr: 4,
+    maxerr: 8,
     maxlen: 96,
     node: true,
     nomen: true,
@@ -103,7 +103,7 @@
         };
         // init assets
         local['/'] =
-            local.utility2.textFormat(local.fs
+            local.utility2.stringFormat(local.fs
                 .readFileSync(__dirname + '/README.md', 'utf8')
                 .replace((/[\S\s]+?(<!DOCTYPE html>[\S\s]+?<\/html>)[\S\s]+/), '$1')
                 // parse '\' line-continuation
