@@ -255,11 +255,11 @@ backed by mongodb with swagger-ui api",
         "url" : "https://github.com/kaizhu256/node-cms2.git"
     },
     "scripts": {
-        "build2": "node_modules/.bin/utility2 shRun shBuild",
+        "build-ci": "node_modules/.bin/utility2 shRun shReadmeBuild",
         "start": "npm_config_mode_auto_restart=1 \
 node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmePackageJsonExport && \
-node_modules/.bin/utility2 shRun shNpmTest test.js"
+node_modules/.bin/utility2 test test.js"
     },
     "version": "2015.3.8-11"
 }
@@ -281,7 +281,7 @@ node_modules/.bin/utility2 shRun shNpmTest test.js"
 # internal build-script
 ```
 # build.sh
-# this shell script will run the build process for this package
+# this shell script will run the build for this package
 shBuild() {
     # init env
     export npm_config_mode_slimerjs=1 || return $?

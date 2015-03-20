@@ -3,7 +3,6 @@
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "cms2": "index.js" },
     "dependencies": {
-        "mongodb": "^2.0.21",
         "swagger-ui-lite": "^2.1.8-M1-2015-03-11-b",
         "utility2": "2015.3.8-11"
     },
@@ -32,9 +31,9 @@
         "url" : "https://github.com/kaizhu256/node-cms2.git"
     },
     "scripts": {
-        "build2": "node_modules/.bin/utility2 shRun shBuild",
+        "build-ci": "node_modules/.bin/utility2 shRun shReadmeBuild",
         "start": "npm_config_mode_auto_restart=1 node_modules/.bin/utility2 shRun node test.js",
-        "test": "node_modules/.bin/utility2 shRun shReadmePackageJsonExport && node_modules/.bin/utility2 shRun shNpmTest test.js"
+        "test": "node_modules/.bin/utility2 shRun shReadmePackageJsonExport && node_modules/.bin/utility2 test test.js"
     },
     "version": "2015.3.8-11"
 }

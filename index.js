@@ -33,9 +33,101 @@
         local.utility2 = local.modeJs === 'browser'
             ? window.utility2
             : require('utility2');
-        // init env
-        local.cms2.swaggerBasePath =
-            local.utility2.envDict.npm_config_mode_api_prefix || '/api/v0.1';
+
+
+
+        local.cms2.swaggerDatatypeValidate = function (options, value, required) {
+            /*jslint bitwise: true*/
+            var assert, throwErrorFormat, isNull;
+            isNull = value === null || value === undefined;
+            if (required && isNull) {
+                throw new Error('required property is null or undefined');
+            }
+            assert = function (valid) {
+                if (!isNull && !valid) {
+                    throw new Error(
+                        'invalid ' + (options.format || options.type) + ' property '
+                            + JSON.stringify(value)
+                    );
+                }
+            };
+            throwErrorFormat = function () {
+                throw new Error(
+                    options.type + ' property has invalid format ' + options.format
+                );
+            };
+// https://github.com/swagger-api/swagger-spec/blob/master/versions/2.0.md#data-types
+            switch (options.type) {
+            case 'array':
+                assert(Array.isArray(value));
+                if (options.format) {
+                    throwErrorFormat();
+                }
+                break;
+            case 'boolean':
+                assert(typeof value === 'boolean');
+                if (options.format) {
+                    throwErrorFormat();
+                }
+                break;
+            case 'file':
+                if (options.format) {
+                    throwErrorFormat();
+                }
+                break;
+            case 'integer':
+                assert(typeof value === 'number' && (value | 0) === value);
+                switch (options.format) {
+                case 'int32':
+                case 'int64':
+                case undefined:
+                    break;
+                default:
+                    throwErrorFormat();
+                }
+                break;
+            case 'number':
+                switch (options.format) {
+                case 'double':
+                case 'float':
+                case undefined:
+                    break;
+                default:
+                    throwErrorFormat();
+                }
+                assert(typeof value === 'number');
+                break;
+            case 'string':
+                switch (options.format) {
+                // https://github.com/swagger-api/swagger-spec/issues/50
+                case 'byte':
+                    //!! assert((/^[]/).test(value));
+                    break;
+                case 'date':
+                    assert(value === new Date(value).toISOString().slice(0, 10));
+                    break;
+                case 'date-time':
+                    assert(value === new Date(value).toISOString());
+                    break;
+                case undefined:
+                    break;
+                default:
+                    throwErrorFormat();
+                }
+                assert(typeof value === 'string');
+                break;
+            default:
+                throw new Error('property has invalid type ' + options.type);
+            }
+        };
+        //!! try {
+            //!! local.cms2.swaggerDatatypeValidate({
+                //!! //!! format: 'aa',
+                //!! type: 'boolean'
+            //!! }, null, true);
+        //!! } catch (errorCaught) {
+            //!! local.utility2.onErrorDefault(errorCaught);
+        //!! }
     }());
     switch (local.modeJs) {
 
@@ -43,24 +135,7 @@
 
     // run node js-env code
     case 'node':
-        local.cms2.modelDataNormalize = function (modelName, data) {
-            /*
-                this function will normalize the data of the given model
-            */
-            var model;
-            data = data || {};
-            model = local.cms2.swaggerJson.definitions[modelName];
-            // remove undefined properties from data
-            Object.keys(data).forEach(function (key) {
-                if (!(/^(?:_id|timeCreated|timeModified|type)$/).test(key) &&
-                        !model.properties[key]) {
-                    delete data[key];
-                }
-            });
-            return data;
-        };
-
-        local.cms2.swaggerModelUpdate = function (options) {
+        local.cms2.modelCreate = function (options) {
             /*
                 this function will update swaggerJson.paths with options.paths
             */
@@ -69,108 +144,108 @@
 
 /* jslint-indent-begin 12 */
 /*jslint maxlen: 108, regexp: true*/
-var model, pathMethod, requestHandler, tmp;
+var model, pathMethod, tmp;
 // init default crud
-if (options.crudDefault) {
+if (options._crudDefault) {
     local.utility2.objectSetOverride(options, {
         paths: {
-            '/{{modelName}}': {
+            '/{{_modelName}}': {
                 // post /model - modelCreateOrReplace
                 post: {
-                    operationId: '{{modelNameCameCase}}CreateOrReplace',
+                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    operationId: '{{_modelNameCameCase}}CreateOrReplace',
                     parameters: [{
-                        description: '{{modelName}} object',
+                        description: '{{_modelName}} object',
                         in: 'body',
                         name: 'body',
                         required: true,
-                        schema: { $ref: '#/definitions/{{modelName}}' }
+                        schema: { $ref: '#/definitions/{{_modelName}}' }
                     }],
-                    requestHandler: local.cms2.serverMiddlewareCrudDefault,
                     responses: {
                         200: {
                             description: '200 ok - ' +
                                 'http://jsonapi.org/format/#document-structure-top-level',
-                            schema: { $ref: '#/definitions/JsonApiResponseData{{modelName}}' }
+                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                         }
                     },
-                    summary: '{{modelNameCameCase}}CreateOrReplace - ' +
-                        'create or replace {{modelName}} object',
-                    tags: ['{{modelName}}']
+                    summary: '{{_modelNameCameCase}}CreateOrReplace - ' +
+                        'create or replace {{_modelName}} object',
+                    tags: ['{{_modelName}}']
                 },
                 // put /model - modelCreateOrUpdate
                 put: {
-                    operationId: '{{modelNameCameCase}}CreateOrUpdate',
+                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    operationId: '{{_modelNameCameCase}}CreateOrUpdate',
                     parameters: [{
-                        description: '{{modelName}} object',
+                        description: '{{_modelName}} object',
                         in: 'body',
                         name: 'body',
                         required: true,
-                        schema: { $ref: '#/definitions/{{modelName}}' }
+                        schema: { $ref: '#/definitions/{{_modelName}}' }
                     }],
-                    requestHandler: local.cms2.serverMiddlewareCrudDefault,
                     responses: {
                         200: {
                             description: '200 ok - ' +
                                 'http://jsonapi.org/format/#document-structure-top-level',
-                            schema: { $ref: '#/definitions/JsonApiResponseData{{modelName}}' }
+                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                         }
                     },
-                    summary: '{{modelNameCameCase}}CreateOrUpdate - ' +
-                        'create or update {{modelName}} object',
-                    tags: ['{{modelName}}']
+                    summary: '{{_modelNameCameCase}}CreateOrUpdate - ' +
+                        'create or update {{_modelName}} object',
+                    tags: ['{{_modelName}}']
                 }
             },
-            '/{{modelName}}/{id}': {
+            '/{{_modelName}}/{id}': {
                 // delete /model/id - modelDeleteById
                 delete: {
-                    operationId: '{{modelNameCameCase}}DeleteById',
+                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    operationId: '{{_modelNameCameCase}}DeleteById',
                     parameters: [{
-                        description: '{{modelName}} id',
+                        description: '{{_modelName}} id',
                         in: 'path',
                         name: 'id',
                         required: true
                     }],
-                    requestHandler: local.cms2.serverMiddlewareCrudDefault,
-                    summary: '{{modelNameCameCase}}DeleteById - delete ' +
-                        '{{modelName}} object by id',
-                    tags: ['{{modelName}}']
+                    summary: '{{_modelNameCameCase}}DeleteById - delete ' +
+                        '{{_modelName}} object by id',
+                    tags: ['{{_modelName}}']
                 },
                 // get /model/id - modelGetById
                 get: {
-                    operationId: '{{modelNameCameCase}}GetById',
+                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    operationId: '{{_modelNameCameCase}}GetById',
                     parameters: [{
-                        description: '{{modelName}} id',
+                        description: '{{_modelName}} id',
                         in: 'path',
                         name: 'id',
                         required: true
                     }],
-                    requestHandler: local.cms2.serverMiddlewareCrudDefault,
                     responses: {
                         200: {
                             description: '200 ok - ' +
                                 'http://jsonapi.org/format/#document-structure-top-level',
-                            schema: { $ref: '#/definitions/JsonApiResponseData{{modelName}}' }
+                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                         }
                     },
-                    summary: '{{modelNameCameCase}}GetById - get ' +
-                        '{{modelName}} object by id',
-                    tags: ['{{modelName}}']
+                    summary: '{{_modelNameCameCase}}GetById - get ' +
+                        '{{_modelName}} object by id',
+                    tags: ['{{_modelName}}']
                 }
             }
         }
     }, 2);
 }
 // init extra options properties
-options.definitions['JsonApiResponseData{{modelName}}'] = {
+options.definitions['JsonApiResponseData{{_modelName}}'] = {
     allOf: [{ $ref: '#/definitions/JsonApiResponseData' }],
     properties: {
         data: { $ref: '#/definitions/User' }
     }
 };
-options.modelNameCameCase = options.modelName[0].toLowerCase() + options.modelName.slice(1);
+options._modelNameCameCase = options._modelName[0].toLowerCase() + options._modelName.slice(1);
 // recursively stringFormat options
 local.utility2.objectTraverse(options, function (element) {
-    Object.keys(typeof element === 'object'
+    Object.keys(element && typeof element === 'object'
         ? element
         : {}).forEach(function (key) {
         tmp = element[key];
@@ -183,25 +258,29 @@ local.utility2.objectTraverse(options, function (element) {
     });
 });
 // update swaggerJson.definitions
-local.utility2.objectSetOverride(local.cms2.swaggerJson, {
-    // json-copy object to prevent side-effects
-    definitions: local.utility2.jsonCopy(options.definitions)
-}, 2);
 // init modelDict
 local.cms2.modelDict = local.cms2.modelDict || {};
 // init model
-model = local.cms2.modelDict[options.modelName] = options.definitions[options.modelName];
-// init cacheDict.collectionDict
-local.cms2.cacheDict.collectionDict = local.cms2.cacheDict.collectionDict || {};
+model = local.cms2.modelDict[options._modelName] = options.definitions[options._modelName];
+model.dataNormalize = function (data) {
+    /*
+        this function will normalize the data
+    */
+    data = data || {};
+    // remove undefined properties from data
+    Object.keys(data).forEach(function (key) {
+        if (!(/^(?:_id|timeCreated|timeModified|type)$/).test(key) && !model.properties[key]) {
+            delete data[key];
+        }
+    });
+    return data;
+};
 // init model.collection
-local.utility2.taskCreateOrSubscribe(
+local.utility2.taskPoolCreateOrAddCallback(
     { key: 'cms2.mongodbConnect' },
     null,
     function () {
-        model.collection =
-            local.cms2.cacheDict.collectionDict[options.collectionName] =
-            local.cms2.cacheDict.collectionDict[options.collectionName] ||
-            local.cms2.db.collection(options.collectionName);
+        model.collection = local.cms2.db.collection(options._collectionName);
     }
 );
 // update swaggerJson.paths
@@ -221,33 +300,37 @@ Object.keys(options.paths).forEach(function (path) {
                 schema: { $ref: '#/definitions/JsonApiResponseError' }
             }
         } }, 2);
-        // security - remove requestHandler in swaggerJson.paths[path][method]
-        requestHandler = pathMethod.requestHandler;
-        delete pathMethod.requestHandler;
-        // init swaggerJson.paths[path]
-        local.cms2.swaggerJson.paths[path] = local.cms2.swaggerJson.paths[path] || {};
-        // save pathMethod to swaggerJson.paths[path]
-        local.cms2.swaggerJson.paths[path][method] =
-            // json-copy object to prevent side-effects
-            local.utility2.jsonCopy(pathMethod);
         // init internal properties
         Object.keys(options).forEach(function (key) {
-            if (typeof options[key] === 'string') {
+            if (key[0] === '_' && typeof options[key] === 'string') {
                 pathMethod[key] = pathMethod[key] || options[key];
             }
         });
-        pathMethod.method = method;
-        pathMethod.path = path;
-        // security - restore requestHandler in pathMethod
-        pathMethod.requestHandler = requestHandler;
-        pathMethod.requestHandlerKey =
+        pathMethod._method = method;
+        pathMethod._path = path;
+        pathMethod._requestHandlerKey =
             method.toLowerCase() + ' ' + path.replace((/\{\S*?\}/), '');
-        // init swaggerRequestHandlerDict
-        local.cms2.swaggerRequestHandlerDict = local.cms2.swaggerRequestHandlerDict || {};
-        // save pathMethod to swaggerRequestHandlerDict
-        local.cms2.swaggerRequestHandlerDict[pathMethod.requestHandlerKey] = pathMethod;
+        // init requestHandlerDict
+        local.cms2.requestHandlerDict = local.cms2.requestHandlerDict || {};
+        // save pathMethod to requestHandlerDict
+        local.cms2.requestHandlerDict[pathMethod._requestHandlerKey] = pathMethod;
     });
 });
+// update swaggerJson
+local.utility2.objectSetOverride(
+    local.cms2.swaggerJson,
+    local.utility2.objectTraverse(local.utility2.jsonCopy(options), function (element) {
+        if (element && typeof element === 'object') {
+            Object.keys(element).forEach(function (key) {
+                // security - remove private underscored key
+                if (key[0] === '_') {
+                    delete element[key];
+                }
+            });
+        }
+    }),
+    2
+);
 /* jslint-indent-end */
 
 
@@ -291,12 +374,12 @@ onNext = function (error) {
                 onNext();
             }
             break;
-        // lookup and init swagger-object from swaggerRequestHandlerDict
+        // lookup and init swagger-object from requestHandlerDict
         case 2:
             if (request.urlParsed.pathnameNormalized
-                    .indexOf(local.cms2.swaggerBasePath) === 0) {
+                    .indexOf(local.cms2.swaggerJson.basePath) === 0) {
                 tmp = request.urlParsed.pathnameNormalized
-                    .replace(local.cms2.swaggerBasePath, '');
+                    .replace(local.cms2.swaggerJson.basePath, '');
                 switch (tmp) {
                 // serve swagger.json
                 case '/swagger.json':
@@ -305,7 +388,7 @@ onNext = function (error) {
                 }
                 // lookup swagger request-handler
                 while (true) {
-                    swagger = swagger || local.cms2.swaggerRequestHandlerDict[
+                    swagger = swagger || local.cms2.requestHandlerDict[
                         request.method.toLowerCase() + ' ' + tmp
                     ];
                     if (swagger || !(/[^\/]/).test(tmp)) {
@@ -321,7 +404,7 @@ onNext = function (error) {
             }
             // json-copy object to prevent side-effects
             swagger = request.swagger = local.utility2.jsonCopy(swagger);
-            swagger.model = local.cms2.modelDict[swagger.modelName];
+            swagger.model = local.cms2.modelDict[swagger._modelName];
             swagger.responseData = {};
             onNext();
             break;
@@ -331,8 +414,10 @@ onNext = function (error) {
             onParallel.counter += 1;
             swagger.parameterDict = { id: local.utility2.uuidTime(), type: null };
             // parse path parameter
-            tmp = request.urlParsed.pathname.replace(local.cms2.swaggerBasePath, '').split('/');
-            swagger.path.split('/').forEach(function (key, ii) {
+            tmp = request.urlParsed.pathname
+                .replace(local.cms2.swaggerJson.basePath, '')
+                .split('/');
+            swagger._path.split('/').forEach(function (key, ii) {
                 if ((/^\{\S*?\}$/).test(key)) {
                     swagger.parameterDict[key.slice(1, -1)] = tmp[ii];
                 }
@@ -364,11 +449,11 @@ onNext = function (error) {
         case 4:
             local.cms2.serverMiddlewareHookBefore(request, response, onNext);
             break;
-        // run swagger.requestHandler
+        // run swagger._requestHandler
         case 5:
-            tmp = local.cms2.swaggerRequestHandlerDict[swagger.requestHandlerKey];
-            if (tmp && tmp.requestHandler) {
-                tmp.requestHandler(request, response, onNext);
+            tmp = local.cms2.requestHandlerDict[swagger._requestHandlerKey];
+            if (tmp && tmp._requestHandler) {
+                tmp._requestHandler(request, response, onNext);
                 return;
             }
             onNext();
@@ -432,11 +517,11 @@ onNext();
                         // jslint-hack
                         local.utility2.nop(response);
                         swagger = request.swagger;
-                        swagger.crudDefaultKey =
-                            swagger.requestHandlerKey
+                        swagger._crudDefaultKey =
+                            swagger._requestHandlerKey
                                 .replace((/\/\S+?\//), '//')
                                 .replace((/[\w]+?$/), '');
-                        switch (swagger.crudDefaultKey) {
+                        switch (swagger._crudDefaultKey) {
                         case 'get //':
                             swagger.model.collection
                                 .findOne({ _id: swagger.parameterDict.id }, onNext);
@@ -460,8 +545,8 @@ onNext();
                         break;
                     case 2:
                         // normalize data
-                        data = local.cms2.modelDataNormalize(swagger.modelName, data);
-                        switch (swagger.crudDefaultKey) {
+                        data = swagger.model.dataNormalize(data);
+                        switch (swagger._crudDefaultKey) {
                         case 'post /':
                             modeNext = NaN;
                             swagger.responseData.data = data;
@@ -498,16 +583,12 @@ onNext();
             /*
                 this function will handle errors according to http://jsonapi.org/format/#errors
             */
-            // jslint-hack
-            local.utility2.nop(request);
             local.utility2.onErrorDefault(error);
             if (!error) {
                 nextMiddleware();
                 return;
             }
-            if (!response.headersSent) {
-                response.statusCode = response.statusCode || 500;
-            }
+            local.utility2.serverRespondWriteHead(request, response, 500, {});
             response.end(JSON.stringify({ errors: [{
                 code: error.code,
                 id: local.utility2.uuidTime(),
@@ -559,11 +640,9 @@ onNext();
         local.swagger_ui_lite = require('swagger-ui-lite');
         local.url = require('url');
         local.utility2 = require('utility2');
-        // init cacheDict
-        local.cms2.cacheDict = {};
         // init mongodb client
         local.utility2.onReady.counter += 1;
-        local.utility2.taskCreateOrSubscribe(
+        local.utility2.taskPoolCreateOrAddCallback(
             { key: 'cms2.mongodbConnect' },
             function (onError) {
                 local.mongodb.MongoClient.connect(
@@ -582,36 +661,8 @@ onNext();
         // init assets
         local.cms2['/assets/cms2.js'] = local.fs
             .readFileSync(__filename, 'utf8');
-        local.cms2['/assets/swagger-ui.html'] = local.fs
-            .readFileSync(
-                local.swagger_ui_lite.__dirname + '/swagger-ui.html',
-                'utf8'
-            )
-            .replace(
-                'http://petstore.swagger.io/v2/swagger.json',
-                local.cms2.swaggerBasePath + '/swagger.json'
-            );
-        local.cms2['/assets/swagger-ui.rollup.css'] = local.fs
-            .readFileSync(
-                local.swagger_ui_lite.__dirname + '/swagger-ui.rollup.css',
-                'utf8'
-            );
-        local.cms2['/assets/swagger-ui.rollup.js'] = local.fs
-            .readFileSync(
-                local.swagger_ui_lite.__dirname + '/swagger-ui.rollup.js',
-                'utf8'
-            );
-        local.cms2['/assets/swagger-ui.explorer_icons.png'] = local.fs
-            .readFileSync(local.swagger_ui_lite.__dirname +
-                '/swagger-ui.explorer_icons.png');
-        local.cms2['/assets/swagger-ui.logo_small.png'] = local.fs
-            .readFileSync(local.swagger_ui_lite.__dirname +
-                '/swagger-ui.logo_small.png');
-        local.cms2['/assets/swagger-ui.throbber.gif'] = local.fs
-            .readFileSync(local.swagger_ui_lite.__dirname +
-                '/swagger-ui.throbber.gif');
         local.cms2.swaggerJson = {
-            basePath: local.cms2.swaggerBasePath,
+            basePath: local.utility2.envDict.npm_config_mode_api_prefix || '/api/v0.1',
             definitions: {
                 // http://jsonapi.org/format/#errors
                 JsonApiError: {
@@ -680,14 +731,39 @@ onNext();
             paths: {},
             swagger: '2.0'
         };
-        local.cms2.swaggerModelUpdate({
-            crudDefault: true,
-            collectionName: 'User',
-            createIndexList: [[{
-                'usernameList.name': 1
-            }, {
-                unique: true
-            }]],
+        local.cms2['/assets/swagger-ui.html'] = local.fs
+            .readFileSync(
+                local.swagger_ui_lite.__dirname + '/swagger-ui.html',
+                'utf8'
+            )
+            .replace(
+                'http://petstore.swagger.io/v2/swagger.json',
+                local.cms2.swaggerJson.basePath + '/swagger.json'
+            );
+        local.cms2['/assets/swagger-ui.rollup.css'] = local.fs
+            .readFileSync(
+                local.swagger_ui_lite.__dirname + '/swagger-ui.rollup.css',
+                'utf8'
+            );
+        local.cms2['/assets/swagger-ui.rollup.js'] = local.fs
+            .readFileSync(
+                local.swagger_ui_lite.__dirname + '/swagger-ui.rollup.js',
+                'utf8'
+            );
+        local.cms2['/assets/swagger-ui.explorer_icons.png'] = local.fs
+            .readFileSync(local.swagger_ui_lite.__dirname +
+                '/swagger-ui.explorer_icons.png');
+        local.cms2['/assets/swagger-ui.logo_small.png'] = local.fs
+            .readFileSync(local.swagger_ui_lite.__dirname +
+                '/swagger-ui.logo_small.png');
+        local.cms2['/assets/swagger-ui.throbber.gif'] = local.fs
+            .readFileSync(local.swagger_ui_lite.__dirname +
+                '/swagger-ui.throbber.gif');
+        local.cms2.modelCreate({
+            _collectionName: 'User',
+            _createIndexList: [[{ 'usernameList.name': 1 }, { sparse: true, unique: true }]],
+            _crudDefault: true,
+            _modelName: 'User',
             definitions: {
                 // http://jsonapi.org/format/#document-structure-top-level
                 JsonApiResponseDataUser: {
@@ -719,7 +795,6 @@ onNext();
                     }
                 }
             },
-            modelName: 'User',
             paths: {
                 '/User/login': {
                     // post /User/login - userLogin
