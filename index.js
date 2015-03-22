@@ -173,125 +173,131 @@ var model, pathMethod, tmp;
 if (options._crudDefault) {
     local.utility2.objectSetOverride(options, {
         paths: {
-            '/{{_modelName}}': {
-                // get /model - modelFindByQuery
+            '/{{_modelName}}/create': {
+                post: {
+                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    parameters: [{
+                        description: '{{_modelName}} object',
+                        in: 'body',
+                        name: 'body',
+                        required: true,
+                        schema: { $ref: '#/definitions/{{_modelName}}' },
+                        type: 'object'
+                    }],
+                    responses: {
+                        200: {
+                            description: '200 ok - ' +
+                                'http://jsonapi.org/format/#document-structure-top-level',
+                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
+                        }
+                    },
+                    summary: 'create {{_modelName}} object',
+                    tags: ['{{_modelName}}']
+                }
+            },
+            '/{{_modelName}}/createOrReplace': {
+                put: {
+                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    parameters: [{
+                        description: '{{_modelName}} object',
+                        in: 'body',
+                        name: 'body',
+                        required: true,
+                        schema: { $ref: '#/definitions/{{_modelName}}' },
+                        type: 'object'
+                    }],
+                    responses: {
+                        200: {
+                            description: '200 ok - ' +
+                                'http://jsonapi.org/format/#document-structure-top-level',
+                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
+                        }
+                    },
+                    summary: 'create or replace {{_modelName}} object',
+                    tags: ['{{_modelName}}']
+                }
+            },
+            '/{{_modelName}}/createOrUpdate': {
+                patch: {
+                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    parameters: [{
+                        description: '{{_modelName}} object',
+                        in: 'body',
+                        name: 'body',
+                        required: true,
+                        schema: { $ref: '#/definitions/{{_modelName}}' },
+                        type: 'object'
+                    }],
+                    responses: {
+                        200: {
+                            description: '200 ok - ' +
+                                'http://jsonapi.org/format/#document-structure-top-level',
+                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
+                        }
+                    },
+                    summary: 'create or update {{_modelName}} object',
+                    tags: ['{{_modelName}}']
+                }
+            },
+            '/{{_modelName}}/deleteById/{id}': {
+                delete: {
+                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    parameters: [{
+                        description: '{{_modelName}} id',
+                        in: 'path',
+                        name: 'id',
+                        required: true,
+                        type: 'string'
+                    }],
+                    summary: 'delete {{_modelName}} object by id',
+                    tags: ['{{_modelName}}']
+                }
+            },
+            '/{{_modelName}}/getById/{id}': {
                 get: {
                     _requestHandler: local.cms2.serverMiddlewareCrudDefault,
-                    operationId: '{{_modelNameCamelCase}}FindByQuery',
                     parameters: [{
-                        description: 'mongodb query object',
+                        description: '{{_modelName}} id',
+                        in: 'path',
+                        name: 'id',
+                        required: true,
+                        type: 'string'
+                    }],
+                    responses: {
+                        200: {
+                            description: '200 ok - ' +
+                                'http://jsonapi.org/format/#document-structure-top-level',
+                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
+                        }
+                    },
+                    summary: 'get {{_modelName}} object by id',
+                    tags: ['{{_modelName}}']
+                }
+            },
+            '/{{_modelName}}/getByQuery': {
+                get: {
+                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    parameters: [{
+                        description: 'mongodb query',
+                        default: '{"_id":"foo"}',
                         in: 'path',
                         name: 'query',
                         required: true,
                         type: 'object'
-                    }],
-                    responses: {
-                        200: {
-                            description: '200 ok - ' +
-                                'http://jsonapi.org/format/#document-structure-top-level',
-                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
-                        }
-                    },
-                    summary: '{{_modelNameCamelCase}}FindByQuery - get ' +
-                        '{{_modelName}} object by id',
-                    tags: ['{{_modelName}}']
-                },
-                // patch /model - modelCreateOrUpdate
-                patch: {
-                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
-                    operationId: '{{_modelNameCamelCase}}CreateOrUpdate',
-                    parameters: [{
-                        description: '{{_modelName}} object',
-                        in: 'body',
-                        name: 'body',
-                        required: true,
-                        schema: { $ref: '#/definitions/{{_modelName}}' },
-                        type: 'object'
-                    }],
-                    responses: {
-                        200: {
-                            description: '200 ok - ' +
-                                'http://jsonapi.org/format/#document-structure-top-level',
-                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
-                        }
-                    },
-                    summary: '{{_modelNameCamelCase}}CreateOrUpdate - ' +
-                        'create or update {{_modelName}} object',
-                    tags: ['{{_modelName}}']
-                },
-                // post /model - modelCreate
-                post: {
-                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
-                    operationId: '{{_modelNameCamelCase}}Create',
-                    parameters: [{
-                        description: '{{_modelName}} object',
-                        in: 'body',
-                        name: 'body',
-                        required: true,
-                        schema: { $ref: '#/definitions/{{_modelName}}' },
-                        type: 'object'
-                    }],
-                    responses: {
-                        200: {
-                            description: '200 ok - ' +
-                                'http://jsonapi.org/format/#document-structure-top-level',
-                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
-                        }
-                    },
-                    summary: '{{_modelNameCamelCase}}Create - ' +
-                        'create or update {{_modelName}} object',
-                    tags: ['{{_modelName}}']
-                },
-                // put /model - modelCreateOrReplace
-                put: {
-                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
-                    operationId: '{{_modelNameCamelCase}}CreateOrReplace',
-                    parameters: [{
-                        description: '{{_modelName}} object',
-                        in: 'body',
-                        name: 'body',
-                        required: true,
-                        schema: { $ref: '#/definitions/{{_modelName}}' },
-                        type: 'object'
-                    }],
-                    responses: {
-                        200: {
-                            description: '200 ok - ' +
-                                'http://jsonapi.org/format/#document-structure-top-level',
-                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
-                        }
-                    },
-                    summary: '{{_modelNameCamelCase}}CreateOrReplace - ' +
-                        'create or replace {{_modelName}} object',
-                    tags: ['{{_modelName}}']
-                }
-            },
-            '/{{_modelName}}/{id}': {
-                // delete /model/id - modelDeleteById
-                delete: {
-                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
-                    operationId: '{{_modelNameCamelCase}}DeleteById',
-                    parameters: [{
-                        description: '{{_modelName}} id',
+                    }, {
+                        description: 'mongodb cursor limit',
+                        default: 1,
                         in: 'path',
-                        name: 'id',
+                        name: 'limit',
                         required: true,
-                        type: 'string'
-                    }],
-                    summary: '{{_modelNameCamelCase}}DeleteById - delete ' +
-                        '{{_modelName}} object by id',
-                    tags: ['{{_modelName}}']
-                },
-                // get /model/id - modelGetById
-                get: {
-                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
-                    operationId: '{{_modelNameCamelCase}}GetById',
-                    parameters: [{
-                        description: '{{_modelName}} id',
+                        type: 'integer'
+                    }, {
+                        description: 'mongodb cursor sort',
+                        default: '{"timeModified":-1}',
                         in: 'path',
-                        name: 'id',
+                        name: 'sort',
                         required: true,
-                        type: 'string'
+                        type: 'object'
                     }],
                     responses: {
                         200: {
@@ -300,8 +306,7 @@ if (options._crudDefault) {
                             schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                         }
                     },
-                    summary: '{{_modelNameCamelCase}}GetById - get ' +
-                        '{{_modelName}} object by id',
+                    summary: 'get {{_modelName}} object by query',
                     tags: ['{{_modelName}}']
                 }
             }
@@ -313,7 +318,6 @@ options.definitions['JsonApiResponseData{{_modelName}}'] = {
     allOf: [{ $ref: '#/definitions/JsonApiResponseData' }],
     properties: { data: { $ref: '#/definitions/User' } }
 };
-options._modelNameCamelCase = options._modelName[0].toLowerCase() + options._modelName.slice(1);
 // recursively stringFormat options
 local.utility2.objectTraverse(options, function (element) {
     Object.keys(element && typeof element === 'object'
@@ -392,6 +396,8 @@ Object.keys(options.paths).forEach(function (path) {
                 schema: { $ref: '#/definitions/JsonApiResponseError' }
             }
         } }, 2);
+        // init pathMethod.operationId
+        pathMethod.operationId = path.split('/')[2];
         // init pathMethod._*
         Object.keys(options).forEach(function (key) {
             if (key[0] === '_' && typeof options[key] === 'string') {
@@ -399,11 +405,8 @@ Object.keys(options.paths).forEach(function (path) {
             }
         });
         pathMethod._method = method;
-        pathMethod._operationIdType =
-            (pathMethod.operationId || '').replace(pathMethod._modelNameCamelCase, '');
         pathMethod._path = path;
-        pathMethod._requestHandlerKey =
-            method.toLowerCase() + ' ' + path.replace((/\{\S*?\}/), '');
+        pathMethod._requestHandlerKey = path.replace((/\{\S*?\}/), '');
         // init requestHandlerDict
         local.cms2.requestHandlerDict = local.cms2.requestHandlerDict || {};
         // save pathMethod to requestHandlerDict
@@ -482,9 +485,7 @@ onNext = function (error) {
                 }
                 // lookup swagger request-handler from requestHandlerDict
                 while (true) {
-                    swagger = swagger || local.cms2.requestHandlerDict[
-                        request.method.toLowerCase() + ' ' + tmp
-                    ];
+                    swagger = swagger || local.cms2.requestHandlerDict[debugPrint(tmp)];
                     if (swagger || !(/[^\/]/).test(tmp)) {
                         break;
                     }
@@ -620,13 +621,13 @@ onNext();
                         swagger = request.swagger;
                         // init data
                         data = swagger.responseData.data;
-                        switch (swagger._operationIdType) {
-                        case 'CreateOrReplace':
+                        switch (swagger.operationId) {
+                        case 'createOrReplace':
                             // update data from body
                             local.utility2.objectSetOverride(data, swagger.paramDict.body);
                             onNext(null, data);
                             break;
-                        case 'CreateOrUpdate':
+                        case 'createOrUpdate':
                             // update data from body
                             local.utility2.objectSetOverride(data, swagger.paramDict.body);
                             // get previously saved data
@@ -639,11 +640,11 @@ onNext();
                                 onNext(null, data);
                             });
                             break;
-                        case 'DeleteById':
+                        case 'deleteById':
                             modeNext = NaN;
                             swagger.model.collection.removeOne({ _id: data._id }, onNext);
                             break;
-                        case 'GetById':
+                        case 'getById':
                             modeNext = NaN;
                             swagger.model.collection.findOne({ _id: data._id }, onNext);
                             break;
@@ -653,15 +654,15 @@ onNext();
                         }
                         break;
                     case 2:
-                        switch (swagger._operationIdType) {
-                        case 'CreateOrReplace':
+                        switch (swagger.operationId) {
+                        case 'createOrReplace':
                             // init timeCreated
                             if (swagger.model.properties.timeCreated) {
                                 data.timeCreated = new Date().toISOString();
                             }
                             onNext(null, data);
                             break;
-                        case 'CreateOrUpdate':
+                        case 'createOrUpdate':
                             // merge old data into new data
                             local.utility2.objectSetDefault(data, swagger.dataOld);
                             // init timeCreated
@@ -674,9 +675,9 @@ onNext();
                         }
                         break;
                     case 3:
-                        switch (swagger._operationIdType) {
-                        case 'CreateOrReplace':
-                        case 'CreateOrUpdate':
+                        switch (swagger.operationId) {
+                        case 'createOrReplace':
+                        case 'createOrUpdate':
                             modeNext = NaN;
                             // init timeModified
                             if (swagger.model.properties.timeModified) {
@@ -967,7 +968,6 @@ onNext();
                 '/User/login': {
                     // post /User/login - userLogin
                     post: {
-                        operationId: 'userLogin',
                         parameters: [{
                             description: 'login username',
                             in: 'query',
@@ -981,14 +981,13 @@ onNext();
                             required: true,
                             type: 'string'
                         }],
-                        summary: 'userLogin - login new session',
+                        summary: 'login user to new session',
                         tags: ['User']
                     }
                 },
                 '/User/logout': {
                     // delete /User/logout - userLogout
                     delete: {
-                        operationId: 'userLogout',
                         parameters: [{
                             description: 'logout sessionId',
                             in: 'query',
@@ -996,7 +995,7 @@ onNext();
                             required: true,
                             type: 'string'
                         }],
-                        summary: 'userLogout - logout current session',
+                        summary: 'logout user from existing session',
                         tags: ['User']
                     }
                 }
@@ -1016,7 +1015,7 @@ onNext();
                     id: 'foo'
                 }),
                 method: 'PATCH',
-                url: '/api/v0.1/User'
+                url: '/api/v0.1/User/createOrUpdate'
             }, debugPrint);
             return;
         });

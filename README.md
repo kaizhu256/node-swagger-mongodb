@@ -226,6 +226,7 @@ shExampleSh
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "cms2": "index.js" },
     "dependencies": {
+        "mongodb": "^2.0.23",
         "swagger-ui-lite": "^2.1.8-M1-2015-03-11-b",
         "utility2": "2015.3.8-11"
     },
@@ -238,13 +239,10 @@ backed by mongodb with swagger-ui api",
     "keywords": [
         "browser",
         "cms",
-        "lightweight",
-        "lite",
-        "mongo",
-        "mongodb",
+        "light", "lightweight", "lite",
+        "mongo", "mongodb",
         "utility2",
-        "swagger",
-        "swagger-ui",
+        "swagger", "swagger-ui",
         "web"
     ],
     "license": "MIT",
