@@ -62,56 +62,90 @@
             return data;
         };
 
+        local.cms2.swaggerModelValidate = function (options) {
+            /*
+               this function will validate options.data according to options.model
+            */
+            var data, model;
+            data = options.data;
+            try {
+                model = options.model || local.cms2.swaggerJson
+                    .definitions[(/^\#\/definitions\/(\w+)$/).exec(options.$ref)[1]];
+            } catch (ignore) {
+            }
+            Object.keys((model && model.properties) || {}).forEach(function (key) {
+                try {
+                    local.cms2.swaggerPropertyValidate({
+                        data: data[key],
+                        key: key,
+                        property: model.properties[key],
+                        required: model.required && model.required.indexOf(key) >= 0
+                    });
+                } catch (errorCaught) {
+                    errorCaught.message = 'invalid ' + options.key + '.' + key + ' - ' +
+                        errorCaught.message;
+                    errorCaught.stack = errorCaught.message + '\n' + errorCaught.stack;
+                    throw errorCaught;
+                }
+            });
+            return data;
+        };
+
         local.cms2.swaggerPropertyValidate = function (options) {
             /*
-               this function will validate options.value according to options.property
+               this function will validate options.data according to options.property
             */
             /*jslint bitwise: true, regexp: true*/
-            var assert, property, tmp, value;
+            var assert, data, property, tmp;
             assert = function (valid) {
                 if (!valid) {
                     throw new Error(
-                        'invalid ' + (property.format || property.type) + ' property '
-                            + JSON.stringify(value)
+                        'invalid ' +
+                            (property.$ref || property.format || property.type) +
+                            ' property - ' + JSON.stringify(data)
                     );
                 }
             };
-            property = options.property;
-            value = options.value;
-            // JSON.parse value
+            property = options.property || {};
+            data = options.data;
+            // JSON.parse data
             if (options.parse &&
-                    value && typeof value === 'string' &&
-                    options.type !== 'string') {
+                    data && typeof data === 'string' &&
+                    property.type !== 'file' && property.type !== 'string') {
                 try {
-                    value = JSON.parse(value);
+                    data = JSON.parse(data);
                 } catch (errorCaught) {
                     assert(null);
                 }
             }
-            // validate undefined value
-            if (value === null || value === undefined) {
+            // validate undefined data
+            if (data === null || data === undefined) {
                 if (options.required) {
                     throw new Error('required property cannot be null or undefined');
                 }
-                return value;
-            }
-            // validate undefined property.type
-            if (property.$ref && property.type === undefined) {
-                return value;
+                return data;
             }
             // validate property.type
 // https://github.com/swagger-api/swagger-spec/blob/master/versions/2.0.md#data-types
             switch (property.type) {
             case 'array':
-                assert(Array.isArray(value));
+                assert(Array.isArray(data));
+                // recurse - validate elements in list
+                data.forEach(function (element) {
+                    local.cms2.swaggerPropertyValidate({
+                        key: options.key,
+                        property: property.items,
+                        data: element
+                    });
+                });
                 break;
             case 'boolean':
-                assert(typeof value === 'boolean');
+                assert(typeof data === 'boolean');
                 break;
             case 'file':
                 break;
             case 'integer':
-                assert(typeof value === 'number' && (value | 0) === value);
+                assert(typeof data === 'number' && (data | 0) === data);
                 switch (property.format) {
                 case 'int32':
                 case 'int64':
@@ -119,7 +153,7 @@
                 }
                 break;
             case 'number':
-                assert(typeof value === 'number');
+                assert(typeof data === 'number');
                 switch (property.format) {
                 case 'double':
                 case 'float':
@@ -127,30 +161,36 @@
                 }
                 break;
             case 'object':
-                assert(typeof value === 'object');
+                assert(typeof data === 'object');
                 break;
             case 'string':
-                assert(typeof value === 'string');
+                assert(typeof data === 'string');
                 switch (property.format) {
                 // https://github.com/swagger-api/swagger-spec/issues/50
                 case 'byte':
-                    assert(!(/[^\n\r\+\/0-9\=A-Za-z]/).test(value));
+                    assert(!(/[^\n\r\+\/0-9\=A-Za-z]/).test(data));
                     break;
                 case 'date':
-                    tmp = new Date(value);
-                    assert(tmp.getTime() && value === tmp.toISOString().slice(0, 10));
+                    tmp = new Date(data);
+                    assert(tmp.getTime() && data === tmp.toISOString().slice(0, 10));
                     break;
                 case 'date-time':
-                    tmp = new Date(value);
-                    assert(tmp.getTime() && value === tmp.toISOString());
+                    tmp = new Date(data);
+                    assert(tmp.getTime() && data === tmp.toISOString());
                     break;
                 case 'email':
-                    assert(local.utility2.regexpEmailValidate.test(value));
+                    assert(local.utility2.regexpEmailValidate.test(data));
                     break;
                 }
                 break;
             }
-            return value;
+            // recurse - validate model according to property.$ref
+            local.cms2.swaggerModelValidate({
+                $ref: property.$ref,
+                data: data,
+                key: options.key
+            });
+            return data;
         };
     }());
     switch (local.modeJs) {
@@ -181,8 +221,7 @@ if (options._crudDefault) {
                         in: 'body',
                         name: 'body',
                         required: true,
-                        schema: { $ref: '#/definitions/{{_modelName}}' },
-                        type: 'object'
+                        schema: { $ref: '#/definitions/{{_modelName}}' }
                     }],
                     responses: {
                         200: {
@@ -203,8 +242,7 @@ if (options._crudDefault) {
                         in: 'body',
                         name: 'body',
                         required: true,
-                        schema: { $ref: '#/definitions/{{_modelName}}' },
-                        type: 'object'
+                        schema: { $ref: '#/definitions/{{_modelName}}' }
                     }],
                     responses: {
                         200: {
@@ -225,8 +263,7 @@ if (options._crudDefault) {
                         in: 'body',
                         name: 'body',
                         required: true,
-                        schema: { $ref: '#/definitions/{{_modelName}}' },
-                        type: 'object'
+                        schema: { $ref: '#/definitions/{{_modelName}}' }
                     }],
                     responses: {
                         200: {
@@ -280,24 +317,24 @@ if (options._crudDefault) {
                     parameters: [{
                         description: 'mongodb query',
                         default: '{"_id":"foo"}',
-                        in: 'path',
+                        in: 'query',
                         name: 'query',
                         required: true,
-                        type: 'object'
+                        schema: { $ref: '#/definitions/Object' }
                     }, {
                         description: 'mongodb cursor limit',
                         default: 1,
-                        in: 'path',
+                        in: 'query',
                         name: 'limit',
                         required: true,
                         type: 'integer'
                     }, {
                         description: 'mongodb cursor sort',
                         default: '{"timeModified":-1}',
-                        in: 'path',
+                        in: 'query',
                         name: 'sort',
                         required: true,
-                        type: 'object'
+                        schema: { $ref: '#/definitions/Object' }
                     }],
                     responses: {
                         200: {
@@ -346,27 +383,6 @@ model.dataNormalize = function (data) {
     Object.keys(data).forEach(function (key) {
         if (!(/^(?:_id|timeCreated|timeModified|type)$/).test(key) && !model.properties[key]) {
             delete data[key];
-        }
-    });
-    return data;
-};
-model.dataValidate = function (data) {
-    /*
-        this function will normalize the data
-    */
-    data = data || {};
-    Object.keys(model.properties).forEach(function (key) {
-        try {
-            local.cms2.swaggerPropertyValidate({
-                property: model.properties[key],
-                required: model.required && model.required.indexOf(key) >= 0,
-                value: data[key]
-            });
-        } catch (errorCaught) {
-            errorCaught.message = 'invalid ' + options._modelName + '.' + key + ' - ' +
-                errorCaught.message;
-            errorCaught.stack = errorCaught.message + '\n' + errorCaught.stack;
-            throw errorCaught;
         }
     });
     return data;
@@ -485,7 +501,7 @@ onNext = function (error) {
                 }
                 // lookup swagger request-handler from requestHandlerDict
                 while (true) {
-                    swagger = swagger || local.cms2.requestHandlerDict[debugPrint(tmp)];
+                    swagger = swagger || local.cms2.requestHandlerDict[tmp];
                     if (swagger || !(/[^\/]/).test(tmp)) {
                         break;
                     }
@@ -548,9 +564,10 @@ onNext = function (error) {
             // parse paramDict
             swagger.parameters.forEach(function (parameter) {
                 swagger.paramDict[parameter.name] = local.cms2.swaggerPropertyValidate({
+                    data: swagger.paramDict[parameter.name],
+                    key: parameter.name,
                     parse: true,
-                    property: parameter,
-                    value: swagger.paramDict[parameter.name]
+                    property: parameter
                 });
             });
             // rename id to _id
@@ -560,12 +577,28 @@ onNext = function (error) {
                 swagger.responseData.data[key] = swagger.paramDict[key] ||
                     (swagger.paramDict.body && swagger.paramDict.body[key]);
             });
+            // init _id
             swagger.responseData.data._id =
                 swagger.responseData.data._id || local.utility2.uuidTime();
+            // get previously saved data
+            if (swagger.model) {
+                swagger.model.collection.findOne({
+                    _id: swagger.responseData.data._id
+                }, function (error, dataPrevious) {
+                    // jslint-hack
+                    local.utility2.nop(error);
+                    swagger.dataPrevious = dataPrevious;
+                    onNext();
+                });
+                return;
+            }
+            onNext();
+            break;
+        case 5:
             // run serverMiddlewareHookBefore
             local.cms2.serverMiddlewareHookBefore(request, response, onNext);
             break;
-        case 5:
+        case 6:
             // run _requestHandler
             if (swagger._requestHandler) {
                 swagger._requestHandler(request, response, onNext);
@@ -573,20 +606,18 @@ onNext = function (error) {
             }
             onNext();
             break;
-        case 6:
+        case 7:
             // run serverMiddlewareHookAfter
             local.cms2.serverMiddlewareHookAfter(request, response, onNext);
             break;
-        case 7:
+        case 8:
             // end response
             response.end(JSON.stringify(
                 // rename _id to id
                 local.cms2.swagger_IdToId(
                     // jsonCopy object to prevent side-effect
                     local.utility2.jsonCopy(swagger.responseData)
-                ),
-                null,
-                !process.env.npm_config_mode_production && 4
+                )
             ));
             break;
         default:
@@ -622,31 +653,64 @@ onNext();
                         // init data
                         data = swagger.responseData.data;
                         switch (swagger.operationId) {
+                        case 'create':
                         case 'createOrReplace':
                             // update data from body
                             local.utility2.objectSetOverride(data, swagger.paramDict.body);
+                            // init timeCreated
+                            if (swagger.model.properties.timeCreated) {
+                                data.timeCreated = new Date().toISOString();
+                            }
+                            // init timeModified
+                            if (swagger.model.properties.timeModified) {
+                                data.timeModified = new Date().toISOString();
+                            }
+                            // validate data
+                            local.cms2.swaggerModelValidate({
+                                // normalize data
+                                data: swagger.model.dataNormalize(data),
+                                key: swagger._modelName,
+                                model: swagger.model
+                            });
                             onNext(null, data);
                             break;
                         case 'createOrUpdate':
+                            // update data from previously saved data
+                            local.utility2.objectSetOverride(data, swagger.dataPrevious);
                             // update data from body
                             local.utility2.objectSetOverride(data, swagger.paramDict.body);
-                            // get previously saved data
-                            swagger.model.collection.findOne({
-                                _id: data._id
-                            }, function (error, dataOld) {
-                                // jslint-hack
-                                local.utility2.nop(error);
-                                swagger.dataOld = dataOld || {};
-                                onNext(null, data);
+                            // init timeCreated
+                            if (swagger.model.properties.timeCreated) {
+                                data.timeCreated =
+                                    swagger.dataPrevious.timeCreated ||
+                                    new Date().toISOString();
+                            }
+                            // init timeModified
+                            if (swagger.model.properties.timeModified) {
+                                data.timeModified = new Date().toISOString();
+                            }
+                            // validate data
+                            local.cms2.swaggerModelValidate({
+                                // normalize data
+                                data: swagger.model.dataNormalize(data),
+                                key: swagger._modelName,
+                                model: swagger.model
                             });
+                            onNext(null, data);
                             break;
                         case 'deleteById':
                             modeNext = NaN;
                             swagger.model.collection.removeOne({ _id: data._id }, onNext);
                             break;
                         case 'getById':
-                            modeNext = NaN;
                             swagger.model.collection.findOne({ _id: data._id }, onNext);
+                            break;
+                        case 'getByQuery':
+                            swagger.model.collection
+                                .find(swagger.paramDict.query)
+                                .limit(swagger.paramDict.limit)
+                                .sort(swagger.paramDict.sort)
+                                .toArray(onNext);
                             break;
                         default:
                             throw new Error('invalid crud operation - ' +
@@ -655,39 +719,14 @@ onNext();
                         break;
                     case 2:
                         switch (swagger.operationId) {
-                        case 'createOrReplace':
-                            // init timeCreated
-                            if (swagger.model.properties.timeCreated) {
-                                data.timeCreated = new Date().toISOString();
-                            }
-                            onNext(null, data);
+                        case 'create':
+                            modeNext = NaN;
+                            // insert data
+                            swagger.model.collection.insert(data, onNext);
                             break;
-                        case 'createOrUpdate':
-                            // merge old data into new data
-                            local.utility2.objectSetDefault(data, swagger.dataOld);
-                            // init timeCreated
-                            if (swagger.model.properties.timeCreated) {
-                                data.timeCreated =
-                                    swagger.dataOld.timeCreated || new Date().toISOString();
-                            }
-                            onNext(null, data);
-                            break;
-                        }
-                        break;
-                    case 3:
-                        switch (swagger.operationId) {
                         case 'createOrReplace':
                         case 'createOrUpdate':
                             modeNext = NaN;
-                            // init timeModified
-                            if (swagger.model.properties.timeModified) {
-                                data.timeModified = new Date().toISOString();
-                            }
-                            // validate data
-                            swagger.model.dataValidate(
-                                // normalize data
-                                swagger.model.dataNormalize(data)
-                            );
                             // upsert data
                             swagger.model.collection.update(
                                 { _id: data._id },
@@ -696,10 +735,13 @@ onNext();
                                 onNext
                             );
                             break;
+                        case 'getById':
+                        case 'getByQuery':
+                            modeNext = NaN;
+                            swagger.responseData.data = data;
+                            onNext();
+                            break;
                         }
-                        break;
-                    case 4:
-                        onNext();
                         break;
                     default:
                         local.utility2.objectSetOverride(swagger.responseData, {
@@ -731,7 +773,7 @@ onNext();
                 title: error.message,
                 detail: error.stack,
                 status: response.statusCode
-            }] }), null, !process.env.npm_config_mode_production && 4));
+            }] })));
         };
 
         local.cms2.serverMiddlewareHookAfter = function (request, response, nextMiddleware) {
@@ -802,10 +844,10 @@ onNext();
             definitions: {
                 Alias: {
                     properties: {
-                        type: { type: 'string' },
-                        value: { type: 'string' }
+                        alias: { type: 'string' },
+                        type: { type: 'string' }
                     },
-                    required: ['value']
+                    required: ['alias']
                 },
                 // http://jsonapi.org/format/#errors
                 JsonApiError: {
@@ -841,6 +883,8 @@ onNext();
                 JsonApiResource: {
                     properties: {
                         id: { type: 'string' },
+                        timeCreated: { format: 'date-time', type: 'string' },
+                        timeModified: { format: 'date-time', type: 'string' },
                         type: { type: 'string' }
                     }
                 },
@@ -864,7 +908,8 @@ onNext();
                             type: 'array'
                         }
                     }
-                }
+                },
+                Object: { properties: {} }
             },
             info: {
                 description: 'demo of cms2 swagger-api',
@@ -922,8 +967,6 @@ onNext();
                         },
                         content: { type: 'string' },
                         summary: { type: 'string' },
-                        timeCreated: { format: 'date-time', type: 'string' },
-                        timeModified: { format: 'date-time', type: 'string' },
                         title: { type: 'string' }
                     }
                 }
@@ -958,9 +1001,7 @@ onNext();
                             type: 'array'
                         },
                         passwordHash: { type: 'string' },
-                        passwordSalt: { type: 'string' },
-                        timeCreated: { format: 'date-time', type: 'string' },
-                        timeModified: { format: 'date-time', type: 'string' }
+                        passwordSalt: { type: 'string' }
                     }
                 }
             },
@@ -1012,10 +1053,12 @@ onNext();
         }, null, function () {
             local.utility2.ajax({
                 data: JSON.stringify({
-                    id: 'foo'
+                    _id: 'foo',
+                    aliasList: [{alias: 'ofdisfsadf'}],
+                    content: '1'
                 }),
                 method: 'PATCH',
-                url: '/api/v0.1/User/createOrUpdate'
+                url: '/api/v0.1/ContentDraft/createOrUpdate'
             }, debugPrint);
             return;
         });
