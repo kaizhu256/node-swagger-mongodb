@@ -78,7 +78,9 @@
         global.local = local;
         // require modules
         local.fs = require('fs');
+        local.mongodb = require('mongodb');
         local.path = require('path');
+        local.swagger_ui_lite = require('swagger-ui-lite');
         local.url = require('url');
         local.utility2 = require('utility2');
         // init tests

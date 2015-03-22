@@ -36,98 +36,122 @@
 
 
 
-        local.cms2.swaggerDatatypeValidate = function (options, value, required) {
-            /*jslint bitwise: true*/
-            var assert, throwErrorFormat, isNull;
-            isNull = value === null || value === undefined;
-            if (required && isNull) {
-                throw new Error('required property is null or undefined');
-            }
+        local.cms2.swaggerIdTo_Id = function (data) {
+            /*
+                this function will recursively convert the property id to _id
+            */
+            local.utility2.objectTraverse(data, function (element) {
+                if (element && element.id) {
+                    element._id = element._id || element.id;
+                    delete element.id;
+                }
+            });
+            return data;
+        };
+
+        local.cms2.swagger_IdToId = function (data) {
+            /*
+                this function will recursively convert the property _id to id
+            */
+            local.utility2.objectTraverse(data, function (element) {
+                if (element && element._id) {
+                    element.id = element.id || element._id;
+                    delete element._id;
+                }
+            });
+            return data;
+        };
+
+        local.cms2.swaggerPropertyValidate = function (options) {
+            /*
+               this function will validate options.value according to options.property
+            */
+            /*jslint bitwise: true, regexp: true*/
+            var assert, property, tmp, value;
             assert = function (valid) {
-                if (!isNull && !valid) {
+                if (!valid) {
                     throw new Error(
-                        'invalid ' + (options.format || options.type) + ' property '
+                        'invalid ' + (property.format || property.type) + ' property '
                             + JSON.stringify(value)
                     );
                 }
             };
-            throwErrorFormat = function () {
-                throw new Error(
-                    options.type + ' property has invalid format ' + options.format
-                );
-            };
+            property = options.property;
+            value = options.value;
+            // JSON.parse value
+            if (options.parse &&
+                    value && typeof value === 'string' &&
+                    options.type !== 'string') {
+                try {
+                    value = JSON.parse(value);
+                } catch (errorCaught) {
+                    assert(null);
+                }
+            }
+            // validate undefined value
+            if (value === null || value === undefined) {
+                if (options.required) {
+                    throw new Error('required property cannot be null or undefined');
+                }
+                return value;
+            }
+            // validate undefined property.type
+            if (property.$ref && property.type === undefined) {
+                return value;
+            }
+            // validate property.type
 // https://github.com/swagger-api/swagger-spec/blob/master/versions/2.0.md#data-types
-            switch (options.type) {
+            switch (property.type) {
             case 'array':
                 assert(Array.isArray(value));
-                if (options.format) {
-                    throwErrorFormat();
-                }
                 break;
             case 'boolean':
                 assert(typeof value === 'boolean');
-                if (options.format) {
-                    throwErrorFormat();
-                }
                 break;
             case 'file':
-                if (options.format) {
-                    throwErrorFormat();
-                }
                 break;
             case 'integer':
                 assert(typeof value === 'number' && (value | 0) === value);
-                switch (options.format) {
+                switch (property.format) {
                 case 'int32':
                 case 'int64':
-                case undefined:
                     break;
-                default:
-                    throwErrorFormat();
                 }
                 break;
             case 'number':
-                switch (options.format) {
+                assert(typeof value === 'number');
+                switch (property.format) {
                 case 'double':
                 case 'float':
-                case undefined:
                     break;
-                default:
-                    throwErrorFormat();
                 }
-                assert(typeof value === 'number');
+                break;
+            case 'object':
+                assert(typeof value === 'object');
                 break;
             case 'string':
-                switch (options.format) {
+                assert(typeof value === 'string');
+                switch (property.format) {
                 // https://github.com/swagger-api/swagger-spec/issues/50
                 case 'byte':
-                    //!! assert((/^[]/).test(value));
+                    assert(!(/[^\n\r\+\/0-9\=A-Za-z]/).test(value));
                     break;
                 case 'date':
-                    assert(value === new Date(value).toISOString().slice(0, 10));
+                    tmp = new Date(value);
+                    assert(tmp.getTime() && value === tmp.toISOString().slice(0, 10));
                     break;
                 case 'date-time':
-                    assert(value === new Date(value).toISOString());
+                    tmp = new Date(value);
+                    assert(tmp.getTime() && value === tmp.toISOString());
                     break;
-                case undefined:
+                case 'email':
+                    assert(local.utility2.regexpEmailValidate.test(value));
                     break;
-                default:
-                    throwErrorFormat();
                 }
-                assert(typeof value === 'string');
                 break;
-            default:
-                throw new Error('property has invalid type ' + options.type);
             }
+            return value;
         };
-        //!! try {
-            //!! local.cms2.swaggerDatatypeValidate({
-                //!! //!! format: 'aa',
-                //!! type: 'boolean'
-            //!! }, null, true);
-        //!! } catch (errorCaught) {
-            //!! local.utility2.onErrorDefault(errorCaught);
-        //!! }
     }());
     switch (local.modeJs) {
 
@@ -150,16 +174,16 @@ if (options._crudDefault) {
     local.utility2.objectSetOverride(options, {
         paths: {
             '/{{_modelName}}': {
-                // post /model - modelCreateOrReplace
-                post: {
+                // get /model - modelFindByQuery
+                get: {
                     _requestHandler: local.cms2.serverMiddlewareCrudDefault,
-                    operationId: '{{_modelNameCameCase}}CreateOrReplace',
+                    operationId: '{{_modelNameCamelCase}}FindByQuery',
                     parameters: [{
-                        description: '{{_modelName}} object',
-                        in: 'body',
-                        name: 'body',
+                        description: 'mongodb query object',
+                        in: 'path',
+                        name: 'query',
                         required: true,
-                        schema: { $ref: '#/definitions/{{_modelName}}' }
+                        type: 'object'
                     }],
                     responses: {
                         200: {
@@ -168,20 +192,21 @@ if (options._crudDefault) {
                             schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                         }
                     },
-                    summary: '{{_modelNameCameCase}}CreateOrReplace - ' +
-                        'create or replace {{_modelName}} object',
+                    summary: '{{_modelNameCamelCase}}FindByQuery - get ' +
+                        '{{_modelName}} object by id',
                     tags: ['{{_modelName}}']
                 },
-                // put /model - modelCreateOrUpdate
-                put: {
+                // patch /model - modelCreateOrUpdate
+                patch: {
                     _requestHandler: local.cms2.serverMiddlewareCrudDefault,
-                    operationId: '{{_modelNameCameCase}}CreateOrUpdate',
+                    operationId: '{{_modelNameCamelCase}}CreateOrUpdate',
                     parameters: [{
                         description: '{{_modelName}} object',
                         in: 'body',
                         name: 'body',
                         required: true,
-                        schema: { $ref: '#/definitions/{{_modelName}}' }
+                        schema: { $ref: '#/definitions/{{_modelName}}' },
+                        type: 'object'
                     }],
                     responses: {
                         200: {
@@ -190,8 +215,54 @@ if (options._crudDefault) {
                             schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                         }
                     },
-                    summary: '{{_modelNameCameCase}}CreateOrUpdate - ' +
+                    summary: '{{_modelNameCamelCase}}CreateOrUpdate - ' +
                         'create or update {{_modelName}} object',
+                    tags: ['{{_modelName}}']
+                },
+                // post /model - modelCreate
+                post: {
+                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    operationId: '{{_modelNameCamelCase}}Create',
+                    parameters: [{
+                        description: '{{_modelName}} object',
+                        in: 'body',
+                        name: 'body',
+                        required: true,
+                        schema: { $ref: '#/definitions/{{_modelName}}' },
+                        type: 'object'
+                    }],
+                    responses: {
+                        200: {
+                            description: '200 ok - ' +
+                                'http://jsonapi.org/format/#document-structure-top-level',
+                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
+                        }
+                    },
+                    summary: '{{_modelNameCamelCase}}Create - ' +
+                        'create or update {{_modelName}} object',
+                    tags: ['{{_modelName}}']
+                },
+                // put /model - modelCreateOrReplace
+                put: {
+                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    operationId: '{{_modelNameCamelCase}}CreateOrReplace',
+                    parameters: [{
+                        description: '{{_modelName}} object',
+                        in: 'body',
+                        name: 'body',
+                        required: true,
+                        schema: { $ref: '#/definitions/{{_modelName}}' },
+                        type: 'object'
+                    }],
+                    responses: {
+                        200: {
+                            description: '200 ok - ' +
+                                'http://jsonapi.org/format/#document-structure-top-level',
+                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
+                        }
+                    },
+                    summary: '{{_modelNameCamelCase}}CreateOrReplace - ' +
+                        'create or replace {{_modelName}} object',
                     tags: ['{{_modelName}}']
                 }
             },
@@ -199,26 +270,28 @@ if (options._crudDefault) {
                 // delete /model/id - modelDeleteById
                 delete: {
                     _requestHandler: local.cms2.serverMiddlewareCrudDefault,
-                    operationId: '{{_modelNameCameCase}}DeleteById',
+                    operationId: '{{_modelNameCamelCase}}DeleteById',
                     parameters: [{
                         description: '{{_modelName}} id',
                         in: 'path',
                         name: 'id',
-                        required: true
+                        required: true,
+                        type: 'string'
                     }],
-                    summary: '{{_modelNameCameCase}}DeleteById - delete ' +
+                    summary: '{{_modelNameCamelCase}}DeleteById - delete ' +
                         '{{_modelName}} object by id',
                     tags: ['{{_modelName}}']
                 },
                 // get /model/id - modelGetById
                 get: {
                     _requestHandler: local.cms2.serverMiddlewareCrudDefault,
-                    operationId: '{{_modelNameCameCase}}GetById',
+                    operationId: '{{_modelNameCamelCase}}GetById',
                     parameters: [{
                         description: '{{_modelName}} id',
                         in: 'path',
                         name: 'id',
-                        required: true
+                        required: true,
+                        type: 'string'
                     }],
                     responses: {
                         200: {
@@ -227,7 +300,7 @@ if (options._crudDefault) {
                             schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                         }
                     },
-                    summary: '{{_modelNameCameCase}}GetById - get ' +
+                    summary: '{{_modelNameCamelCase}}GetById - get ' +
                         '{{_modelName}} object by id',
                     tags: ['{{_modelName}}']
                 }
@@ -238,11 +311,9 @@ if (options._crudDefault) {
 // init extra options properties
 options.definitions['JsonApiResponseData{{_modelName}}'] = {
     allOf: [{ $ref: '#/definitions/JsonApiResponseData' }],
-    properties: {
-        data: { $ref: '#/definitions/User' }
-    }
+    properties: { data: { $ref: '#/definitions/User' } }
 };
-options._modelNameCameCase = options._modelName[0].toLowerCase() + options._modelName.slice(1);
+options._modelNameCamelCase = options._modelName[0].toLowerCase() + options._modelName.slice(1);
 // recursively stringFormat options
 local.utility2.objectTraverse(options, function (element) {
     Object.keys(element && typeof element === 'object'
@@ -275,6 +346,27 @@ model.dataNormalize = function (data) {
     });
     return data;
 };
+model.dataValidate = function (data) {
+    /*
+        this function will normalize the data
+    */
+    data = data || {};
+    Object.keys(model.properties).forEach(function (key) {
+        try {
+            local.cms2.swaggerPropertyValidate({
+                property: model.properties[key],
+                required: model.required && model.required.indexOf(key) >= 0,
+                value: data[key]
+            });
+        } catch (errorCaught) {
+            errorCaught.message = 'invalid ' + options._modelName + '.' + key + ' - ' +
+                errorCaught.message;
+            errorCaught.stack = errorCaught.message + '\n' + errorCaught.stack;
+            throw errorCaught;
+        }
+    });
+    return data;
+};
 // init model.collection
 local.utility2.taskPoolCreateOrAddCallback(
     { key: 'cms2.mongodbConnect' },
@@ -290,23 +382,25 @@ Object.keys(options.paths).forEach(function (path) {
         // init pathMethod.responses
         local.utility2.objectSetDefault(pathMethod, { responses: {
             200: {
-                description: '200 ok - ' +
+                description: 'ok - ' +
                     'http://jsonapi.org/format/#document-structure-top-level',
                 schema: { $ref: '#/definitions/JsonApiResponseData' }
             },
-            500: {
-                description: '500 internal server error - ' +
+            default: {
+                description: 'internal server error - ' +
                     'http://jsonapi.org/format/#errors',
                 schema: { $ref: '#/definitions/JsonApiResponseError' }
             }
         } }, 2);
-        // init internal properties
+        // init pathMethod._*
         Object.keys(options).forEach(function (key) {
             if (key[0] === '_' && typeof options[key] === 'string') {
                 pathMethod[key] = pathMethod[key] || options[key];
             }
         });
         pathMethod._method = method;
+        pathMethod._operationIdType =
+            (pathMethod.operationId || '').replace(pathMethod._modelNameCamelCase, '');
         pathMethod._path = path;
         pathMethod._requestHandlerKey =
             method.toLowerCase() + ' ' + path.replace((/\{\S*?\}/), '');
@@ -319,6 +413,7 @@ Object.keys(options.paths).forEach(function (path) {
 // update swaggerJson
 local.utility2.objectSetOverride(
     local.cms2.swaggerJson,
+    // jsonCopy object to prevent side-effect
     local.utility2.objectTraverse(local.utility2.jsonCopy(options), function (element) {
         if (element && typeof element === 'object') {
             Object.keys(element).forEach(function (key) {
@@ -354,8 +449,8 @@ onNext = function (error) {
             ? NaN
             : modeNext + 1;
         switch (modeNext) {
-        // serve builtin assets
         case 1:
+            // serve builtin assets
             switch (request.urlParsed.pathnameNormalized) {
             case '/assets/utility2.css':
             case '/assets/utility2.js':
@@ -374,7 +469,6 @@ onNext = function (error) {
                 onNext();
             }
             break;
-        // lookup and init swagger-object from requestHandlerDict
         case 2:
             if (request.urlParsed.pathnameNormalized
                     .indexOf(local.cms2.swaggerJson.basePath) === 0) {
@@ -386,7 +480,7 @@ onNext = function (error) {
                     response.end(local.utility2.jsonStringifyOrdered(local.cms2.swaggerJson));
                     return;
                 }
-                // lookup swagger request-handler
+                // lookup swagger request-handler from requestHandlerDict
                 while (true) {
                     swagger = swagger || local.cms2.requestHandlerDict[
                         request.method.toLowerCase() + ' ' + tmp
@@ -402,86 +496,94 @@ onNext = function (error) {
                 nextMiddleware();
                 return;
             }
-            // json-copy object to prevent side-effects
+            // save _requestHandler
+            tmp = swagger._requestHandler;
+            // jsonCopy object to prevent side-effect
             swagger = request.swagger = local.utility2.jsonCopy(swagger);
+            global.swagger = swagger; //debugPrint
+            // restore _requestHandler
+            swagger._requestHandler = tmp;
             swagger.model = local.cms2.modelDict[swagger._modelName];
-            swagger.responseData = {};
+            swagger.responseData = { data: {} };
             onNext();
             break;
-        // init swagger.parameterDict
         case 3:
             onParallel = local.utility2.onParallel(onNext);
             onParallel.counter += 1;
-            swagger.parameterDict = { id: local.utility2.uuidTime(), type: null };
-            // parse path parameter
+            // init paramDict
+            swagger.paramDict = {};
+            // parse path param
             tmp = request.urlParsed.pathname
                 .replace(local.cms2.swaggerJson.basePath, '')
                 .split('/');
             swagger._path.split('/').forEach(function (key, ii) {
                 if ((/^\{\S*?\}$/).test(key)) {
-                    swagger.parameterDict[key.slice(1, -1)] = tmp[ii];
+                    swagger.paramDict[key.slice(1, -1)] = tmp[ii];
                 }
             });
-            (swagger.parameters || []).forEach(function (parameter) {
-                switch (parameter.in) {
-                // parse body parameter
+            (swagger.parameters || []).forEach(function (param) {
+                switch (param.in) {
+                // parse body param
                 case 'body':
                     onParallel.counter += 1;
                     local.utility2.streamReadAll(request, function (error, data) {
-                        swagger.parameterDict[parameter.name] = String(data);
+                        swagger.paramDict[param.name] = String(data);
                         onParallel(error);
                     });
                     break;
-                // parse header parameter
+                // parse header param
                 case 'header':
-                    swagger.parameterDict[parameter.name] = request.headers[parameter.name];
+                    swagger.paramDict[param.name] = request.headers[param.name];
                     break;
-                // parse query parameter
+                // parse query param
                 case 'query':
-                    swagger.parameterDict[parameter.name] =
-                        request.urlParsed.query[parameter.name];
+                    swagger.paramDict[param.name] = request.urlParsed.query[param.name];
                     break;
                 }
             });
             onParallel();
             break;
-        // run serverMiddlewareHookBefore
         case 4:
+            // parse paramDict
+            swagger.parameters.forEach(function (parameter) {
+                swagger.paramDict[parameter.name] = local.cms2.swaggerPropertyValidate({
+                    parse: true,
+                    property: parameter,
+                    value: swagger.paramDict[parameter.name]
+                });
+            });
+            // rename id to _id
+            local.cms2.swaggerIdTo_Id(swagger.paramDict);
+            // http://jsonapi.org/format/#document-structure-resource-objects
+            ['_id', 'type'].forEach(function (key) {
+                swagger.responseData.data[key] = swagger.paramDict[key] ||
+                    (swagger.paramDict.body && swagger.paramDict.body[key]);
+            });
+            swagger.responseData.data._id =
+                swagger.responseData.data._id || local.utility2.uuidTime();
+            // run serverMiddlewareHookBefore
             local.cms2.serverMiddlewareHookBefore(request, response, onNext);
             break;
-        // run swagger._requestHandler
         case 5:
-            tmp = local.cms2.requestHandlerDict[swagger._requestHandlerKey];
-            if (tmp && tmp._requestHandler) {
-                tmp._requestHandler(request, response, onNext);
+            // run _requestHandler
+            if (swagger._requestHandler) {
+                swagger._requestHandler(request, response, onNext);
                 return;
             }
             onNext();
             break;
-        // run serverMiddlewareHookAfter
         case 6:
-            // jsonify data
-            swagger.responseData = local.utility2.jsonCopy(swagger.responseData);
+            // run serverMiddlewareHookAfter
             local.cms2.serverMiddlewareHookAfter(request, response, onNext);
             break;
-        // end response
         case 7:
-            // rename _id -> id
-            local.utility2.objectTraverse(swagger.responseData, function (element) {
-                if (element && element._id) {
-                    element.id = element.id || element._id;
-                    element._id = undefined;
-                }
-            });
-            // normalize responseData
-            local.utility2.objectSetDefault(
-                swagger.responseData,
-                // http://jsonapi.org/format/#document-structure-resource-objects
-                { data: { id: swagger.parameterDict.id, type: swagger.parameterDict.type } },
-                2
-            );
+            // end response
             response.end(JSON.stringify(
-                swagger.responseData,
+                // rename _id to id
+                local.cms2.swagger_IdToId(
+                    // jsonCopy object to prevent side-effect
+                    local.utility2.jsonCopy(swagger.responseData)
+                ),
                 null,
                 !process.env.npm_config_mode_production && 4
             ));
@@ -512,31 +614,38 @@ onNext();
                         ? NaN
                         : modeNext + 1;
                     switch (modeNext) {
-                    // serve builtin assets
                     case 1:
                         // jslint-hack
                         local.utility2.nop(response);
                         swagger = request.swagger;
-                        swagger._crudDefaultKey =
-                            swagger._requestHandlerKey
-                                .replace((/\/\S+?\//), '//')
-                                .replace((/[\w]+?$/), '');
-                        switch (swagger._crudDefaultKey) {
-                        case 'get //':
-                            swagger.model.collection
-                                .findOne({ _id: swagger.parameterDict.id }, onNext);
+                        // init data
+                        data = swagger.responseData.data;
+                        switch (swagger._operationIdType) {
+                        case 'CreateOrReplace':
+                            // update data from body
+                            local.utility2.objectSetOverride(data, swagger.paramDict.body);
+                            onNext(null, data);
                             break;
-                        case 'delete //':
+                        case 'CreateOrUpdate':
+                            // update data from body
+                            local.utility2.objectSetOverride(data, swagger.paramDict.body);
+                            // get previously saved data
+                            swagger.model.collection.findOne({
+                                _id: data._id
+                            }, function (error, dataOld) {
+                                // jslint-hack
+                                local.utility2.nop(error);
+                                swagger.dataOld = dataOld || {};
+                                onNext(null, data);
+                            });
+                            break;
+                        case 'DeleteById':
                             modeNext = NaN;
-                            swagger.model.collection
-                                .removeOne({ _id: swagger.parameterDict.id }, onNext);
+                            swagger.model.collection.removeOne({ _id: data._id }, onNext);
                             break;
-                        case 'post /':
-                        case 'put /':
-                            local.utility2.onErrorJsonParse(onNext)(
-                                null,
-                                swagger.parameterDict.body
-                            );
+                        case 'GetById':
+                            modeNext = NaN;
+                            swagger.model.collection.findOne({ _id: data._id }, onNext);
                             break;
                         default:
                             throw new Error('invalid crud operation - ' +
@@ -544,18 +653,41 @@ onNext();
                         }
                         break;
                     case 2:
-                        // normalize data
-                        data = swagger.model.dataNormalize(data);
-                        switch (swagger._crudDefaultKey) {
-                        case 'post /':
+                        switch (swagger._operationIdType) {
+                        case 'CreateOrReplace':
+                            // init timeCreated
+                            if (swagger.model.properties.timeCreated) {
+                                data.timeCreated = new Date().toISOString();
+                            }
+                            onNext(null, data);
+                            break;
+                        case 'CreateOrUpdate':
+                            // merge old data into new data
+                            local.utility2.objectSetDefault(data, swagger.dataOld);
+                            // init timeCreated
+                            if (swagger.model.properties.timeCreated) {
+                                data.timeCreated =
+                                    swagger.dataOld.timeCreated || new Date().toISOString();
+                            }
+                            onNext(null, data);
+                            break;
+                        }
+                        break;
+                    case 3:
+                        switch (swagger._operationIdType) {
+                        case 'CreateOrReplace':
+                        case 'CreateOrUpdate':
                             modeNext = NaN;
-                            swagger.responseData.data = data;
-                            // init _id
-                            data._id = swagger.parameterDict.id =
-                                data._id || data.id || local.utility2.uuidTime();
-                            delete data.id;
-                            // init timeCreated and timeModified
-                            data.timeCreated = data.timeModified = new Date().toISOString();
+                            // init timeModified
+                            if (swagger.model.properties.timeModified) {
+                                data.timeModified = new Date().toISOString();
+                            }
+                            // validate data
+                            swagger.model.dataValidate(
+                                // normalize data
+                                swagger.model.dataNormalize(data)
+                            );
+                            // upsert data
                             swagger.model.collection.update(
                                 { _id: data._id },
                                 data,
@@ -563,13 +695,15 @@ onNext();
                                 onNext
                             );
                             break;
-                        default:
-                            modeNext = NaN;
-                            onNext(null, data);
                         }
                         break;
+                    case 4:
+                        onNext();
+                        break;
                     default:
-                        swagger.responseData.data = swagger.responseData.data || data;
+                        local.utility2.objectSetOverride(swagger.responseData, {
+                            meta: data
+                        }, 2);
                         nextMiddleware(error);
                     }
                 } catch (errorCaught) {
@@ -589,13 +723,14 @@ onNext();
                 return;
             }
             local.utility2.serverRespondWriteHead(request, response, 500, {});
-            response.end(JSON.stringify({ errors: [{
+            // rename _id to id
+            response.end(JSON.stringify(local.cms2.swagger_IdToId({ errors: [{
+                _id: request.swagger.responseData._id,
                 code: error.code,
-                id: local.utility2.uuidTime(),
                 title: error.message,
                 detail: error.stack,
                 status: response.statusCode
-            }] }, null, !process.env.npm_config_mode_production && 4));
+            }] }), null, !process.env.npm_config_mode_production && 4));
         };
 
         local.cms2.serverMiddlewareHookAfter = function (request, response, nextMiddleware) {
@@ -664,6 +799,13 @@ onNext();
         local.cms2.swaggerJson = {
             basePath: local.utility2.envDict.npm_config_mode_api_prefix || '/api/v0.1',
             definitions: {
+                Alias: {
+                    properties: {
+                        type: { type: 'string' },
+                        value: { type: 'string' }
+                    },
+                    required: ['value']
+                },
                 // http://jsonapi.org/format/#errors
                 JsonApiError: {
                     properties: {
@@ -759,39 +901,65 @@ onNext();
         local.cms2['/assets/swagger-ui.throbber.gif'] = local.fs
             .readFileSync(local.swagger_ui_lite.__dirname +
                 '/swagger-ui.throbber.gif');
+        // init ContentDraft model
+        local.cms2.modelCreate({
+            _collectionName: 'ContentDraft',
+            _createIndexList: [[{ 'aliasList.name': 1 }, { sparse: true, unique: true }]],
+            _crudDefault: true,
+            _modelName: 'ContentDraft',
+            definitions: {
+                // http://jsonapi.org/format/#document-structure-top-level
+                JsonApiResponseDataContentDraft: {
+                    allOf: [{ $ref: '#/definitions/JsonApiResponseData' }],
+                    properties: { data: { $ref: '#/definitions/ContentDraft' } }
+                },
+                ContentDraft: {
+                    properties: {
+                        aliasList: {
+                            items: { $ref: '#/definitions/Alias' },
+                            type: 'array'
+                        },
+                        content: { type: 'string' },
+                        summary: { type: 'string' },
+                        timeCreated: { format: 'date-time', type: 'string' },
+                        timeModified: { format: 'date-time', type: 'string' },
+                        title: { type: 'string' }
+                    }
+                }
+            },
+            tags: [
+                {
+                    description: 'ContentDraft api',
+                    name: 'ContentDraft'
+                }
+            ]
+        });
+        // init User model
         local.cms2.modelCreate({
             _collectionName: 'User',
-            _createIndexList: [[{ 'usernameList.name': 1 }, { sparse: true, unique: true }]],
+            _createIndexList: [[{ 'aliasList.name': 1 }, { sparse: true, unique: true }]],
             _crudDefault: true,
             _modelName: 'User',
             definitions: {
                 // http://jsonapi.org/format/#document-structure-top-level
                 JsonApiResponseDataUser: {
                     allOf: [{ $ref: '#/definitions/JsonApiResponseData' }],
-                    properties: {
-                        data: { $ref: '#/definitions/User' }
-                    }
+                    properties: { data: { $ref: '#/definitions/User' } }
                 },
                 User: {
                     properties: {
-                        timeCreated: { type: 'date-time' },
-                        timeModified: { type: 'date-time' },
+                        aliasList: {
+                            items: { $ref: '#/definitions/Alias' },
+                            type: 'array'
+                        },
                         roleList: {
                             items: { type: 'string' },
                             type: 'array'
                         },
                         passwordHash: { type: 'string' },
                         passwordSalt: { type: 'string' },
-                        usernameList: {
-                            items: { $ref: '#/definitions/Username' },
-                            type: 'array'
-                        }
-                    }
-                },
-                Username: {
-                    properties: {
-                        name: { type: 'string' },
-                        type: { type: 'string' }
+                        timeCreated: { format: 'date-time', type: 'string' },
+                        timeModified: { format: 'date-time', type: 'string' }
                     }
                 }
             },
@@ -839,6 +1007,18 @@ onNext();
                     name: 'User'
                 }
             ]
+        });
+        local.utility2.taskPoolCreateOrAddCallback({
+            key: 'utility2.onReady'
+        }, null, function () {
+            local.utility2.ajax({
+                data: JSON.stringify({
+                    id: 'foo'
+                }),
+                method: 'PATCH',
+                url: '/api/v0.1/User'
+            }, debugPrint);
+            return;
         });
         break;
     }
