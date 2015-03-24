@@ -228,12 +228,12 @@ shExampleSh
     "dependencies": {
         "mongodb": "^2.0.23",
         "swagger-ui-lite": "^2.1.8-M1-2015-03-11-b",
-        "utility2": "2015.3.24-10"
+        "utility2": "2015.3.24-11"
     },
     "description": "yet another lightweight content-management-system \
 backed by mongodb with swagger-ui api",
     "devDependencies": {
-        "phantomjs-lite": "^2015.1.4-103"
+        "phantomjs-lite": "^2015.3.24-11"
     },
     "engines": { "node": ">=0.10 <=0.12" },
     "keywords": [
@@ -259,7 +259,7 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmePackageJsonExport && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.3.24-10"
+    "version": "2015.3.24-11"
 }
 ```
 
