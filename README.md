@@ -39,7 +39,7 @@ instruction
 
 /*jslint
     browser: true,
-    maxerr: 4,
+    maxerr: 8,
     maxlen: 80,
     node: true,
     nomen: true,
@@ -228,7 +228,7 @@ shExampleSh
     "dependencies": {
         "mongodb": "^2.0.23",
         "swagger-ui-lite": "^2.1.8-M1-2015-03-11-b",
-        "utility2": "2015.3.8-11"
+        "utility2": "2015.3.24-10"
     },
     "description": "yet another lightweight content-management-system \
 backed by mongodb with swagger-ui api",
@@ -259,7 +259,7 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmePackageJsonExport && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.3.8-11"
+    "version": "2015.3.24-10"
 }
 ```
 
