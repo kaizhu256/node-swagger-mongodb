@@ -22,7 +22,7 @@ yet another content-management-system backed by mongodb with swagger-ui api
 
 
 # quickstart web example
-#### follow the instruction in this script
+#### to run this example, read the instruction inside the script below
 ```
 /*
 example.js
@@ -175,7 +175,7 @@ instruction
 
 
 # quickstart command-line example
-#### follow the instruction in this script
+#### to run this example, read the instruction inside the script below
 ```
 # example.sh
 

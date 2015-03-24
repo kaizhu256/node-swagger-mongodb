@@ -34,9 +34,18 @@
             ? window.utility2
             : require('utility2');
 
+        local.cms2.modelDereference = function ($ref) {
+            /*
+                this function will try to dereference the model from $ref
+            */
+            try {
+                return $ref && local.cms2.swaggerJson
+                    .definitions[(/^\#\/definitions\/(\w+)$/).exec($ref)[1]];
+            } catch (ignore) {
+            }
+        };
 
-
-        local.cms2.swaggerIdTo_Id = function (data) {
+        local.cms2.modelIdTo_Id = function (data) {
             /*
                 this function will recursively convert the property id to _id
             */
@@ -49,7 +58,7 @@
             return data;
         };
 
-        local.cms2.swagger_IdToId = function (data) {
+        local.cms2.model_IdToId = function (data) {
             /*
                 this function will recursively convert the property _id to id
             */
@@ -62,20 +71,43 @@
             return data;
         };
 
-        local.cms2.swaggerModelValidate = function (options) {
+        local.cms2.modelNormalize = function (options) {
+            /*
+                this function will normalize options.data according to options.model
+            */
+            var data;
+            data = options.data || {};
+            // init _timeCreated
+            data._timeCreated = options.dataPrevious._timeCreated || new Date().toISOString();
+            // init _timeModified
+            data._timeModified = new Date().toISOString();
+            // normalize _aliasList
+            local.cms2.modelNormalizeAliasList(options);
+        };
+
+        local.cms2.modelNormalizeAliasList = function (options) {
+            var aliasDict;
+            aliasDict = {};
+            (options.data._aliasList || []).forEach(function (element) {
+                aliasDict[element && element.key] = element;
+            });
+            aliasDict[options.data._id] =
+                aliasDict[options.data._id] || { key: options.data._id };
+            options.data._aliasList = Object.keys(aliasDict).map(function (key) {
+                return aliasDict[key];
+            });
+        };
+
+        local.cms2.modelValidate = function (options) {
             /*
                this function will validate options.data according to options.model
             */
             var data, model;
             data = options.data;
-            try {
-                model = options.model || local.cms2.swaggerJson
-                    .definitions[(/^\#\/definitions\/(\w+)$/).exec(options.$ref)[1]];
-            } catch (ignore) {
-            }
-            Object.keys((model && model.properties) || {}).forEach(function (key) {
+            model = options.model || {};
+            Object.keys(model.properties || {}).forEach(function (key) {
                 try {
-                    local.cms2.swaggerPropertyValidate({
+                    local.cms2.modelValidateProperty({
                         data: data[key],
                         key: key,
                         property: model.properties[key],
@@ -88,10 +120,18 @@
                     throw errorCaught;
                 }
             });
+            // recurse - validate data according to model.allOf
+            (model.allOf || []).forEach(function (element) {
+                local.cms2.modelValidate({
+                    data: options.data,
+                    key: element.$ref,
+                    model: local.cms2.modelDereference(element.$ref)
+                });
+            });
             return data;
         };
 
-        local.cms2.swaggerPropertyValidate = function (options) {
+        local.cms2.modelValidateProperty = function (options) {
             /*
                this function will validate options.data according to options.property
             */
@@ -132,7 +172,7 @@
                 assert(Array.isArray(data));
                 // recurse - validate elements in list
                 data.forEach(function (element) {
-                    local.cms2.swaggerPropertyValidate({
+                    local.cms2.modelValidateProperty({
                         key: options.key,
                         property: property.items,
                         data: element
@@ -185,9 +225,9 @@
                 break;
             }
             // recurse - validate model according to property.$ref
-            local.cms2.swaggerModelValidate({
-                $ref: property.$ref,
+            local.cms2.modelValidate({
                 data: data,
+                model: local.cms2.modelDereference(property.$ref),
                 key: options.key
             });
             return data;
@@ -353,7 +393,7 @@ if (options._crudDefault) {
 // init extra options properties
 options.definitions['JsonApiResponseData{{_modelName}}'] = {
     allOf: [{ $ref: '#/definitions/JsonApiResponseData' }],
-    properties: { data: { $ref: '#/definitions/User' } }
+    properties: { data: { $ref: '#/definitions/{{_modelName}}' } }
 };
 // recursively stringFormat options
 local.utility2.objectTraverse(options, function (element) {
@@ -374,19 +414,6 @@ local.utility2.objectTraverse(options, function (element) {
 local.cms2.modelDict = local.cms2.modelDict || {};
 // init model
 model = local.cms2.modelDict[options._modelName] = options.definitions[options._modelName];
-model.dataNormalize = function (data) {
-    /*
-        this function will normalize the data
-    */
-    data = data || {};
-    // remove undefined properties from data
-    Object.keys(data).forEach(function (key) {
-        if (!(/^(?:_id|timeCreated|timeModified|type)$/).test(key) && !model.properties[key]) {
-            delete data[key];
-        }
-    });
-    return data;
-};
 // init model.collection
 local.utility2.taskPoolCreateOrAddCallback(
     { key: 'cms2.mongodbConnect' },
@@ -460,7 +487,7 @@ local.utility2.objectSetOverride(
 
 /* jslint-indent-begin 12 */
 /*jslint maxlen: 108, regexp: true*/
-var modeNext, onNext, onParallel, swagger, tmp;
+var modeNext, onNext, onTaskEnd, swagger, tmp;
 modeNext = 0;
 onNext = function (error) {
     try {
@@ -521,12 +548,11 @@ onNext = function (error) {
             // restore _requestHandler
             swagger._requestHandler = tmp;
             swagger.model = local.cms2.modelDict[swagger._modelName];
-            swagger.responseData = { data: {} };
             onNext();
             break;
         case 3:
-            onParallel = local.utility2.onParallel(onNext);
-            onParallel.counter += 1;
+            onTaskEnd = local.utility2.onTaskEnd(onNext);
+            onTaskEnd.counter += 1;
             // init paramDict
             swagger.paramDict = {};
             // parse path param
@@ -542,10 +568,10 @@ onNext = function (error) {
                 switch (param.in) {
                 // parse body param
                 case 'body':
-                    onParallel.counter += 1;
+                    onTaskEnd.counter += 1;
                     local.utility2.streamReadAll(request, function (error, data) {
                         swagger.paramDict[param.name] = String(data);
-                        onParallel(error);
+                        onTaskEnd(error);
                     });
                     break;
                 // parse header param
@@ -558,12 +584,12 @@ onNext = function (error) {
                     break;
                 }
             });
-            onParallel();
+            onTaskEnd();
             break;
         case 4:
             // parse paramDict
             swagger.parameters.forEach(function (parameter) {
-                swagger.paramDict[parameter.name] = local.cms2.swaggerPropertyValidate({
+                swagger.paramDict[parameter.name] = local.cms2.modelValidateProperty({
                     data: swagger.paramDict[parameter.name],
                     key: parameter.name,
                     parse: true,
@@ -571,12 +597,16 @@ onNext = function (error) {
                 });
             });
             // rename id to _id
-            local.cms2.swaggerIdTo_Id(swagger.paramDict);
+            local.cms2.modelIdTo_Id(swagger.paramDict);
+            // init responseData
             // http://jsonapi.org/format/#document-structure-resource-objects
-            ['_id', 'type'].forEach(function (key) {
-                swagger.responseData.data[key] = swagger.paramDict[key] ||
-                    (swagger.paramDict.body && swagger.paramDict.body[key]);
-            });
+            local.utility2.objectSetDefault(swagger, { responseData: { data: {
+                _id: swagger.paramDict._id ||
+                    (swagger.paramDict.body && swagger.paramDict.body._id) ||
+                    local.utility2.uuidTime(),
+                id: swagger.paramDict.type ||
+                    (swagger.paramDict.body && swagger.paramDict.body.type)
+            } } }, -1);
             // init _id
             swagger.responseData.data._id =
                 swagger.responseData.data._id || local.utility2.uuidTime();
@@ -614,7 +644,7 @@ onNext = function (error) {
             // end response
             response.end(JSON.stringify(
                 // rename _id to id
-                local.cms2.swagger_IdToId(
+                local.cms2.model_IdToId(
                     // jsonCopy object to prevent side-effect
                     local.utility2.jsonCopy(swagger.responseData)
                 )
@@ -657,42 +687,39 @@ onNext();
                         case 'createOrReplace':
                             // update data from body
                             local.utility2.objectSetOverride(data, swagger.paramDict.body);
-                            // init timeCreated
-                            if (swagger.model.properties.timeCreated) {
-                                data.timeCreated = new Date().toISOString();
-                            }
-                            // init timeModified
-                            if (swagger.model.properties.timeModified) {
-                                data.timeModified = new Date().toISOString();
-                            }
+                            // normalize data
+                            local.cms2.modelNormalize({
+                                data: data,
+                                dataPrevious: swagger.dataPrevious
+                            });
                             // validate data
-                            local.cms2.swaggerModelValidate({
-                                // normalize data
-                                data: swagger.model.dataNormalize(data),
+                            local.cms2.modelValidate({
+                                data: data,
                                 key: swagger._modelName,
                                 model: swagger.model
                             });
                             onNext(null, data);
                             break;
                         case 'createOrUpdate':
-                            // update data from previously saved data
-                            local.utility2.objectSetOverride(data, swagger.dataPrevious);
                             // update data from body
                             local.utility2.objectSetOverride(data, swagger.paramDict.body);
-                            // init timeCreated
-                            if (swagger.model.properties.timeCreated) {
-                                data.timeCreated =
-                                    swagger.dataPrevious.timeCreated ||
-                                    new Date().toISOString();
-                            }
-                            // init timeModified
-                            if (swagger.model.properties.timeModified) {
-                                data.timeModified = new Date().toISOString();
-                            }
-                            // validate data
-                            local.cms2.swaggerModelValidate({
-                                // normalize data
-                                data: swagger.model.dataNormalize(data),
+                            // init _aliasList
+                            data._aliasList =
+                                data._aliasList || options.dataPrevious._aliasList;
+                            // normalize data
+                            local.cms2.modelNormalize({
+                                data: data,
+                                dataPrevious: swagger.dataPrevious
+                            });
+                            // update previously saved data with current data
+                            swagger.dataUpdated = local.utility2.objectSetOverride(
+                                // jsonCopy object to prevent side-effect
+                                local.utility2.jsonCopy(swagger.dataPrevious),
+                                data
+                            );
+                            // validate updated data
+                            local.cms2.modelValidate({
+                                data: swagger.dataUpdated,
                                 key: swagger._modelName,
                                 model: swagger.model
                             });
@@ -725,6 +752,17 @@ onNext();
                             swagger.model.collection.insert(data, onNext);
                             break;
                         case 'createOrReplace':
+                            modeNext = NaN;
+                            // init responseData.data
+                            swagger.responseData.data = swagger.dataUpdated;
+                            // upsert data
+                            swagger.model.collection.update(
+                                { _id: data._id },
+                                { $set: data },
+                                { upsert: true },
+                                onNext
+                            );
+                            break;
                         case 'createOrUpdate':
                             modeNext = NaN;
                             // upsert data
@@ -767,7 +805,7 @@ onNext();
             }
             local.utility2.serverRespondWriteHead(request, response, 500, {});
             // rename _id to id
-            response.end(JSON.stringify(local.cms2.swagger_IdToId({ errors: [{
+            response.end(JSON.stringify(local.cms2.model_IdToId({ errors: [{
                 _id: request.swagger.responseData._id,
                 code: error.code,
                 title: error.message,
@@ -844,10 +882,10 @@ onNext();
             definitions: {
                 Alias: {
                     properties: {
-                        alias: { type: 'string' },
+                        key: { type: 'string' },
                         type: { type: 'string' }
                     },
-                    required: ['alias']
+                    required: ['key']
                 },
                 // http://jsonapi.org/format/#errors
                 JsonApiError: {
@@ -882,9 +920,13 @@ onNext();
                 // http://jsonapi.org/format/#document-structure-resource-objects
                 JsonApiResource: {
                     properties: {
+                        _aliasList: {
+                            items: { $ref: '#/definitions/Alias' },
+                            type: 'array'
+                        },
+                        _timeCreated: { format: 'date-time', type: 'string' },
+                        _timeModified: { format: 'date-time', type: 'string' },
                         id: { type: 'string' },
-                        timeCreated: { format: 'date-time', type: 'string' },
-                        timeModified: { format: 'date-time', type: 'string' },
                         type: { type: 'string' }
                     }
                 },
@@ -950,21 +992,13 @@ onNext();
         // init ContentDraft model
         local.cms2.modelCreate({
             _collectionName: 'ContentDraft',
-            _createIndexList: [[{ 'aliasList.name': 1 }, { sparse: true, unique: true }]],
+            _createIndexList: [[{ '_aliasList.key': 1 }, { sparse: true, unique: true }]],
             _crudDefault: true,
             _modelName: 'ContentDraft',
             definitions: {
-                // http://jsonapi.org/format/#document-structure-top-level
-                JsonApiResponseDataContentDraft: {
-                    allOf: [{ $ref: '#/definitions/JsonApiResponseData' }],
-                    properties: { data: { $ref: '#/definitions/ContentDraft' } }
-                },
                 ContentDraft: {
+                    allOf: [{ $ref: '#/definitions/JsonApiResource' }],
                     properties: {
-                        aliasList: {
-                            items: { $ref: '#/definitions/Alias' },
-                            type: 'array'
-                        },
                         content: { type: 'string' },
                         summary: { type: 'string' },
                         title: { type: 'string' }
@@ -981,18 +1015,14 @@ onNext();
         // init User model
         local.cms2.modelCreate({
             _collectionName: 'User',
-            _createIndexList: [[{ 'aliasList.name': 1 }, { sparse: true, unique: true }]],
+            _createIndexList: [[{ '_aliasList.key': 1 }, { sparse: true, unique: true }]],
             _crudDefault: true,
             _modelName: 'User',
             definitions: {
-                // http://jsonapi.org/format/#document-structure-top-level
-                JsonApiResponseDataUser: {
-                    allOf: [{ $ref: '#/definitions/JsonApiResponseData' }],
-                    properties: { data: { $ref: '#/definitions/User' } }
-                },
                 User: {
+                    allOf: [{ $ref: '#/definitions/JsonApiResource' }],
                     properties: {
-                        aliasList: {
+                        _aliasList: {
                             items: { $ref: '#/definitions/Alias' },
                             type: 'array'
                         },
@@ -1054,7 +1084,7 @@ onNext();
             local.utility2.ajax({
                 data: JSON.stringify({
                     _id: 'foo',
-                    aliasList: [{alias: 'ofdisfsadf'}],
+                    _aliasList: [{key: '1', key2: 'ofdisfsadf'}],
                     content: '1'
                 }),
                 method: 'PATCH',

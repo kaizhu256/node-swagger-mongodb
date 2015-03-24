@@ -89,19 +89,19 @@
                 this function will test the test-page's
                 default handling behavior
             */
-            var onParallel;
-            onParallel = local.utility2.onParallel(onError);
-            onParallel.counter += 1;
+            var onTaskEnd;
+            onTaskEnd = local.utility2.onTaskEnd(onError);
+            onTaskEnd.counter += 1;
             // test test-page handling behavior
-            onParallel.counter += 1;
+            onTaskEnd.counter += 1;
             local.utility2.phantomTest({
                 url: 'http://localhost:' +
                     local.utility2.envDict.npm_config_server_port +
                     '?modeTest=phantom&' +
                     '_testSecret={{_testSecret}}&' +
                     'timeoutDefault=' + local.utility2.timeoutDefault
-            }, onParallel);
-            onParallel();
+            }, onTaskEnd);
+            onTaskEnd();
         };
         // init assets
         local['/'] =
