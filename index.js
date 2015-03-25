@@ -81,21 +81,6 @@
             data._timeCreated = options.dataPrevious._timeCreated || new Date().toISOString();
             // init _timeModified
             data._timeModified = new Date().toISOString();
-            // normalize _aliasList
-            local.cms2.modelNormalizeAliasList(options);
-        };
-
-        local.cms2.modelNormalizeAliasList = function (options) {
-            var aliasDict;
-            aliasDict = {};
-            (options.data._aliasList || []).forEach(function (element) {
-                aliasDict[element && element.key] = element;
-            });
-            aliasDict[options.data._id] =
-                aliasDict[options.data._id] || { key: options.data._id };
-            options.data._aliasList = Object.keys(aliasDict).map(function (key) {
-                return aliasDict[key];
-            });
         };
 
         local.cms2.modelValidate = function (options) {
@@ -114,8 +99,8 @@
                         required: model.required && model.required.indexOf(key) >= 0
                     });
                 } catch (errorCaught) {
-                    errorCaught.message = 'invalid ' + options.key + '.' + key + ' - ' +
-                        errorCaught.message;
+                    errorCaught.message = 'invalid property "' + options.key + '.' + key +
+                        '" - ' + errorCaught.message;
                     errorCaught.stack = errorCaught.message + '\n' + errorCaught.stack;
                     throw errorCaught;
                 }
@@ -136,18 +121,17 @@
                this function will validate options.data according to options.property
             */
             /*jslint bitwise: true, regexp: true*/
-            var assert, data, property, tmp;
+            var assert, data, format, property, tmp, type;
             assert = function (valid) {
                 if (!valid) {
-                    throw new Error(
-                        'invalid ' +
-                            (property.$ref || property.format || property.type) +
-                            ' property - ' + JSON.stringify(data)
-                    );
+                    throw new Error('invalid "' + options.key + ':' + format +
+                            '" property - ' + JSON.stringify(data));
                 }
             };
             property = options.property || {};
             data = options.data;
+            type = property.type || property.$ref || (property.schema && property.schema.$ref);
+            format = property.format || type;
             // JSON.parse data
             if (options.parse &&
                     data && typeof data === 'string' &&
@@ -161,13 +145,14 @@
             // validate undefined data
             if (data === null || data === undefined) {
                 if (options.required) {
-                    throw new Error('required property cannot be null or undefined');
+                    throw new Error('required "' + options.key + ':' + format +
+                        '" property cannot be null or undefined');
                 }
                 return data;
             }
             // validate property.type
 // https://github.com/swagger-api/swagger-spec/blob/master/versions/2.0.md#data-types
-            switch (property.type) {
+            switch (type) {
             case 'array':
                 assert(Array.isArray(data));
                 // recurse - validate elements in list
@@ -200,6 +185,7 @@
                     break;
                 }
                 break;
+            case '#/definitions/Object':
             case 'object':
                 assert(typeof data === 'object');
                 break;
@@ -227,7 +213,7 @@
             // recurse - validate model according to property.$ref
             local.cms2.modelValidate({
                 data: data,
-                model: local.cms2.modelDereference(property.$ref),
+                model: local.cms2.modelDereference(type),
                 key: options.key
             });
             return data;
@@ -255,7 +241,7 @@ if (options._crudDefault) {
         paths: {
             '/{{_modelName}}/create': {
                 post: {
-                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    _requestHandler: local.cms2.middlewareCrudDefault,
                     parameters: [{
                         description: '{{_modelName}} object',
                         in: 'body',
@@ -276,7 +262,7 @@ if (options._crudDefault) {
             },
             '/{{_modelName}}/createOrReplace': {
                 put: {
-                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    _requestHandler: local.cms2.middlewareCrudDefault,
                     parameters: [{
                         description: '{{_modelName}} object',
                         in: 'body',
@@ -297,7 +283,7 @@ if (options._crudDefault) {
             },
             '/{{_modelName}}/createOrUpdate': {
                 patch: {
-                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    _requestHandler: local.cms2.middlewareCrudDefault,
                     parameters: [{
                         description: '{{_modelName}} object',
                         in: 'body',
@@ -318,7 +304,7 @@ if (options._crudDefault) {
             },
             '/{{_modelName}}/deleteById/{id}': {
                 delete: {
-                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    _requestHandler: local.cms2.middlewareCrudDefault,
                     parameters: [{
                         description: '{{_modelName}} id',
                         in: 'path',
@@ -332,7 +318,7 @@ if (options._crudDefault) {
             },
             '/{{_modelName}}/getById/{id}': {
                 get: {
-                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    _requestHandler: local.cms2.middlewareCrudDefault,
                     parameters: [{
                         description: '{{_modelName}} id',
                         in: 'path',
@@ -353,27 +339,32 @@ if (options._crudDefault) {
             },
             '/{{_modelName}}/getByQuery': {
                 get: {
-                    _requestHandler: local.cms2.serverMiddlewareCrudDefault,
+                    _requestHandler: local.cms2.middlewareCrudDefault,
                     parameters: [{
-                        description: 'mongodb query',
+                        description: 'mongodb query param',
                         default: '{"_id":"foo"}',
                         in: 'query',
                         name: 'query',
                         required: true,
                         schema: { $ref: '#/definitions/Object' }
                     }, {
-                        description: 'mongodb cursor limit',
+                        description: 'mongodb projection param',
+                        default: '{}',
+                        in: 'query',
+                        name: 'projection',
+                        schema: { $ref: '#/definitions/Object' }
+                    }, {
+                        description: 'mongodb cursor limit param',
                         default: 1,
                         in: 'query',
                         name: 'limit',
                         required: true,
                         type: 'integer'
                     }, {
-                        description: 'mongodb cursor sort',
-                        default: '{"timeModified":-1}',
+                        description: 'mongodb cursor sort param',
+                        default: '{"_timeModified":-1}',
                         in: 'query',
                         name: 'sort',
-                        required: true,
                         schema: { $ref: '#/definitions/Object' }
                     }],
                     responses: {
@@ -472,13 +463,28 @@ local.utility2.objectSetOverride(
     }),
     2
 );
+// update swaggerJson.tags
+tmp = {};
+[local.cms2.swaggerJson.tags, options._tags].forEach(function (tags) {
+    (tags || []).forEach(function (element) {
+        tmp[element.name] = element;
+    });
+});
+local.cms2.swaggerJson.tags = Object
+    // jsonCopy object to prevent side-effect
+    .keys(local.utility2.jsonCopy(tmp))
+    // sort by name
+    .sort()
+    .map(function (key) {
+        return tmp[key];
+    });
 /* jslint-indent-end */
 
 
 
         };
 
-        local.cms2.serverMiddleware = function (request, response, nextMiddleware) {
+        local.cms2.middleware = function (request, response, nextMiddleware) {
             /*
                 this function will run the main swagger middleware
             */
@@ -583,17 +589,21 @@ onNext = function (error) {
                     swagger.paramDict[param.name] = request.urlParsed.query[param.name];
                     break;
                 }
+                // init default param
+                swagger.paramDict[param.name] = swagger.paramDict[param.name] || param.default;
             });
             onTaskEnd();
             break;
         case 4:
             // parse paramDict
-            swagger.parameters.forEach(function (parameter) {
-                swagger.paramDict[parameter.name] = local.cms2.modelValidateProperty({
-                    data: swagger.paramDict[parameter.name],
-                    key: parameter.name,
+            swagger.parameters.forEach(function (param) {
+                // validate param
+                swagger.paramDict[param.name] = local.cms2.modelValidateProperty({
+                    data: swagger.paramDict[param.name],
+                    key: 'param.' + param.name,
                     parse: true,
-                    property: parameter
+                    property: param,
+                    required: param.required
                 });
             });
             // rename id to _id
@@ -617,7 +627,7 @@ onNext = function (error) {
                 }, function (error, dataPrevious) {
                     // jslint-hack
                     local.utility2.nop(error);
-                    swagger.dataPrevious = dataPrevious;
+                    swagger.dataPrevious = dataPrevious || {};
                     onNext();
                 });
                 return;
@@ -625,8 +635,8 @@ onNext = function (error) {
             onNext();
             break;
         case 5:
-            // run serverMiddlewareHookBefore
-            local.cms2.serverMiddlewareHookBefore(request, response, onNext);
+            // run middlewareHookBefore
+            local.cms2.middlewareHookBefore(request, response, onNext);
             break;
         case 6:
             // run _requestHandler
@@ -637,8 +647,8 @@ onNext = function (error) {
             onNext();
             break;
         case 7:
-            // run serverMiddlewareHookAfter
-            local.cms2.serverMiddlewareHookAfter(request, response, onNext);
+            // run middlewareHookAfter
+            local.cms2.middlewareHookAfter(request, response, onNext);
             break;
         case 8:
             // end response
@@ -651,10 +661,10 @@ onNext = function (error) {
             ));
             break;
         default:
-            local.cms2.serverMiddlewareError(error, request, response, nextMiddleware);
+            local.cms2.middlewareError(error, request, response, nextMiddleware);
         }
     } catch (errorCaught) {
-        local.cms2.serverMiddlewareError(errorCaught, request, response, nextMiddleware);
+        local.cms2.middlewareError(errorCaught, request, response, nextMiddleware);
     }
 };
 onNext();
@@ -664,7 +674,7 @@ onNext();
 
         };
 
-        local.cms2.serverMiddlewareCrudDefault = function (request, response, nextMiddleware) {
+        local.cms2.middlewareCrudDefault = function (request, response, nextMiddleware) {
             /*
                 this function will run default swagger crud operations
             */
@@ -703,9 +713,6 @@ onNext();
                         case 'createOrUpdate':
                             // update data from body
                             local.utility2.objectSetOverride(data, swagger.paramDict.body);
-                            // init _aliasList
-                            data._aliasList =
-                                data._aliasList || options.dataPrevious._aliasList;
                             // normalize data
                             local.cms2.modelNormalize({
                                 data: data,
@@ -753,8 +760,6 @@ onNext();
                             break;
                         case 'createOrReplace':
                             modeNext = NaN;
-                            // init responseData.data
-                            swagger.responseData.data = swagger.dataUpdated;
                             // upsert data
                             swagger.model.collection.update(
                                 { _id: data._id },
@@ -765,6 +770,8 @@ onNext();
                             break;
                         case 'createOrUpdate':
                             modeNext = NaN;
+                            // init responseData.data
+                            swagger.responseData.data = swagger.dataUpdated;
                             // upsert data
                             swagger.model.collection.update(
                                 { _id: data._id },
@@ -794,7 +801,7 @@ onNext();
             onNext();
         };
 
-        local.cms2.serverMiddlewareError = function (error, request, response, nextMiddleware) {
+        local.cms2.middlewareError = function (error, request, response, nextMiddleware) {
             /*
                 this function will handle errors according to http://jsonapi.org/format/#errors
             */
@@ -806,7 +813,10 @@ onNext();
             local.utility2.serverRespondWriteHead(request, response, 500, {});
             // rename _id to id
             response.end(JSON.stringify(local.cms2.model_IdToId({ errors: [{
-                _id: request.swagger.responseData._id,
+                _id: request &&
+                    request.swagger &&
+                    request.swagger.responseData &&
+                    request.swagger.responseData._id,
                 code: error.code,
                 title: error.message,
                 detail: error.stack,
@@ -814,7 +824,30 @@ onNext();
             }] })));
         };
 
-        local.cms2.serverMiddlewareHookAfter = function (request, response, nextMiddleware) {
+        local.cms2.middlewareHookAfterList = [];
+
+        local.cms2.middlewareHookAfter = function (request, response, nextMiddleware) {
+            /*
+               this function will run any hooks after the main swagger api
+            */
+            var modeNext, onNext;
+            modeNext = -1;
+            onNext = function (error) {
+                modeNext = error instanceof Error
+                    ? NaN
+                    : modeNext + 1;
+                if (modeNext < local.cms2.middlewareHookAfterList.length) {
+                    local.cms2
+                        .middlewareHookAfterList[modeNext](request, response, onNext);
+                    return;
+                }
+                // default to nextMiddleware
+                nextMiddleware(error);
+            };
+            onNext();
+        };
+
+        local.cms2.middlewareHookAfter = function (request, response, nextMiddleware) {
             /*
                this function will run any hooks before the main swagger api
             */
@@ -823,7 +856,7 @@ onNext();
             nextMiddleware();
         };
 
-        local.cms2.serverMiddlewareHookBefore = function (request, response, nextMiddleware) {
+        local.cms2.middlewareHookBefore = function (request, response, nextMiddleware) {
             /*
                this function will run any hooks after the main swagger api
             */
@@ -880,13 +913,6 @@ onNext();
         local.cms2.swaggerJson = {
             basePath: local.utility2.envDict.npm_config_mode_api_prefix || '/api/v0.1',
             definitions: {
-                Alias: {
-                    properties: {
-                        key: { type: 'string' },
-                        type: { type: 'string' }
-                    },
-                    required: ['key']
-                },
                 // http://jsonapi.org/format/#errors
                 JsonApiError: {
                     properties: {
@@ -920,13 +946,13 @@ onNext();
                 // http://jsonapi.org/format/#document-structure-resource-objects
                 JsonApiResource: {
                     properties: {
-                        _aliasList: {
-                            items: { $ref: '#/definitions/Alias' },
-                            type: 'array'
-                        },
                         _timeCreated: { format: 'date-time', type: 'string' },
                         _timeModified: { format: 'date-time', type: 'string' },
+                        aliasOf: { type: 'string' },
+                        aliasType: { type: 'string' },
+                        parentId: { type: 'string' },
                         id: { type: 'string' },
+                        subtype: { type: 'string' },
                         type: { type: 'string' }
                     }
                 },
@@ -959,7 +985,8 @@ onNext();
                 version: '0.1'
             },
             paths: {},
-            swagger: '2.0'
+            swagger: '2.0',
+            tags: []
         };
         local.cms2['/assets/swagger-ui.html'] = local.fs
             .readFileSync(
@@ -992,9 +1019,9 @@ onNext();
         // init ContentDraft model
         local.cms2.modelCreate({
             _collectionName: 'ContentDraft',
-            _createIndexList: [[{ '_aliasList.key': 1 }, { sparse: true, unique: true }]],
             _crudDefault: true,
             _modelName: 'ContentDraft',
+            _tags: [{ description: 'draft content', name: 'ContentDraft' }],
             definitions: {
                 ContentDraft: {
                     allOf: [{ $ref: '#/definitions/JsonApiResource' }],
@@ -1004,28 +1031,46 @@ onNext();
                         title: { type: 'string' }
                     }
                 }
-            },
-            tags: [
-                {
-                    description: 'ContentDraft api',
-                    name: 'ContentDraft'
+            }
+        });
+        // init ContentHistory model
+        local.cms2.modelCreate({
+            _collectionName: 'ContentHistory',
+            _crudDefault: true,
+            _modelName: 'ContentHistory',
+            _tags: [{ description: 'history of published content', name: 'ContentHistory' }],
+            definitions: {
+                ContentHistory: {
+                    allOf: [{ $ref: '#/definitions/ContentDraft' }],
+                    properties: {
+                        _contentId: { type: 'string' },
+                        _version: { type: 'integer' }
+                    }
                 }
-            ]
+            }
+        });
+        // init ContentPublish model
+        local.cms2.modelCreate({
+            _collectionName: 'ContentPublish',
+            _crudDefault: true,
+            _modelName: 'ContentPublish',
+            _tags: [{ description: 'published content', name: 'ContentPublish' }],
+            definitions: {
+                ContentPublish: {
+                    allOf: [{ $ref: '#/definitions/ContentDraft' }]
+                }
+            }
         });
         // init User model
         local.cms2.modelCreate({
             _collectionName: 'User',
-            _createIndexList: [[{ '_aliasList.key': 1 }, { sparse: true, unique: true }]],
             _crudDefault: true,
             _modelName: 'User',
+            _tags: [{ description: 'User api', name: 'User' }],
             definitions: {
                 User: {
                     allOf: [{ $ref: '#/definitions/JsonApiResource' }],
                     properties: {
-                        _aliasList: {
-                            items: { $ref: '#/definitions/Alias' },
-                            type: 'array'
-                        },
                         roleList: {
                             items: { type: 'string' },
                             type: 'array'
@@ -1070,25 +1115,22 @@ onNext();
                         tags: ['User']
                     }
                 }
-            },
-            tags: [
-                {
-                    description: 'User api',
-                    name: 'User'
-                }
-            ]
+            }
         });
         local.utility2.taskPoolCreateOrAddCallback({
             key: 'utility2.onReady'
         }, null, function () {
+            //!! local.utility2.ajax({
+                //!! data: JSON.stringify({
+                    //!! _id: 'foo',
+                    //!! content: '1'
+                //!! }),
+                //!! method: 'PATCH',
+                //!! url: '/api/v0.1/ContentDraft/createOrUpdate'
+            //!! }, debugPrint);
             local.utility2.ajax({
-                data: JSON.stringify({
-                    _id: 'foo',
-                    _aliasList: [{key: '1', key2: 'ofdisfsadf'}],
-                    content: '1'
-                }),
-                method: 'PATCH',
-                url: '/api/v0.1/ContentDraft/createOrUpdate'
+                method: 'GET',
+                url: '/api/v0.1/ContentDraft/getByQuery?limit=1&projection={}'
             }, debugPrint);
             return;
         });
