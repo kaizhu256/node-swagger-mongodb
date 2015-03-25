@@ -235,168 +235,165 @@
 /* jslint-indent-begin 12 */
 /*jslint maxlen: 108, regexp: true*/
 var model, pathMethod, tmp;
-// init default crud
-if (options._crudDefault) {
-    local.utility2.objectSetOverride(options, {
-        paths: {
-            '/{{_modelName}}/create': {
-                post: {
-                    _requestHandler: local.cms2.middlewareCrudDefault,
-                    parameters: [{
-                        description: '{{_modelName}} object',
-                        in: 'body',
-                        name: 'body',
-                        required: true,
-                        schema: { $ref: '#/definitions/{{_modelName}}' }
-                    }],
-                    responses: {
-                        200: {
-                            description: '200 ok - ' +
-                                'http://jsonapi.org/format/#document-structure-top-level',
-                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
-                        }
-                    },
-                    summary: 'create {{_modelName}} object',
-                    tags: ['{{_modelName}}']
+local.utility2.objectSetDefault(options, {
+    // init default crud paths
+    paths: options._crudDefault && {
+        '/{{_modelName}}/create': { post: {
+            _requestHandler: local.cms2.middlewareCrudDefault,
+            parameters: [{
+                description: '{{_modelName}} object',
+                in: 'body',
+                name: 'body',
+                required: true,
+                schema: { $ref: '#/definitions/{{_modelName}}' }
+            }],
+            responses: {
+                200: {
+                    description: '200 ok - ' +
+                        'http://jsonapi.org/format/#document-structure-top-level',
+                    schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                 }
             },
-            '/{{_modelName}}/createOrReplace': {
-                put: {
-                    _requestHandler: local.cms2.middlewareCrudDefault,
-                    parameters: [{
-                        description: '{{_modelName}} object',
-                        in: 'body',
-                        name: 'body',
-                        required: true,
-                        schema: { $ref: '#/definitions/{{_modelName}}' }
-                    }],
-                    responses: {
-                        200: {
-                            description: '200 ok - ' +
-                                'http://jsonapi.org/format/#document-structure-top-level',
-                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
-                        }
-                    },
-                    summary: 'create or replace {{_modelName}} object',
-                    tags: ['{{_modelName}}']
+            summary: 'create {{_modelName}} object',
+            tags: ['{{_modelName}}']
+        } },
+        '/{{_modelName}}/createOrReplace': { put: {
+            _requestHandler: local.cms2.middlewareCrudDefault,
+            parameters: [{
+                description: '{{_modelName}} object',
+                in: 'body',
+                name: 'body',
+                required: true,
+                schema: { $ref: '#/definitions/{{_modelName}}' }
+            }],
+            responses: {
+                200: {
+                    description: '200 ok - ' +
+                        'http://jsonapi.org/format/#document-structure-top-level',
+                    schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                 }
             },
-            '/{{_modelName}}/createOrUpdate': {
-                patch: {
-                    _requestHandler: local.cms2.middlewareCrudDefault,
-                    parameters: [{
-                        description: '{{_modelName}} object',
-                        in: 'body',
-                        name: 'body',
-                        required: true,
-                        schema: { $ref: '#/definitions/{{_modelName}}' }
-                    }],
-                    responses: {
-                        200: {
-                            description: '200 ok - ' +
-                                'http://jsonapi.org/format/#document-structure-top-level',
-                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
-                        }
-                    },
-                    summary: 'create or update {{_modelName}} object',
-                    tags: ['{{_modelName}}']
+            summary: 'create or replace {{_modelName}} object',
+            tags: ['{{_modelName}}']
+        } },
+        '/{{_modelName}}/createOrUpdate': { patch: {
+            _requestHandler: local.cms2.middlewareCrudDefault,
+            parameters: [{
+                description: '{{_modelName}} object',
+                in: 'body',
+                name: 'body',
+                required: true,
+                schema: { $ref: '#/definitions/{{_modelName}}' }
+            }],
+            responses: {
+                200: {
+                    description: '200 ok - ' +
+                        'http://jsonapi.org/format/#document-structure-top-level',
+                    schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                 }
             },
-            '/{{_modelName}}/deleteById/{id}': {
-                delete: {
-                    _requestHandler: local.cms2.middlewareCrudDefault,
-                    parameters: [{
-                        description: '{{_modelName}} id',
-                        in: 'path',
-                        name: 'id',
-                        required: true,
-                        type: 'string'
-                    }],
-                    summary: 'delete {{_modelName}} object by id',
-                    tags: ['{{_modelName}}']
+            summary: 'create or update {{_modelName}} object',
+            tags: ['{{_modelName}}']
+        } },
+        '/{{_modelName}}/deleteById/{id}': { delete: {
+            _requestHandler: local.cms2.middlewareCrudDefault,
+            parameters: [{
+                description: '{{_modelName}} id',
+                in: 'path',
+                name: 'id',
+                required: true,
+                type: 'string'
+            }],
+            summary: 'delete {{_modelName}} object by id',
+            tags: ['{{_modelName}}']
+        } },
+        '/{{_modelName}}/getById/{id}': { get: {
+            _requestHandler: local.cms2.middlewareCrudDefault,
+            parameters: [{
+                description: '{{_modelName}} id',
+                in: 'path',
+                name: 'id',
+                required: true,
+                type: 'string'
+            }],
+            responses: {
+                200: {
+                    description: '200 ok - ' +
+                        'http://jsonapi.org/format/#document-structure-top-level',
+                    schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                 }
             },
-            '/{{_modelName}}/getById/{id}': {
-                get: {
-                    _requestHandler: local.cms2.middlewareCrudDefault,
-                    parameters: [{
-                        description: '{{_modelName}} id',
-                        in: 'path',
-                        name: 'id',
-                        required: true,
-                        type: 'string'
-                    }],
-                    responses: {
-                        200: {
-                            description: '200 ok - ' +
-                                'http://jsonapi.org/format/#document-structure-top-level',
-                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
-                        }
-                    },
-                    summary: 'get {{_modelName}} object by id',
-                    tags: ['{{_modelName}}']
+            summary: 'get {{_modelName}} object by id',
+            tags: ['{{_modelName}}']
+        } },
+        '/{{_modelName}}/getByQuery': { get: {
+            _requestHandler: local.cms2.middlewareCrudDefault,
+            parameters: [{
+                description: 'mongodb query param',
+                default: '{"_id":"foo"}',
+                in: 'query',
+                name: 'query',
+                required: true,
+                schema: { $ref: '#/definitions/Object' }
+            }, {
+                description: 'mongodb projection param',
+                default: '{}',
+                in: 'query',
+                name: 'projection',
+                schema: { $ref: '#/definitions/Object' }
+            }, {
+                description: 'mongodb cursor limit param',
+                default: 1,
+                format: 'integer',
+                in: 'query',
+                name: 'limit',
+                required: true,
+                type: 'number'
+            }, {
+                description: 'mongodb cursor sort param',
+                default: '{"_timeModified":-1}',
+                in: 'query',
+                name: 'sort',
+                schema: { $ref: '#/definitions/Object' }
+            }],
+            responses: {
+                200: {
+                    description: '200 ok - ' +
+                        'http://jsonapi.org/format/#document-structure-top-level',
+                    schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                 }
             },
-            '/{{_modelName}}/getByQuery': {
-                get: {
-                    _requestHandler: local.cms2.middlewareCrudDefault,
-                    parameters: [{
-                        description: 'mongodb query param',
-                        default: '{"_id":"foo"}',
-                        in: 'query',
-                        name: 'query',
-                        required: true,
-                        schema: { $ref: '#/definitions/Object' }
-                    }, {
-                        description: 'mongodb projection param',
-                        default: '{}',
-                        in: 'query',
-                        name: 'projection',
-                        schema: { $ref: '#/definitions/Object' }
-                    }, {
-                        description: 'mongodb cursor limit param',
-                        default: 1,
-                        in: 'query',
-                        name: 'limit',
-                        required: true,
-                        type: 'integer'
-                    }, {
-                        description: 'mongodb cursor sort param',
-                        default: '{"_timeModified":-1}',
-                        in: 'query',
-                        name: 'sort',
-                        schema: { $ref: '#/definitions/Object' }
-                    }],
-                    responses: {
-                        200: {
-                            description: '200 ok - ' +
-                                'http://jsonapi.org/format/#document-structure-top-level',
-                            schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
-                        }
-                    },
-                    summary: 'get {{_modelName}} object by query',
-                    tags: ['{{_modelName}}']
-                }
-            }
+            summary: 'get {{_modelName}} object by query',
+            tags: ['{{_modelName}}']
+        } }
+    },
+    // init default definitions
+    definitions: {
+        'JsonApiResponseData{{_modelName}}': {
+            allOf: [{ $ref: '#/definitions/JsonApiResponseData' }],
+            properties: { data: {
+                items: { $ref: '#/definitions/{{_modelName}}' },
+                type: 'array'
+            } }
         }
-    }, 2);
-}
-// init extra options properties
-options.definitions['JsonApiResponseData{{_modelName}}'] = {
-    allOf: [{ $ref: '#/definitions/JsonApiResponseData' }],
-    properties: { data: { $ref: '#/definitions/{{_modelName}}' } }
-};
+    }
+}, 2);
 // recursively stringFormat options
 local.utility2.objectTraverse(options, function (element) {
     Object.keys(element && typeof element === 'object'
         ? element
         : {}).forEach(function (key) {
-        tmp = element[key];
-        delete element[key];
-        key = local.utility2.stringFormat(key, options);
-        element[key] = tmp;
-        if (typeof element[key] === 'string') {
-            element[key] = local.utility2.stringFormat(element[key], options);
+        tmp = local.utility2.stringFormat(key, options);
+        if (tmp !== key) {
+            // if there is no collision, then rename key
+            if (element[tmp] === undefined) {
+                element[tmp] = element[key];
+            }
+            // remove old key
+            delete element[key];
+        }
+        if (typeof element[tmp] === 'string') {
+            element[tmp] = local.utility2.stringFormat(element[tmp], options);
         }
     });
 });
@@ -610,20 +607,20 @@ onNext = function (error) {
             local.cms2.modelIdTo_Id(swagger.paramDict);
             // init responseData
             // http://jsonapi.org/format/#document-structure-resource-objects
-            local.utility2.objectSetDefault(swagger, { responseData: { data: {
+            local.utility2.objectSetDefault(swagger, { responseData: { data: [{
                 _id: swagger.paramDict._id ||
                     (swagger.paramDict.body && swagger.paramDict.body._id) ||
                     local.utility2.uuidTime(),
                 id: swagger.paramDict.type ||
                     (swagger.paramDict.body && swagger.paramDict.body.type)
-            } } }, -1);
+            }] } }, -1);
             // init _id
-            swagger.responseData.data._id =
-                swagger.responseData.data._id || local.utility2.uuidTime();
+            swagger.responseData.data[0]._id =
+                swagger.responseData.data[0]._id || local.utility2.uuidTime();
             // get previously saved data
             if (swagger.model) {
                 swagger.model.collection.findOne({
-                    _id: swagger.responseData.data._id
+                    _id: swagger.responseData.data[0]._id
                 }, function (error, dataPrevious) {
                     // jslint-hack
                     local.utility2.nop(error);
@@ -691,7 +688,7 @@ onNext();
                         local.utility2.nop(response);
                         swagger = request.swagger;
                         // init data
-                        data = swagger.responseData.data;
+                        data = swagger.responseData.data[0];
                         switch (swagger.operationId) {
                         case 'create':
                         case 'createOrReplace':
@@ -770,8 +767,8 @@ onNext();
                             break;
                         case 'createOrUpdate':
                             modeNext = NaN;
-                            // init responseData.data
-                            swagger.responseData.data = swagger.dataUpdated;
+                            // init responseData.data[0]
+                            swagger.responseData.data[0] = swagger.dataUpdated;
                             // upsert data
                             swagger.model.collection.update(
                                 { _id: data._id },
@@ -928,7 +925,7 @@ onNext();
                             items: { type: 'string' },
                             type: 'array'
                         },
-                        status: { type: 'integer' },
+                        status: { format: 'integer', type: 'number' },
                         title: { type: 'string' }
                     }
                 },
@@ -959,7 +956,10 @@ onNext();
                 // http://jsonapi.org/format/#document-structure-top-level
                 JsonApiResponseData: {
                     properties: {
-                        data: { $ref: '#/definitions/JsonApiResource' },
+                        data: {
+                            items: { $ref: '#/definitions/JsonApiResource' },
+                            type: 'array'
+                        },
                         included: {
                             items: { $ref: '#/definitions/JsonApiResource' },
                             type: 'array'
@@ -1044,7 +1044,7 @@ onNext();
                     allOf: [{ $ref: '#/definitions/ContentDraft' }],
                     properties: {
                         _contentId: { type: 'string' },
-                        _version: { type: 'integer' }
+                        _version: { format: 'integer', type: 'number' }
                     }
                 }
             }
@@ -1120,14 +1120,14 @@ onNext();
         local.utility2.taskPoolCreateOrAddCallback({
             key: 'utility2.onReady'
         }, null, function () {
-            //!! local.utility2.ajax({
-                //!! data: JSON.stringify({
-                    //!! _id: 'foo',
-                    //!! content: '1'
-                //!! }),
-                //!! method: 'PATCH',
-                //!! url: '/api/v0.1/ContentDraft/createOrUpdate'
-            //!! }, debugPrint);
+            local.utility2.ajax({
+                data: JSON.stringify({
+                    _id: 'foo',
+                    content: '1'
+                }),
+                method: 'PATCH',
+                url: '/api/v0.1/ContentDraft/createOrUpdate'
+            }, debugPrint);
             local.utility2.ajax({
                 method: 'GET',
                 url: '/api/v0.1/ContentDraft/getByQuery?limit=1&projection={}'
