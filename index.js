@@ -6,34 +6,13 @@
     nomen: true,
     stupid: true
 */
-(function () {
+(function (local) {
     'use strict';
-    var local;
-    // init local
-    local = {};
-    local.cms2 = { local: local };
 
 
 
     // run shared js-env code
     (function () {
-        local.modeJs = (function () {
-            try {
-                return module.exports &&
-                    typeof process.versions.node === 'string' &&
-                    typeof require('http').createServer === 'function' &&
-                    'node';
-            } catch (errorCaughtNode) {
-                return typeof navigator.userAgent === 'string' &&
-                    typeof document.querySelector('body') === 'object' &&
-                    'browser';
-            }
-        }());
-        // init utility2
-        local.utility2 = local.modeJs === 'browser'
-            ? window.utility2
-            : require('utility2');
-
         local.cms2.modelDereference = function ($ref) {
             /*
                 this function will try to dereference the model from $ref
@@ -45,7 +24,7 @@
             }
         };
 
-        local.cms2.modelIdTo_Id = function (data) {
+        local.cms2.modelNormalizeIdMongodb = function (data) {
             /*
                 this function will recursively convert the property id to _id
             */
@@ -58,7 +37,7 @@
             return data;
         };
 
-        local.cms2.model_IdToId = function (data) {
+        local.cms2.modelNormalizeIdSwagger = function (data) {
             /*
                 this function will recursively convert the property _id to id
             */
@@ -104,14 +83,6 @@
                     errorCaught.stack = errorCaught.message + '\n' + errorCaught.stack;
                     throw errorCaught;
                 }
-            });
-            // recurse - validate data according to model.allOf
-            (model.allOf || []).forEach(function (element) {
-                local.cms2.modelValidate({
-                    data: options.data,
-                    key: element.$ref,
-                    model: local.cms2.modelDereference(element.$ref)
-                });
             });
             return data;
         };
@@ -185,7 +156,6 @@
                     break;
                 }
                 break;
-            case '#/definitions/Object':
             case 'object':
                 assert(typeof data === 'object');
                 break;
@@ -238,7 +208,7 @@ var model, pathMethod, tmp;
 local.utility2.objectSetDefault(options, {
     // init default crud paths
     paths: options._crudDefault && {
-        '/{{_modelName}}/create': { post: {
+        '/{{_modelName}}/createOne': { post: {
             _requestHandler: local.cms2.middlewareCrudDefault,
             parameters: [{
                 description: '{{_modelName}} object',
@@ -254,10 +224,10 @@ local.utility2.objectSetDefault(options, {
                     schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                 }
             },
-            summary: 'create {{_modelName}} object',
+            summary: 'create one {{_modelName}} object',
             tags: ['{{_modelName}}']
         } },
-        '/{{_modelName}}/createOrReplace': { put: {
+        '/{{_modelName}}/createOrReplaceOne': { put: {
             _requestHandler: local.cms2.middlewareCrudDefault,
             parameters: [{
                 description: '{{_modelName}} object',
@@ -273,10 +243,10 @@ local.utility2.objectSetDefault(options, {
                     schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                 }
             },
-            summary: 'create or replace {{_modelName}} object',
+            summary: 'create or replace one {{_modelName}} object',
             tags: ['{{_modelName}}']
         } },
-        '/{{_modelName}}/createOrUpdate': { patch: {
+        '/{{_modelName}}/createOrUpdateOne': { patch: {
             _requestHandler: local.cms2.middlewareCrudDefault,
             parameters: [{
                 description: '{{_modelName}} object',
@@ -292,10 +262,10 @@ local.utility2.objectSetDefault(options, {
                     schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                 }
             },
-            summary: 'create or update {{_modelName}} object',
+            summary: 'create or update one {{_modelName}} object',
             tags: ['{{_modelName}}']
         } },
-        '/{{_modelName}}/deleteById/{id}': { delete: {
+        '/{{_modelName}}/deleteByIdOne/{id}': { delete: {
             _requestHandler: local.cms2.middlewareCrudDefault,
             parameters: [{
                 description: '{{_modelName}} id',
@@ -304,10 +274,10 @@ local.utility2.objectSetDefault(options, {
                 required: true,
                 type: 'string'
             }],
-            summary: 'delete {{_modelName}} object by id',
+            summary: 'delete one {{_modelName}} object by id',
             tags: ['{{_modelName}}']
         } },
-        '/{{_modelName}}/getById/{id}': { get: {
+        '/{{_modelName}}/getByIdOne/{id}': { get: {
             _requestHandler: local.cms2.middlewareCrudDefault,
             parameters: [{
                 description: '{{_modelName}} id',
@@ -323,10 +293,10 @@ local.utility2.objectSetDefault(options, {
                     schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                 }
             },
-            summary: 'get {{_modelName}} object by id',
+            summary: 'get one {{_modelName}} object by id',
             tags: ['{{_modelName}}']
         } },
-        '/{{_modelName}}/getByQuery': { get: {
+        '/{{_modelName}}/getByQueryMany': { get: {
             _requestHandler: local.cms2.middlewareCrudDefault,
             parameters: [{
                 description: 'mongodb query param',
@@ -334,27 +304,26 @@ local.utility2.objectSetDefault(options, {
                 in: 'query',
                 name: 'query',
                 required: true,
-                schema: { $ref: '#/definitions/Object' }
+                type: 'object'
             }, {
                 description: 'mongodb projection param',
                 default: '{}',
                 in: 'query',
                 name: 'projection',
-                schema: { $ref: '#/definitions/Object' }
+                type: 'object'
             }, {
-                description: 'mongodb cursor limit param',
+                description: 'mongodb limit param',
                 default: 1,
-                format: 'integer',
                 in: 'query',
                 name: 'limit',
                 required: true,
-                type: 'number'
+                type: 'integer'
             }, {
-                description: 'mongodb cursor sort param',
+                description: 'mongodb sort param',
                 default: '{"_timeModified":-1}',
                 in: 'query',
                 name: 'sort',
-                schema: { $ref: '#/definitions/Object' }
+                type: 'object'
             }],
             responses: {
                 200: {
@@ -363,18 +332,18 @@ local.utility2.objectSetDefault(options, {
                     schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
                 }
             },
-            summary: 'get {{_modelName}} object by query',
+            summary: 'get many {{_modelName}} objects by query',
             tags: ['{{_modelName}}']
         } }
     },
     // init default definitions
     definitions: {
         'JsonApiResponseData{{_modelName}}': {
-            allOf: [{ $ref: '#/definitions/JsonApiResponseData' }],
             properties: { data: {
                 items: { $ref: '#/definitions/{{_modelName}}' },
                 type: 'array'
-            } }
+            } },
+            'x-inheritList': [{ $ref: '#/definitions/JsonApiResponseData' }]
         }
     }
 }, 2);
@@ -604,7 +573,7 @@ onNext = function (error) {
                 });
             });
             // rename id to _id
-            local.cms2.modelIdTo_Id(swagger.paramDict);
+            local.cms2.modelNormalizeIdMongodb(swagger.paramDict);
             // init responseData
             // http://jsonapi.org/format/#document-structure-resource-objects
             local.utility2.objectSetDefault(swagger, { responseData: { data: [{
@@ -651,7 +620,7 @@ onNext = function (error) {
             // end response
             response.end(JSON.stringify(
                 // rename _id to id
-                local.cms2.model_IdToId(
+                local.cms2.modelNormalizeIdSwagger(
                     // jsonCopy object to prevent side-effect
                     local.utility2.jsonCopy(swagger.responseData)
                 )
@@ -690,8 +659,8 @@ onNext();
                         // init data
                         data = swagger.responseData.data[0];
                         switch (swagger.operationId) {
-                        case 'create':
-                        case 'createOrReplace':
+                        case 'createOne':
+                        case 'createOrReplaceOne':
                             // update data from body
                             local.utility2.objectSetOverride(data, swagger.paramDict.body);
                             // normalize data
@@ -707,7 +676,7 @@ onNext();
                             });
                             onNext(null, data);
                             break;
-                        case 'createOrUpdate':
+                        case 'createOrUpdateOne':
                             // update data from body
                             local.utility2.objectSetOverride(data, swagger.paramDict.body);
                             // normalize data
@@ -729,14 +698,14 @@ onNext();
                             });
                             onNext(null, data);
                             break;
-                        case 'deleteById':
+                        case 'deleteByIdOne':
                             modeNext = NaN;
                             swagger.model.collection.removeOne({ _id: data._id }, onNext);
                             break;
-                        case 'getById':
+                        case 'getByIdOne':
                             swagger.model.collection.findOne({ _id: data._id }, onNext);
                             break;
-                        case 'getByQuery':
+                        case 'getByQueryMany':
                             swagger.model.collection
                                 .find(swagger.paramDict.query)
                                 .limit(swagger.paramDict.limit)
@@ -750,12 +719,12 @@ onNext();
                         break;
                     case 2:
                         switch (swagger.operationId) {
-                        case 'create':
+                        case 'createOne':
                             modeNext = NaN;
                             // insert data
                             swagger.model.collection.insert(data, onNext);
                             break;
-                        case 'createOrReplace':
+                        case 'createOrReplaceOne':
                             modeNext = NaN;
                             // upsert data
                             swagger.model.collection.update(
@@ -765,7 +734,7 @@ onNext();
                                 onNext
                             );
                             break;
-                        case 'createOrUpdate':
+                        case 'createOrUpdateOne':
                             modeNext = NaN;
                             // init responseData.data[0]
                             swagger.responseData.data[0] = swagger.dataUpdated;
@@ -777,8 +746,8 @@ onNext();
                                 onNext
                             );
                             break;
-                        case 'getById':
-                        case 'getByQuery':
+                        case 'getByIdOne':
+                        case 'getByQueryMany':
                             modeNext = NaN;
                             swagger.responseData.data = data;
                             onNext();
@@ -809,7 +778,7 @@ onNext();
             }
             local.utility2.serverRespondWriteHead(request, response, 500, {});
             // rename _id to id
-            response.end(JSON.stringify(local.cms2.model_IdToId({ errors: [{
+            response.end(JSON.stringify(local.cms2.modelNormalizeIdSwagger({ errors: [{
                 _id: request &&
                     request.swagger &&
                     request.swagger.responseData &&
@@ -867,25 +836,8 @@ onNext();
 
 
 
-    // run browser js-env code
-    case 'browser':
-        // export cms2
-        window.cms2 = local.cms2;
-        break;
-
-
-
     // run node js-env code
     case 'node':
-        // export cms2
-        module.exports = local.cms2;
-        // require modules
-        local.fs = require('fs');
-        local.mongodb = require('mongodb');
-        local.path = require('path');
-        local.swagger_ui_lite = require('swagger-ui-lite');
-        local.url = require('url');
-        local.utility2 = require('utility2');
         // init mongodb client
         local.utility2.onReady.counter += 1;
         local.utility2.taskPoolCreateOrAddCallback(
@@ -925,7 +877,7 @@ onNext();
                             items: { type: 'string' },
                             type: 'array'
                         },
-                        status: { format: 'integer', type: 'number' },
+                        status: { type: 'integer' },
                         title: { type: 'string' }
                     }
                 },
@@ -976,8 +928,7 @@ onNext();
                             type: 'array'
                         }
                     }
-                },
-                Object: { properties: {} }
+                }
             },
             info: {
                 description: 'demo of cms2 swagger-api',
@@ -1006,7 +957,9 @@ onNext();
             .readFileSync(
                 local.swagger_ui_lite.__dirname + '/swagger-ui.rollup.js',
                 'utf8'
-            );
+            )
+            // hack add object type
+            .replace('var str;', 'var str = type === "object" ? "object" : undefined;');
         local.cms2['/assets/swagger-ui.explorer_icons.png'] = local.fs
             .readFileSync(local.swagger_ui_lite.__dirname +
                 '/swagger-ui.explorer_icons.png');
@@ -1024,12 +977,12 @@ onNext();
             _tags: [{ description: 'draft content', name: 'ContentDraft' }],
             definitions: {
                 ContentDraft: {
-                    allOf: [{ $ref: '#/definitions/JsonApiResource' }],
                     properties: {
                         content: { type: 'string' },
                         summary: { type: 'string' },
                         title: { type: 'string' }
-                    }
+                    },
+                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
                 }
             }
         });
@@ -1041,11 +994,11 @@ onNext();
             _tags: [{ description: 'history of published content', name: 'ContentHistory' }],
             definitions: {
                 ContentHistory: {
-                    allOf: [{ $ref: '#/definitions/ContentDraft' }],
                     properties: {
                         _contentId: { type: 'string' },
-                        _version: { format: 'integer', type: 'number' }
-                    }
+                        _version: { type: 'integer' }
+                    },
+                    'x-inheritList': [{ $ref: '#/definitions/ContentDraft' }]
                 }
             }
         });
@@ -1057,7 +1010,7 @@ onNext();
             _tags: [{ description: 'published content', name: 'ContentPublish' }],
             definitions: {
                 ContentPublish: {
-                    allOf: [{ $ref: '#/definitions/ContentDraft' }]
+                    'x-inheritList': [{ $ref: '#/definitions/ContentDraft' }]
                 }
             }
         });
@@ -1069,7 +1022,6 @@ onNext();
             _tags: [{ description: 'User api', name: 'User' }],
             definitions: {
                 User: {
-                    allOf: [{ $ref: '#/definitions/JsonApiResource' }],
                     properties: {
                         roleList: {
                             items: { type: 'string' },
@@ -1077,7 +1029,8 @@ onNext();
                         },
                         passwordHash: { type: 'string' },
                         passwordSalt: { type: 'string' }
-                    }
+                    },
+                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
                 }
             },
             paths: {
@@ -1117,23 +1070,94 @@ onNext();
                 }
             }
         });
+        local.utility2.objectSetOverride(local.swagger_tools.v2.validators[
+            'schema.json'
+        ].cache['schema.json'], {
+            definitions: {
+                queryParameterSubSchema: {
+                    properties: {
+                        type: {
+                            // hack swagger-tools.validate to allow object type
+                            enum: ['string', 'number', 'boolean', 'integer', 'array', 'object']
+                        }
+                    }
+                }
+            }
+        }, -1);
+        // validate swaggerJson
         local.utility2.taskPoolCreateOrAddCallback({
             key: 'utility2.onReady'
         }, null, function () {
-            local.utility2.ajax({
-                data: JSON.stringify({
-                    _id: 'foo',
-                    content: '1'
-                }),
-                method: 'PATCH',
-                url: '/api/v0.1/ContentDraft/createOrUpdate'
-            }, debugPrint);
-            local.utility2.ajax({
-                method: 'GET',
-                url: '/api/v0.1/ContentDraft/getByQuery?limit=1&projection={}'
-            }, debugPrint);
-            return;
+            local.swagger_tools.v2
+                .validate(local.cms2.swaggerJson, function (error, result) {
+                    if (error) {
+                        local.utility2.onErrorDefault(error);
+                        return;
+                    }
+                    local._debugSwaggerJsonError = result;
+                    (result && result.errors && result.errors.length
+                        ? result.errors
+                        : result && result.warnings && result.warning.lengh
+                        ? result.warnings
+                        : []).slice(0, 4).forEach(function (element) {
+                        console.error('swagger schema - ' + element.code + ' - ' +
+                            element.message + ' - ' + JSON.stringify(element.path));
+                    });
+                });
         });
         break;
     }
-}());
+}((function () {
+    'use strict';
+    var local;
+
+
+
+    // run shared js-env code
+    (function () {
+        // init local
+        local = {};
+        local.cms2 = { local: local };
+        local.modeJs = (function () {
+            try {
+                return module.exports &&
+                    typeof process.versions.node === 'string' &&
+                    typeof require('http').createServer === 'function' &&
+                    'node';
+            } catch (errorCaughtNode) {
+                return typeof navigator.userAgent === 'string' &&
+                    typeof document.querySelector('body') === 'object' &&
+                    'browser';
+            }
+        }());
+    }());
+    switch (local.modeJs) {
+
+
+
+    // run browser js-env code
+    case 'browser':
+        // export cms2
+        window.cms2 = local.cms2;
+        // require modules
+        local.utility2 = window.utility2;
+        break;
+
+
+
+    // run node js-env code
+    case 'node':
+        // export cms2
+        module.exports = local.cms2;
+        // require modules
+        local.fs = require('fs');
+        local.mongodb = require('mongodb');
+        local.path = require('path');
+        local.swagger_tools = require('swagger-ui-lite/swagger-tools-standalone.js');
+        local.swagger_ui_lite = require('swagger-ui-lite');
+        local.url = require('url');
+        local.utility2 = require('utility2');
+        break;
+    }
+    return local;
+}())));

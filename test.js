@@ -6,7 +6,80 @@
     nomen: true,
     stupid: true,
 */
-(function () {
+(function (local) {
+    'use strict';
+    switch (local.modeJs) {
+
+
+
+    // run node js-env code
+    case 'node':
+        // init tests
+        local.testCase_testPage_default = function (onError) {
+            /*
+                this function will test the test-page's
+                default handling behavior
+            */
+            var onTaskEnd;
+            onTaskEnd = local.utility2.onTaskEnd(onError);
+            onTaskEnd.counter += 1;
+            // test test-page handling behavior
+            onTaskEnd.counter += 1;
+            local.utility2.phantomTest({
+                url: 'http://localhost:' +
+                    local.utility2.envDict.npm_config_server_port +
+                    '?modeTest=phantom&' +
+                    '_testSecret={{_testSecret}}&' +
+                    'timeoutDefault=' + local.utility2.timeoutDefault
+            }, onTaskEnd);
+            onTaskEnd();
+        };
+        // init assets
+        local['/'] =
+            local.utility2.stringFormat(local.fs
+                .readFileSync(__dirname + '/README.md', 'utf8')
+                .replace((/[\S\s]+?(<!DOCTYPE html>[\S\s]+?<\/html>)[\S\s]+/), '$1')
+                // parse '\' line-continuation
+                .replace((/\\\n/g), '')
+                .replace((/\\n' \+(\s*?)'/g), '$1'), { envDict: local.utility2.envDict });
+        local['/assets/cms2.js'] =
+            local.istanbul_lite.instrumentInPackage(
+                local.cms2['/assets/cms2.js'],
+                __dirname + '/index.js',
+                'cms2'
+            );
+        local['/test/test.js'] =
+            local.istanbul_lite.instrumentInPackage(
+                local.fs.readFileSync(__filename, 'utf8'),
+                __filename,
+                'cms2'
+            );
+        // init middleware
+        local.middleware = local.utility2.middlewareGroupCreate([
+            local.utility2.middlewareInit,
+            function (request, response, nextMiddleware) {
+                /*
+                    this function will run the test-middleware
+                */
+                switch (request.urlParsed.pathnameNormalized) {
+                // serve assets
+                case '/':
+                case '/test/test.js':
+                    response.end(local[request.urlParsed.pathnameNormalized]);
+                    break;
+                // default to nextMiddleware
+                default:
+                    nextMiddleware();
+                }
+            }
+        ].concat([local.cms2.middleware]));
+        // init middleware error-handler
+        local.onMiddlewareError = local.utility2.onMiddlewareError;
+        // run server-test
+        local.utility2.testRunServer(local);
+        break;
+    }
+}((function () {
     'use strict';
     var local;
 
@@ -80,72 +153,10 @@
         local.fs = require('fs');
         local.mongodb = require('mongodb');
         local.path = require('path');
+        local.swagger_tools = require('swagger-ui-lite/swagger-tools-standalone.js');
         local.swagger_ui_lite = require('swagger-ui-lite');
         local.url = require('url');
         local.utility2 = require('utility2');
-        // init tests
-        local.testCase_testPage_default = function (onError) {
-            /*
-                this function will test the test-page's
-                default handling behavior
-            */
-            var onTaskEnd;
-            onTaskEnd = local.utility2.onTaskEnd(onError);
-            onTaskEnd.counter += 1;
-            // test test-page handling behavior
-            onTaskEnd.counter += 1;
-            local.utility2.phantomTest({
-                url: 'http://localhost:' +
-                    local.utility2.envDict.npm_config_server_port +
-                    '?modeTest=phantom&' +
-                    '_testSecret={{_testSecret}}&' +
-                    'timeoutDefault=' + local.utility2.timeoutDefault
-            }, onTaskEnd);
-            onTaskEnd();
-        };
-        // init assets
-        local['/'] =
-            local.utility2.stringFormat(local.fs
-                .readFileSync(__dirname + '/README.md', 'utf8')
-                .replace((/[\S\s]+?(<!DOCTYPE html>[\S\s]+?<\/html>)[\S\s]+/), '$1')
-                // parse '\' line-continuation
-                .replace((/\\\n/g), '')
-                .replace((/\\n' \+(\s*?)'/g), '$1'), { envDict: local.utility2.envDict });
-        local['/assets/cms2.js'] =
-            local.istanbul_lite.instrumentInPackage(
-                local.cms2['/assets/cms2.js'],
-                __dirname + '/index.js',
-                'cms2'
-            );
-        local['/test/test.js'] =
-            local.istanbul_lite.instrumentInPackage(
-                local.fs.readFileSync(__filename, 'utf8'),
-                __filename,
-                'cms2'
-            );
-        // init middleware
-        local.middleware = local.utility2.middlewareGroupCreate([
-            local.utility2.middlewareInit,
-            function (request, response, nextMiddleware) {
-                /*
-                    this function will run the test-middleware
-                */
-                switch (request.urlParsed.pathnameNormalized) {
-                // serve assets
-                case '/':
-                case '/test/test.js':
-                    response.end(local[request.urlParsed.pathnameNormalized]);
-                    break;
-                // default to nextMiddleware
-                default:
-                    nextMiddleware();
-                }
-            }
-        ].concat([local.cms2.middleware]));
-        // init middleware error-handler
-        local.onMiddlewareError = local.utility2.onMiddlewareError;
-        // run server-test
-        local.utility2.testRunServer(local);
         // init dir
         local.fs.readdirSync(__dirname).forEach(function (file) {
             file = __dirname + '/' + file;
@@ -163,4 +174,5 @@
         local.utility2.replStart({});
         break;
     }
-}());
+    return local;
+}())));
