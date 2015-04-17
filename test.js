@@ -8,6 +8,28 @@
 */
 (function (local) {
     'use strict';
+    // run shared js-env code
+    (function () {
+        // init tests
+        local.testCase_ajax_404 = function (onError) {
+            /*
+                this function will test ajax's
+                404 http statusCode handling behavior
+            */
+            // test '/test/undefined'
+            local.utility2.ajax({
+                url: '/test/undefined'
+            }, function (error) {
+                local.utility2.testTryCatch(function () {
+                    // validate error occurred
+                    local.utility2.assert(error instanceof Error, error);
+                    // validate 404 http statusCode
+                    local.utility2.assert(error.statusCode === 404, error.statusCode);
+                    onError();
+                }, onError);
+            });
+        };
+    }());
     switch (local.modeJs) {
 
 
@@ -61,11 +83,27 @@
                 /*
                     this function will run the test-middleware
                 */
+                if (request.urlParsed.pathnameNormalized
+                        .indexOf(local.cms2.swaggerJson.basePath) === 0) {
+                    local.utility2.serverRespondSetHead(request, response, null, {
+                        'Access-Control-Allow-Methods':
+                            'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT',
+                        // enable cors
+                        // http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
+                        'Access-Control-Allow-Origin': '*',
+                        // init content-type
+                        'Content-Type': 'application/json; charset=UTF-8'
+                    });
+                }
                 switch (request.urlParsed.pathnameNormalized) {
                 // serve assets
                 case '/':
                 case '/test/test.js':
                     response.end(local[request.urlParsed.pathnameNormalized]);
+                    break;
+                // debug request
+                case '/test/echo':
+                    local.utility2.serverRespondEcho(request, response);
                     break;
                 // default to nextMiddleware
                 default:
@@ -101,16 +139,22 @@
                     'browser';
             }
         }());
-        // init cms2
-        local.cms2 = local.modeJs === 'browser'
-            ? window.cms2
-            : require('./index.js');
+        // init global
+        local.global = local.modeJs === 'browser'
+            ? window
+            : global;
         // init utility2
-        local.utility2 = local.cms2.local.utility2;
+        local.utility2 = local.modeJs === 'browser'
+            ? window.utility2
+            : require('utility2');
         // init jslint_lite
         local.jslint_lite = local.utility2.local.jslint_lite;
         // init istanbul_lite
         local.istanbul_lite = local.utility2.local.istanbul_lite;
+        // init cms2
+        local.cms2 = local.modeJs === 'browser'
+            ? window.cms2
+            : require('./index.js');
         // init tests
         local.testCase_ajax_404 = function (onError) {
             /*
@@ -153,7 +197,7 @@
         local.fs = require('fs');
         local.mongodb = require('mongodb');
         local.path = require('path');
-        local.swagger_tools = require('swagger-ui-lite/swagger-tools-standalone.js');
+        local.swagger_tools = require('swagger-ui-lite/swagger-tools-standalone-min.js');
         local.swagger_ui_lite = require('swagger-ui-lite');
         local.url = require('url');
         local.utility2 = require('utility2');

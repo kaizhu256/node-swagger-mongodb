@@ -78,7 +78,7 @@
                         required: model.required && model.required.indexOf(key) >= 0
                     });
                 } catch (errorCaught) {
-                    errorCaught.message = 'invalid property "' + options.key + '.' + key +
+                    errorCaught.message = '"' + options.key + '.' + key +
                         '" - ' + errorCaught.message;
                     errorCaught.stack = errorCaught.message + '\n' + errorCaught.stack;
                     throw errorCaught;
@@ -227,44 +227,6 @@ local.utility2.objectSetDefault(options, {
             summary: 'create one {{_modelName}} object',
             tags: ['{{_modelName}}']
         } },
-        '/{{_modelName}}/createOrReplaceOne': { put: {
-            _requestHandler: local.cms2.middlewareCrudDefault,
-            parameters: [{
-                description: '{{_modelName}} object',
-                in: 'body',
-                name: 'body',
-                required: true,
-                schema: { $ref: '#/definitions/{{_modelName}}' }
-            }],
-            responses: {
-                200: {
-                    description: '200 ok - ' +
-                        'http://jsonapi.org/format/#document-structure-top-level',
-                    schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
-                }
-            },
-            summary: 'create or replace one {{_modelName}} object',
-            tags: ['{{_modelName}}']
-        } },
-        '/{{_modelName}}/createOrUpdateOne': { patch: {
-            _requestHandler: local.cms2.middlewareCrudDefault,
-            parameters: [{
-                description: '{{_modelName}} object',
-                in: 'body',
-                name: 'body',
-                required: true,
-                schema: { $ref: '#/definitions/{{_modelName}}' }
-            }],
-            responses: {
-                200: {
-                    description: '200 ok - ' +
-                        'http://jsonapi.org/format/#document-structure-top-level',
-                    schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
-                }
-            },
-            summary: 'create or update one {{_modelName}} object',
-            tags: ['{{_modelName}}']
-        } },
         '/{{_modelName}}/deleteByIdOne/{id}': { delete: {
             _requestHandler: local.cms2.middlewareCrudDefault,
             parameters: [{
@@ -334,6 +296,44 @@ local.utility2.objectSetDefault(options, {
             },
             summary: 'get many {{_modelName}} objects by query',
             tags: ['{{_modelName}}']
+        } },
+        '/{{_modelName}}/replaceOrCreateOne': { put: {
+            _requestHandler: local.cms2.middlewareCrudDefault,
+            parameters: [{
+                description: '{{_modelName}} object',
+                in: 'body',
+                name: 'body',
+                required: true,
+                schema: { $ref: '#/definitions/{{_modelName}}' }
+            }],
+            responses: {
+                200: {
+                    description: '200 ok - ' +
+                        'http://jsonapi.org/format/#document-structure-top-level',
+                    schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
+                }
+            },
+            summary: 'replace or create one {{_modelName}} object',
+            tags: ['{{_modelName}}']
+        } },
+        '/{{_modelName}}/updateOrCreateOne': { put: {
+            _requestHandler: local.cms2.middlewareCrudDefault,
+            parameters: [{
+                description: '{{_modelName}} object',
+                in: 'body',
+                name: 'body',
+                required: true,
+                schema: { $ref: '#/definitions/{{_modelName}}' }
+            }],
+            responses: {
+                200: {
+                    description: '200 ok - ' +
+                        'http://jsonapi.org/format/#document-structure-top-level',
+                    schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
+                }
+            },
+            summary: 'update or create one {{_modelName}} object',
+            tags: ['{{_modelName}}']
         } }
     },
     // init default definitions
@@ -372,7 +372,7 @@ local.cms2.modelDict = local.cms2.modelDict || {};
 // init model
 model = local.cms2.modelDict[options._modelName] = options.definitions[options._modelName];
 // init model.collection
-local.utility2.taskPoolCreateOrAddCallback(
+local.utility2.taskCacheCreateOrAddCallback(
     { key: 'cms2.mongodbConnect' },
     null,
     function () {
@@ -436,14 +436,29 @@ tmp = {};
         tmp[element.name] = element;
     });
 });
+// jsonCopy object to prevent side-effect
+local.utility2.jsonCopy(tmp);
 local.cms2.swaggerJson.tags = Object
-    // jsonCopy object to prevent side-effect
-    .keys(local.utility2.jsonCopy(tmp))
+    .keys(tmp)
     // sort by name
     .sort()
     .map(function (key) {
         return tmp[key];
     });
+// init properties from x-inheritList
+[0, 1, 2, 3].forEach(function () {
+    Object.keys(local.cms2.swaggerJson.definitions).forEach(function (model) {
+        model = local.cms2.swaggerJson.definitions[model];
+        // jsonCopy object to prevent side-effec
+        local.utility2.jsonCopy(model['x-inheritList'] || [])
+            .reverse()
+            .forEach(function (element) {
+                local.utility2.objectSetDefault(model, {
+                    properties: (local.cms2.modelDereference(element.$ref) || {}).properties
+                }, 2);
+            });
+    });
+});
 /* jslint-indent-end */
 
 
@@ -660,7 +675,7 @@ onNext();
                         data = swagger.responseData.data[0];
                         switch (swagger.operationId) {
                         case 'createOne':
-                        case 'createOrReplaceOne':
+                        case 'replaceOrCreateOne':
                             // update data from body
                             local.utility2.objectSetOverride(data, swagger.paramDict.body);
                             // normalize data
@@ -676,7 +691,21 @@ onNext();
                             });
                             onNext(null, data);
                             break;
-                        case 'createOrUpdateOne':
+                        case 'deleteByIdOne':
+                            modeNext = NaN;
+                            swagger.model.collection.removeOne({ _id: data._id }, onNext);
+                            break;
+                        case 'getByIdOne':
+                            swagger.model.collection.findOne({ _id: data._id }, onNext);
+                            break;
+                        case 'getByQueryMany':
+                            swagger.model.collection
+                                .find(debugPrint(swagger.paramDict.query))
+                                .limit(swagger.paramDict.limit)
+                                .sort(swagger.paramDict.sort)
+                                .toArray(onNext);
+                            break;
+                        case 'updateOrCreateOne':
                             // update data from body
                             local.utility2.objectSetOverride(data, swagger.paramDict.body);
                             // normalize data
@@ -698,20 +727,6 @@ onNext();
                             });
                             onNext(null, data);
                             break;
-                        case 'deleteByIdOne':
-                            modeNext = NaN;
-                            swagger.model.collection.removeOne({ _id: data._id }, onNext);
-                            break;
-                        case 'getByIdOne':
-                            swagger.model.collection.findOne({ _id: data._id }, onNext);
-                            break;
-                        case 'getByQueryMany':
-                            swagger.model.collection
-                                .find(swagger.paramDict.query)
-                                .limit(swagger.paramDict.limit)
-                                .sort(swagger.paramDict.sort)
-                                .toArray(onNext);
-                            break;
                         default:
                             throw new Error('invalid crud operation - ' +
                                 request.method + ' ' + request.url);
@@ -724,7 +739,7 @@ onNext();
                             // insert data
                             swagger.model.collection.insert(data, onNext);
                             break;
-                        case 'createOrReplaceOne':
+                        case 'replaceOrCreateOne':
                             modeNext = NaN;
                             // upsert data
                             swagger.model.collection.update(
@@ -734,7 +749,13 @@ onNext();
                                 onNext
                             );
                             break;
-                        case 'createOrUpdateOne':
+                        case 'getByIdOne':
+                        case 'getByQueryMany':
+                            modeNext = NaN;
+                            swagger.responseData.data = data;
+                            onNext();
+                            break;
+                        case 'updateOrCreateOne':
                             modeNext = NaN;
                             // init responseData.data[0]
                             swagger.responseData.data[0] = swagger.dataUpdated;
@@ -745,12 +766,6 @@ onNext();
                                 { upsert: true },
                                 onNext
                             );
-                            break;
-                        case 'getByIdOne':
-                        case 'getByQueryMany':
-                            modeNext = NaN;
-                            swagger.responseData.data = data;
-                            onNext();
                             break;
                         }
                         break;
@@ -776,7 +791,7 @@ onNext();
                 nextMiddleware();
                 return;
             }
-            local.utility2.serverRespondWriteHead(request, response, 500, {});
+            local.utility2.serverRespondSetHead(request, response, 500, {});
             // rename _id to id
             response.end(JSON.stringify(local.cms2.modelNormalizeIdSwagger({ errors: [{
                 _id: request &&
@@ -840,7 +855,7 @@ onNext();
     case 'node':
         // init mongodb client
         local.utility2.onReady.counter += 1;
-        local.utility2.taskPoolCreateOrAddCallback(
+        local.utility2.taskCacheCreateOrAddCallback(
             { key: 'cms2.mongodbConnect' },
             function (onError) {
                 local.mongodb.MongoClient.connect(
@@ -895,10 +910,10 @@ onNext();
                 // http://jsonapi.org/format/#document-structure-resource-objects
                 JsonApiResource: {
                     properties: {
+                        _aliasOf: { type: 'string' },
+                        _aliasType: { type: 'string' },
                         _timeCreated: { format: 'date-time', type: 'string' },
                         _timeModified: { format: 'date-time', type: 'string' },
-                        aliasOf: { type: 'string' },
-                        aliasType: { type: 'string' },
                         parentId: { type: 'string' },
                         id: { type: 'string' },
                         subtype: { type: 'string' },
@@ -1019,33 +1034,48 @@ onNext();
             _collectionName: 'User',
             _crudDefault: true,
             _modelName: 'User',
-            _tags: [{ description: 'User api', name: 'User' }],
+            _tags: [{ description: 'user api', name: 'User' }],
             definitions: {
                 User: {
                     properties: {
+                        email: { default: 'john@example.com', type: 'string' },
                         roleList: {
-                            items: { type: 'string' },
+                            items: { default: 'guest', type: 'string' },
                             type: 'array'
                         },
-                        passwordHash: { type: 'string' },
-                        passwordSalt: { type: 'string' }
+                        passwordHash: {
+                            default: '00000000-0000-0000-0000-000000000000',
+                            type: 'string'
+                        },
+                        passwordSalt: {
+                            default: '00000000-0000-0000-0000-000000000000',
+                            type: 'string'
+                        },
+                        username: { default: 'john', type: 'string' },
+                        usernameDict: {
+                            bitbucket: { type: 'string' },
+                            github: { type: 'string' },
+                            google: { type: 'string' },
+                            facebook: { type: 'string' },
+                            twitter: { type: 'string' },
+                            yahoo: { type: 'string' }
+                        }
                     },
                     'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
                 }
             },
             paths: {
                 '/User/login': {
-                    // post /User/login - userLogin
-                    post: {
+                    put: {
                         parameters: [{
                             description: 'login username',
-                            in: 'query',
+                            in: 'header',
                             name: 'username',
                             required: true,
                             type: 'string'
                         }, {
-                            description: 'login password in cleartext',
-                            in: 'query',
+                            description: 'login password',
+                            in: 'header',
                             name: 'password',
                             required: true,
                             type: 'string'
@@ -1055,7 +1085,6 @@ onNext();
                     }
                 },
                 '/User/logout': {
-                    // delete /User/logout - userLogout
                     delete: {
                         parameters: [{
                             description: 'logout sessionId',
@@ -1084,10 +1113,10 @@ onNext();
                 }
             }
         }, -1);
-        // validate swaggerJson
-        local.utility2.taskPoolCreateOrAddCallback({
+        local.utility2.taskCacheCreateOrAddCallback({
             key: 'utility2.onReady'
         }, null, function () {
+            // validate swaggerJson
             local.swagger_tools.v2
                 .validate(local.cms2.swaggerJson, function (error, result) {
                     if (error) {
@@ -1104,7 +1133,43 @@ onNext();
                             element.message + ' - ' + JSON.stringify(element.path));
                     });
                 });
+            //debugprint
+            //!! local.utility2.ajax({
+                //!! data: JSON.stringify({
+                    //!! _id: 'foo',
+                    //!! content: '1'
+                //!! }),
+                //!! method: 'PUT',
+                //!! url: '/api/v0.1/ContentDraft/updateOrCreateOne'
+            //!! }, debugPrint);
+            local.utility2.ajax({
+                method: 'GET',
+                url: '/api/v0.1/ContentDraft/getByQueryMany?limit=1&projection={}'
+            }, debugPrint);
         });
+        // init user roles
+        local.cms2.userRoleDict = {
+            '00_malicious': true,
+            '01_anonymous': true,
+            '02_guest': true,
+            '03_probation': true,
+            '10_normal': true,
+            '11_contributor': true,
+            '12_author': true,
+            '13_moderator': true,
+            '14_editor': true,
+            '15_manager': true,
+            '20_admin': true,
+            '21_root': true
+        };
+        local.cms2.userRoleHas = function (user, role) {
+            /*
+                this function will check if the user has the given role
+            */
+            return local.cms2.userRoleDict[user.role] &&
+                local.cms2.userRoleDict[role] &&
+                user.role <= rule;
+        };
         break;
     }
 }((function () {
@@ -1117,7 +1182,6 @@ onNext();
     (function () {
         // init local
         local = {};
-        local.cms2 = { local: local };
         local.modeJs = (function () {
             try {
                 return module.exports &&
@@ -1130,6 +1194,12 @@ onNext();
                     'browser';
             }
         }());
+        // init global
+        local.global = local.modeJs === 'browser'
+            ? window
+            : global;
+        // init cms2
+        local.cms2 = { local: local };
     }());
     switch (local.modeJs) {
 
@@ -1153,7 +1223,7 @@ onNext();
         local.fs = require('fs');
         local.mongodb = require('mongodb');
         local.path = require('path');
-        local.swagger_tools = require('swagger-ui-lite/swagger-tools-standalone.js');
+        local.swagger_tools = require('swagger-ui-lite/swagger-tools-standalone-min.js');
         local.swagger_ui_lite = require('swagger-ui-lite');
         local.url = require('url');
         local.utility2 = require('utility2');

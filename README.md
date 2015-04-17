@@ -22,7 +22,7 @@ yet another content-management-system backed by mongodb with swagger-ui api
 
 
 # quickstart web example
-#### to run this example, read the instruction inside the script below
+#### to run this example, follow the instruction in the script below
 ```
 /*
 example.js
@@ -175,7 +175,7 @@ instruction
 
 
 # quickstart command-line example
-#### to run this example, read the instruction inside the script below
+#### to run this example, follow the instruction in the script below
 ```
 # example.sh
 
@@ -228,12 +228,12 @@ shExampleSh
     "dependencies": {
         "mongodb": "^2.0.23",
         "swagger-ui-lite": "^2.1.8-M1-2015-03-11-b",
-        "utility2": "2015.3.24-11"
+        "utility2": "2015.4.9-a"
     },
     "description": "yet another lightweight content-management-system \
 backed by mongodb with swagger-ui api",
     "devDependencies": {
-        "phantomjs-lite": "^2015.3.24-11"
+        "phantomjs-lite": "2015.4.9-a"
     },
     "engines": { "node": ">=0.10 <=0.12" },
     "keywords": [
