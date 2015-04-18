@@ -271,19 +271,19 @@ shBuild() {
     export npm_config_mode_slimerjs=1 || return $?
     . node_modules/.bin/utility2 && shInit || return $?
 
-    # run npm-test on published package
-    shRun shNpmTestPublished || return $?
+    #!! # run npm-test on published package
+    #!! shRun shNpmTestPublished || return $?
 
-    # test example js script
-    MODE_BUILD=testExampleJs \
-        shRunScreenCapture shReadmeTestJs example.js || return $?
-    # copy phantomjs screen-capture to $npm_config_dir_build
-    cp /tmp/app/tmp/build/screen-capture.*.png $npm_config_dir_build || \
-        return $?
+    #!! # test example js script
+    #!! MODE_BUILD=testExampleJs \
+        #!! shRunScreenCapture shReadmeTestJs example.js || return $?
+    #!! # copy phantomjs screen-capture to $npm_config_dir_build
+    #!! cp /tmp/app/tmp/build/screen-capture.*.png $npm_config_dir_build || \
+        #!! return $?
 
-    # test example shell script
-    MODE_BUILD=testExampleSh \
-        shRunScreenCapture shReadmeTestSh example.sh || return $?
+    #!! # test example shell script
+    #!! MODE_BUILD=testExampleSh \
+        #!! shRunScreenCapture shReadmeTestSh example.sh || return $?
 
     # run npm-test
     MODE_BUILD=npmTest shRunScreenCapture npm test || return $?
