@@ -34,9 +34,35 @@
 
 
 
+    // run browser js-env code
+    case 'browser':
+        // init tests
+        break;
+
+
+
     // run node js-env code
     case 'node':
         // init tests
+        local.testCase_testPage_default = function (onError) {
+            /*
+                this function will test the test-page's
+                default handling behavior
+            */
+            var onTaskEnd;
+            onTaskEnd = local.utility2.onTaskEnd(onError);
+            onTaskEnd.counter += 1;
+            // test test-page handling behavior
+            onTaskEnd.counter += 1;
+            local.utility2.phantomTest({
+                url: 'http://localhost:' +
+                    local.utility2.envDict.npm_config_server_port +
+                    '?modeTest=phantom&' +
+                    '_testSecret={{_testSecret}}&' +
+                    'timeoutDefault=' + local.utility2.timeoutDefault
+            }, onTaskEnd);
+            onTaskEnd();
+        };
         break;
     }
     switch (local.modeJs) {

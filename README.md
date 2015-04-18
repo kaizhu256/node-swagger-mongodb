@@ -8,17 +8,6 @@ yet another content-management-system backed by mongodb with swagger-ui api
 
 [![build commit status](https://kaizhu256.github.io/node-cms2/build/build.badge.svg)](https://travis-ci.org/kaizhu256/node-cms2)
 
-| git-branch | test-server | test-report | coverage | build-artifacts |
-|:----------:|:-----------:|:-----------:|:--------:|:---------------:|
-|[master](https://github.com/kaizhu256/node-cms2/tree/master) | [![heroku.com test-server](https://kaizhu256.github.io/node-cms2/heroku-logo.75x25.png)](https://hrku01-cms2-master.herokuapp.com) | [![test-report](https://kaizhu256.github.io/node-cms2/build..master..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-cms2/build..master..travis-ci.org/test-report.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-cms2/build..master..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-cms2/build..master..travis-ci.org/coverage.html/node-cms2/index.html) | [![build-artifacts](https://kaizhu256.github.io/node-cms2/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-cms2/tree/gh-pages/build..master..travis-ci.org)|
-|[beta](https://github.com/kaizhu256/node-cms2/tree/beta) | [![heroku.com test-server](https://kaizhu256.github.io/node-cms2/heroku-logo.75x25.png)](https://hrku01-cms2-beta.herokuapp.com) | [![test-report](https://kaizhu256.github.io/node-cms2/build..beta..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-cms2/build..beta..travis-ci.org/test-report.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-cms2/build..beta..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-cms2/build..beta..travis-ci.org/coverage.html/node-cms2/index.html) | [![build-artifacts](https://kaizhu256.github.io/node-cms2/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-cms2/tree/gh-pages/build..beta..travis-ci.org)|
-|[alpha](https://github.com/kaizhu256/node-cms2/tree/alpha) | [![heroku.com test-server](https://kaizhu256.github.io/node-cms2/heroku-logo.75x25.png)](https://hrku01-cms2-alpha.herokuapp.com) | [![test-report](https://kaizhu256.github.io/node-cms2/build..alpha..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-cms2/build..alpha..travis-ci.org/test-report.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-cms2/build..alpha..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-cms2/build..alpha..travis-ci.org/coverage.html/node-cms2/index.html) | [![build-artifacts](https://kaizhu256.github.io/node-cms2/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-cms2/tree/gh-pages/build..alpha..travis-ci.org)|
-
-
-
-# live test-server
-[![heroku.com test-server](https://kaizhu256.github.io/node-cms2/build/screen-capture.herokuTest.slimerjs.png)](https://hrku01-cms2-beta.herokuapp.com)
-
 
 
 # quickstart web example
@@ -54,9 +43,9 @@ instruction
         // init local
         local = {};
         // require modules
+        local.cms2 = require('cms2');
         local.fs = require('fs');
         local.http = require('http');
-        local.cms2 = require('cms2');
         local.url = require('url');
         // init assets
         local['/'] = (String() +
@@ -169,8 +158,6 @@ instruction
 ```
 #### output from shell
 [![screen-capture](https://kaizhu256.github.io/node-cms2/build/screen-capture.testExampleJs.png)](https://travis-ci.org/kaizhu256/node-cms2)
-#### output from phantomjs-lite
-[![screen-capture](https://kaizhu256.github.io/node-cms2/build/screen-capture.testExampleJs.slimerjs.png)](https://hrku01-cms2-beta.herokuapp.com)
 
 
 
@@ -227,7 +214,7 @@ shExampleSh
     "bin": { "cms2": "index.js" },
     "dependencies": {
         "mongodb": "2.0.27",
-        "swagger-ui-lite": "^2.1.8-M1-2015-03-11-b",
+        "swagger-ui-lite": "2.1.8-M1-2015-03-11-b",
         "utility2": "2015.4.18-b"
     },
     "description": "yet another lightweight content-management-system \
@@ -239,7 +226,6 @@ backed by mongodb with swagger-ui api",
     "keywords": [
         "browser",
         "cms",
-        "light", "lightweight", "lite",
         "mongo", "mongodb",
         "utility2",
         "swagger", "swagger-ui",
@@ -302,20 +288,8 @@ shBuild() {
     # run npm-test
     MODE_BUILD=npmTest shRunScreenCapture npm test || return $?
 
-    # deploy app to heroku
-    shRun shHerokuDeploy hrku01-cms2-$CI_BRANCH || return $?
-
-    # test deployed app to heroku
-    if [ "$CI_BRANCH" = alpha ] ||
-        [ "$CI_BRANCH" = beta ] ||
-        [ "$CI_BRANCH" = master ]
-    then
-        local TEST_URL="https://hrku01-cms2-$CI_BRANCH.herokuapp.com" || \
-            return $?
-        TEST_URL="$TEST_URL?modeTest=phantom&_testSecret={{_testSecret}}" || \
-            return $?
-        MODE_BUILD=herokuTest shRun shPhantomTest $TEST_URL || return $?
-    fi
+    # do not continue if running legacy node
+    [ "$(node --version)" \< "v0.12" ] && return
 
     # if number of commits > 1024, then squash older commits
     shRun shGitBackupAndSquashAndPush 1024 > /dev/null || return $?
@@ -324,6 +298,9 @@ shBuild
 
 # save exit-code
 EXIT_CODE=$?
+
+# do not continue if running legacy node
+[ "$(node --version)" \< "v0.12" ] && exit $EXIT_CODE
 
 shBuildCleanup() {
     # this function will cleanup build-artifacts in local build dir
