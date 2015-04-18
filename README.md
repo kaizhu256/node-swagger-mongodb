@@ -226,9 +226,9 @@ shExampleSh
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "cms2": "index.js" },
     "dependencies": {
-        "mongodb": "^2.0.23",
+        "mongodb": "2.0.27",
         "swagger-ui-lite": "^2.1.8-M1-2015-03-11-b",
-        "utility2": "2015.4.9-a"
+        "utility2": "2015.4.18-b"
     },
     "description": "yet another lightweight content-management-system \
 backed by mongodb with swagger-ui api",

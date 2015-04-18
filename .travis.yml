@@ -19,6 +19,9 @@ node_js:
     - "0.12"
 script:
     - npm run-script build-ci
+services:
+    - mongodb
+    - redis-server
 # http://docs.travis-ci.com/user/workers/container-based-infrastructure
 sudo:
     false

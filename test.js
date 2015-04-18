@@ -37,25 +37,34 @@
     // run node js-env code
     case 'node':
         // init tests
-        local.testCase_testPage_default = function (onError) {
-            /*
-                this function will test the test-page's
-                default handling behavior
-            */
-            var onTaskEnd;
-            onTaskEnd = local.utility2.onTaskEnd(onError);
-            onTaskEnd.counter += 1;
-            // test test-page handling behavior
-            onTaskEnd.counter += 1;
-            local.utility2.phantomTest({
-                url: 'http://localhost:' +
-                    local.utility2.envDict.npm_config_server_port +
-                    '?modeTest=phantom&' +
-                    '_testSecret={{_testSecret}}&' +
-                    'timeoutDefault=' + local.utility2.timeoutDefault
-            }, onTaskEnd);
-            onTaskEnd();
-        };
+        break;
+    }
+    switch (local.modeJs) {
+
+
+
+    // run browser js-env code
+    case 'browser':
+        // export local
+        window.local = local;
+        // run test
+        local.utility2.testRun(local);
+        break;
+
+
+
+    // run node js-env code
+    case 'node':
+        // export local
+        global.local = local;
+        // require modules
+        local.fs = require('fs');
+        local.mongodb = require('mongodb');
+        local.path = require('path');
+        local.swagger_tools = require('swagger-ui-lite/swagger-tools-standalone-min.js');
+        local.swagger_ui_lite = require('swagger-ui-lite');
+        local.url = require('url');
+        local.utility2 = require('utility2');
         // init assets
         local['/'] =
             local.utility2.stringFormat(local.fs
@@ -115,6 +124,21 @@
         local.onMiddlewareError = local.utility2.onMiddlewareError;
         // run server-test
         local.utility2.testRunServer(local);
+        // init dir
+        local.fs.readdirSync(__dirname).forEach(function (file) {
+            file = __dirname + '/' + file;
+            switch (local.path.extname(file)) {
+            case '.js':
+            case '.json':
+                // jslint the file
+                local.jslint_lite.jslintAndPrint(local.fs.readFileSync(file, 'utf8'), file);
+                break;
+            }
+            // if the file is modified, then restart the process
+            local.utility2.onFileModifiedRestart(file);
+        });
+        // init repl debugger
+        local.utility2.replStart({});
         break;
     }
 }((function () {
@@ -147,76 +171,14 @@
         local.utility2 = local.modeJs === 'browser'
             ? window.utility2
             : require('utility2');
-        // init jslint_lite
-        local.jslint_lite = local.utility2.local.jslint_lite;
         // init istanbul_lite
         local.istanbul_lite = local.utility2.local.istanbul_lite;
+        // init jslint_lite
+        local.jslint_lite = local.utility2.local.jslint_lite;
         // init cms2
         local.cms2 = local.modeJs === 'browser'
             ? window.cms2
             : require('./index.js');
-        // init tests
-        local.testCase_ajax_404 = function (onError) {
-            /*
-                this function will test ajax's
-                404 http statusCode handling behavior
-            */
-            // test '/test/undefined'
-            local.utility2.ajax({
-                url: '/test/undefined'
-            }, function (error) {
-                local.utility2.testTryCatch(function () {
-                    // validate error occurred
-                    local.utility2.assert(error instanceof Error, error);
-                    // validate 404 http statusCode
-                    local.utility2.assert(error.statusCode === 404, error.statusCode);
-                    onError();
-                }, onError);
-            });
-        };
     }());
-    switch (local.modeJs) {
-
-
-
-    // run browser js-env code
-    case 'browser':
-        // export local
-        window.local = local;
-        // run test
-        local.utility2.testRun(local);
-        break;
-
-
-
-    // run node js-env code
-    case 'node':
-        // export local
-        global.local = local;
-        // require modules
-        local.fs = require('fs');
-        local.mongodb = require('mongodb');
-        local.path = require('path');
-        local.swagger_tools = require('swagger-ui-lite/swagger-tools-standalone-min.js');
-        local.swagger_ui_lite = require('swagger-ui-lite');
-        local.url = require('url');
-        local.utility2 = require('utility2');
-        // init dir
-        local.fs.readdirSync(__dirname).forEach(function (file) {
-            file = __dirname + '/' + file;
-            switch (local.path.extname(file)) {
-            case '.js':
-            case '.json':
-                // jslint the file
-                local.jslint_lite.jslintAndPrint(local.fs.readFileSync(file, 'utf8'), file);
-                break;
-            }
-            // if the file is modified, then restart the process
-            local.utility2.onFileModifiedRestart(file);
-        });
-        // init repl debugger
-        local.utility2.replStart({});
-        break;
-    }
     return local;
 }())));

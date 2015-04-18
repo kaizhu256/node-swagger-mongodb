@@ -188,6 +188,13 @@
             });
             return data;
         };
+
+        local.cms2.userRoleHas = function (user, role) {
+            /*
+                this function will check if the user has the given role
+            */
+            return local.cms2.userRoleDict[user.role] >= local.cms2.userRoleDict[role];
+        };
     }());
     switch (local.modeJs) {
 
@@ -1051,15 +1058,7 @@ onNext();
                             default: '00000000-0000-0000-0000-000000000000',
                             type: 'string'
                         },
-                        username: { default: 'john', type: 'string' },
-                        usernameDict: {
-                            bitbucket: { type: 'string' },
-                            github: { type: 'string' },
-                            google: { type: 'string' },
-                            facebook: { type: 'string' },
-                            twitter: { type: 'string' },
-                            yahoo: { type: 'string' }
-                        }
+                        username: { default: 'john', type: 'string' }
                     },
                     'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
                 }
@@ -1149,26 +1148,15 @@ onNext();
         });
         // init user roles
         local.cms2.userRoleDict = {
-            '00_malicious': true,
-            '01_anonymous': true,
-            '02_guest': true,
-            '03_probation': true,
-            '10_normal': true,
-            '11_contributor': true,
-            '12_author': true,
-            '13_moderator': true,
-            '14_editor': true,
-            '15_manager': true,
-            '20_admin': true,
-            '21_root': true
-        };
-        local.cms2.userRoleHas = function (user, role) {
-            /*
-                this function will check if the user has the given role
-            */
-            return local.cms2.userRoleDict[user.role] &&
-                local.cms2.userRoleDict[role] &&
-                user.role <= rule;
+            'render': 10,
+            'guest': 20,
+            'user': 30,
+            'contributor': 40,
+            'author': 50,
+            'editor': 60,
+            'manager': 70,
+            'admin': 80,
+            'root': 90
         };
         break;
     }
