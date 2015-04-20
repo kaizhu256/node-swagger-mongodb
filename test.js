@@ -13,8 +13,7 @@
         // init tests
         local.testCase_ajax_404 = function (onError) {
             /*
-                this function will test ajax's
-                404 http statusCode handling behavior
+                this function will test ajax's 404 http statusCode handling behavior
             */
             // test '/test/undefined'
             local.utility2.ajax({
@@ -28,6 +27,93 @@
                     onError();
                 }, onError);
             });
+        };
+
+        local.testCase_modelContentDraft_crud = function (onError) {
+            /*
+                this function will test model ContentDraft's crud handling behavior
+            */
+            var modeNext, onNext;
+            modeNext = 0;
+            onNext = function (error) {
+                try {
+
+
+
+/* jslint-indent-begin 20 */
+/*jslint maxlen: 116, regexp: true*/
+modeNext = error instanceof Error
+    ? NaN
+    : modeNext + 1;
+switch (modeNext) {
+case 1:
+    // test '/test/undefined'
+    local.utility2.ajax({
+        url: '/test/undefined'
+    }, function (error) {
+        local.utility2.testTryCatch(function () {
+            // validate error occurred
+            local.utility2.assert(error instanceof Error, error);
+            // validate 404 http statusCode
+            local.utility2.assert(error.statusCode === 404, error.statusCode);
+            onError();
+        }, onError);
+    });
+    break;
+/* jslint-indent-end */
+
+
+
+                    }
+                } catch (errorCaught) {
+                    onError(errorCaught);
+                }
+            };
+            onNext();
+        };
+
+        local.testValidateCrudDelete = function (collection, id, onError) {
+            /*
+                this function will crud-delete the collection/id and validate the deletion
+            */
+            var modeNext, onNext;
+            modeNext = 0;
+            onNext = function (error) {
+                try {
+                    modeNext = error instanceof Error ? -1 : modeNext + 1;
+                    switch (modeNext) {
+                    case 1:
+                        // crud-delete model
+                        local.utility2.ajax({
+                            method: 'DELETE',
+                            url: '/api/v0.1/' + collection + '/deleteByIdOne/' + id
+                        }, onNext);
+                        break;
+                    case 2:
+                        // crud check model exists
+                        local.utility2.ajax({
+                            method: 'GET',
+                            url: '/api/v0.1/' + collection + '/getByIdOne/' + id
+                        }, onNext);
+                        break;
+                    //!! case 3:
+                        //!! data = JSON.parse(data);
+                        //!! // validate content does not exist
+                        //!! local.utility2.assert(data && data.exists === false, url);
+                        //!! // crud check model exists
+                        //!! local.utility2.ajax({
+                            //!! method: 'GET',
+                            //!! url: '/api/v0.1/' + collection + '/getByIdOne/' + id
+                        //!! }, local.utility2.testValidateError(onNext));
+                        //!! break;
+                    default:
+                        onError(error);
+                    }
+                } catch (errorCaught) {
+                    onError(errorCaught);
+                }
+            };
+            onNext();
         };
     }());
     switch (local.modeJs) {

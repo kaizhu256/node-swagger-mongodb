@@ -189,6 +189,42 @@
             return data;
         };
 
+        local.cms2.swaggerInit = function () {
+            /*
+                this function will init swagger from the swaggerJson
+            */
+            var api;
+            local.utility2.objectSetDefault(local.cms2, { swaggerUi: { api: {} } }, 2);
+            api = local.cms2.swaggerUi.api;
+            Object.keys(local.cms2.swaggerJson.paths).forEach(function (path) {
+                var collection;
+                //!! window.swaggerUi.api.ContentDraft.deleteByIdOne[0]
+                collection = api[path.split('/')[1]] = api[path.split('/')[1]] || {};
+                Object.keys(local.cms2.swaggerJson.paths[path]).forEach(function (method) {
+                    var pathMethod;
+                    pathMethod = local.cms2.swaggerJson.paths[path][method];
+                    collection[pathMethod.operationId] = function () {
+                        var data, url;
+                        url = local.cms2.swaggerJson.basePath + '/' + path + '?';
+                        pathMethod.parameters.forEach(function (param, ii) {
+                            switch (param.in) {
+                            case 'path':
+                                url = url.replace('{' + param.name + '}', arguments[ii]);
+                                break;
+                            }
+                        });
+                        local.utility2.ajax({
+                            data: data,
+                            method: method.toUpperCase(),
+                            url: url
+                        }, arguments[pathMethod.parameters.length - 1]);
+                    };
+                });
+                collection.foo = 1;
+
+            });
+        };
+
         local.cms2.userRoleHas = function (user, role) {
             /*
                 this function will check if the user has the given role
@@ -204,7 +240,8 @@
     case 'node':
         local.cms2.modelCreate = function (options) {
             /*
-                this function will update swaggerJson.paths with options.paths
+                this function will create a collection from the given options,
+                and update swaggerJson with it
             */
 
 
@@ -323,7 +360,7 @@ local.utility2.objectSetDefault(options, {
             summary: 'replace or create one {{_modelName}} object',
             tags: ['{{_modelName}}']
         } },
-        '/{{_modelName}}/updateOrCreateOne': { put: {
+        '/{{_modelName}}/updateOrCreateOne': { patch: {
             _requestHandler: local.cms2.middlewareCrudDefault,
             parameters: [{
                 description: '{{_modelName}} object',
@@ -476,190 +513,190 @@ local.cms2.swaggerJson.tags = Object
             /*
                 this function will run the main swagger middleware
             */
+            var modeNext, onNext, onTaskEnd, swagger, tmp;
+            modeNext = 0;
+            onNext = function (error) {
+                try {
 
 
 
-/* jslint-indent-begin 12 */
-/*jslint maxlen: 108, regexp: true*/
-var modeNext, onNext, onTaskEnd, swagger, tmp;
-modeNext = 0;
-onNext = function (error) {
-    try {
-        modeNext = error instanceof Error
-            ? NaN
-            : modeNext + 1;
-        switch (modeNext) {
-        case 1:
-            // serve builtin assets
-            switch (request.urlParsed.pathnameNormalized) {
-            case '/assets/utility2.css':
-            case '/assets/utility2.js':
-                response.end(local.utility2[request.urlParsed.pathnameNormalized]);
-                return;
-            case '/assets/cms2.js':
-            case '/assets/swagger-ui.html':
-            case '/assets/swagger-ui.rollup.css':
-            case '/assets/swagger-ui.rollup.js':
-            case '/assets/swagger-ui.explorer_icons.png':
-            case '/assets/swagger-ui.logo_small.png':
-            case '/assets/swagger-ui.throbber.gif':
-                response.end(local.cms2[request.urlParsed.pathnameNormalized]);
-                return;
-            default:
-                onNext();
-            }
-            break;
-        case 2:
-            if (request.urlParsed.pathnameNormalized
-                    .indexOf(local.cms2.swaggerJson.basePath) === 0) {
-                tmp = request.urlParsed.pathnameNormalized
-                    .replace(local.cms2.swaggerJson.basePath, '');
-                switch (tmp) {
-                // serve swagger.json
-                case '/swagger.json':
-                    response.end(local.utility2.jsonStringifyOrdered(local.cms2.swaggerJson));
-                    return;
-                }
-                // lookup swagger request-handler from requestHandlerDict
-                while (true) {
-                    swagger = swagger || local.cms2.requestHandlerDict[tmp];
-                    if (swagger || !(/[^\/]/).test(tmp)) {
-                        break;
-                    }
-                    tmp = tmp.replace((/[^\/]+(\/*)$/), '$1');
-                }
-            }
-            // if 404, then run nextMiddleware
-            if (!swagger) {
-                nextMiddleware();
-                return;
-            }
-            // save _requestHandler
-            tmp = swagger._requestHandler;
-            // jsonCopy object to prevent side-effect
-            swagger = request.swagger = local.utility2.jsonCopy(swagger);
-            global.swagger = swagger; //debugPrint
-            // restore _requestHandler
-            swagger._requestHandler = tmp;
-            swagger.model = local.cms2.modelDict[swagger._modelName];
-            onNext();
-            break;
-        case 3:
-            onTaskEnd = local.utility2.onTaskEnd(onNext);
-            onTaskEnd.counter += 1;
-            // init paramDict
-            swagger.paramDict = {};
-            // parse path param
-            tmp = request.urlParsed.pathname
-                .replace(local.cms2.swaggerJson.basePath, '')
-                .split('/');
-            swagger._path.split('/').forEach(function (key, ii) {
-                if ((/^\{\S*?\}$/).test(key)) {
-                    swagger.paramDict[key.slice(1, -1)] = tmp[ii];
-                }
-            });
-            (swagger.parameters || []).forEach(function (param) {
-                switch (param.in) {
-                // parse body param
-                case 'body':
-                    onTaskEnd.counter += 1;
-                    local.utility2.streamReadAll(request, function (error, data) {
-                        swagger.paramDict[param.name] = String(data);
-                        onTaskEnd(error);
-                    });
-                    break;
-                // parse header param
-                case 'header':
-                    swagger.paramDict[param.name] = request.headers[param.name];
-                    break;
-                // parse query param
-                case 'query':
-                    swagger.paramDict[param.name] = request.urlParsed.query[param.name];
-                    break;
-                }
-                // init default param
-                swagger.paramDict[param.name] = swagger.paramDict[param.name] || param.default;
-            });
-            onTaskEnd();
-            break;
-        case 4:
-            // parse paramDict
-            swagger.parameters.forEach(function (param) {
-                // validate param
-                swagger.paramDict[param.name] = local.cms2.modelValidateProperty({
-                    data: swagger.paramDict[param.name],
-                    key: 'param.' + param.name,
-                    parse: true,
-                    property: param,
-                    required: param.required
-                });
-            });
-            // rename id to _id
-            local.cms2.modelNormalizeIdMongodb(swagger.paramDict);
-            // init responseData
-            // http://jsonapi.org/format/#document-structure-resource-objects
-            local.utility2.objectSetDefault(swagger, { responseData: { data: [{
-                _id: swagger.paramDict._id ||
-                    (swagger.paramDict.body && swagger.paramDict.body._id) ||
-                    local.utility2.uuidTime(),
-                id: swagger.paramDict.type ||
-                    (swagger.paramDict.body && swagger.paramDict.body.type)
-            }] } }, -1);
-            // init _id
-            swagger.responseData.data[0]._id =
-                swagger.responseData.data[0]._id || local.utility2.uuidTime();
-            // get previously saved data
-            if (swagger.model) {
-                swagger.model.collection.findOne({
-                    _id: swagger.responseData.data[0]._id
-                }, function (error, dataPrevious) {
-                    // jslint-hack
-                    local.utility2.nop(error);
-                    swagger.dataPrevious = dataPrevious || {};
-                    onNext();
-                });
-                return;
-            }
-            onNext();
-            break;
-        case 5:
-            // run middlewareHookBefore
-            local.cms2.middlewareHookBefore(request, response, onNext);
-            break;
-        case 6:
-            // run _requestHandler
-            if (swagger._requestHandler) {
-                swagger._requestHandler(request, response, onNext);
-                return;
-            }
-            onNext();
-            break;
-        case 7:
-            // run middlewareHookAfter
-            local.cms2.middlewareHookAfter(request, response, onNext);
-            break;
-        case 8:
-            // end response
-            response.end(JSON.stringify(
-                // rename _id to id
-                local.cms2.modelNormalizeIdSwagger(
-                    // jsonCopy object to prevent side-effect
-                    local.utility2.jsonCopy(swagger.responseData)
-                )
-            ));
-            break;
-        default:
-            local.cms2.middlewareError(error, request, response, nextMiddleware);
-        }
-    } catch (errorCaught) {
-        local.cms2.middlewareError(errorCaught, request, response, nextMiddleware);
+/* jslint-indent-begin 20 */
+/*jslint maxlen: 116, regexp: true*/
+modeNext = error instanceof Error
+    ? NaN
+    : modeNext + 1;
+switch (modeNext) {
+case 1:
+    // serve builtin assets
+    switch (request.urlParsed.pathnameNormalized) {
+    case '/assets/utility2.css':
+    case '/assets/utility2.js':
+        response.end(local.utility2[request.urlParsed.pathnameNormalized]);
+        return;
+    case '/assets/cms2.js':
+    case '/assets/swagger-ui.html':
+    case '/assets/swagger-ui.rollup.css':
+    case '/assets/swagger-ui.rollup.js':
+    case '/assets/swagger-ui.explorer_icons.png':
+    case '/assets/swagger-ui.logo_small.png':
+    case '/assets/swagger-ui.throbber.gif':
+        response.end(local.cms2[request.urlParsed.pathnameNormalized]);
+        return;
+    default:
+        onNext();
     }
-};
-onNext();
+    break;
+case 2:
+    if (request.urlParsed.pathnameNormalized
+            .indexOf(local.cms2.swaggerJson.basePath) === 0) {
+        tmp = request.urlParsed.pathnameNormalized
+            .replace(local.cms2.swaggerJson.basePath, '');
+        switch (tmp) {
+        // serve swagger.json
+        case '/swagger.json':
+            response.end(local.utility2.jsonStringifyOrdered(local.cms2.swaggerJson));
+            return;
+        }
+        // lookup swagger request-handler from requestHandlerDict
+        while (true) {
+            swagger = swagger || local.cms2.requestHandlerDict[tmp];
+            if (swagger || !(/[^\/]/).test(tmp)) {
+                break;
+            }
+            tmp = tmp.replace((/[^\/]+(\/*)$/), '$1');
+        }
+    }
+    // if 404, then run nextMiddleware
+    if (!swagger) {
+        nextMiddleware();
+        return;
+    }
+    // save _requestHandler
+    tmp = swagger._requestHandler;
+    // jsonCopy object to prevent side-effect
+    swagger = request.swagger = local.utility2.jsonCopy(swagger);
+    global.swagger = swagger; //debugPrint
+    // restore _requestHandler
+    swagger._requestHandler = tmp;
+    swagger.model = local.cms2.modelDict[swagger._modelName];
+    onNext();
+    break;
+case 3:
+    onTaskEnd = local.utility2.onTaskEnd(onNext);
+    onTaskEnd.counter += 1;
+    // init paramDict
+    swagger.paramDict = {};
+    // parse path param
+    tmp = request.urlParsed.pathname
+        .replace(local.cms2.swaggerJson.basePath, '')
+        .split('/');
+    swagger._path.split('/').forEach(function (key, ii) {
+        if ((/^\{\S*?\}$/).test(key)) {
+            swagger.paramDict[key.slice(1, -1)] = tmp[ii];
+        }
+    });
+    (swagger.parameters || []).forEach(function (param) {
+        switch (param.in) {
+        // parse body param
+        case 'body':
+            onTaskEnd.counter += 1;
+            local.utility2.streamReadAll(request, function (error, data) {
+                swagger.paramDict[param.name] = String(data);
+                onTaskEnd(error);
+            });
+            break;
+        // parse header param
+        case 'header':
+            swagger.paramDict[param.name] = request.headers[param.name];
+            break;
+        // parse query param
+        case 'query':
+            swagger.paramDict[param.name] = request.urlParsed.query[param.name];
+            break;
+        }
+        // init default param
+        swagger.paramDict[param.name] = swagger.paramDict[param.name] || param.default;
+    });
+    onTaskEnd();
+    break;
+case 4:
+    // parse paramDict
+    swagger.parameters.forEach(function (param) {
+        // validate param
+        swagger.paramDict[param.name] = local.cms2.modelValidateProperty({
+            data: swagger.paramDict[param.name],
+            key: 'param.' + param.name,
+            parse: true,
+            property: param,
+            required: param.required
+        });
+    });
+    // rename id to _id
+    local.cms2.modelNormalizeIdMongodb(swagger.paramDict);
+    // init responseData
+    // http://jsonapi.org/format/#document-structure-resource-objects
+    local.utility2.objectSetDefault(swagger, { responseData: { data: [{
+        _id: swagger.paramDict._id ||
+            (swagger.paramDict.body && swagger.paramDict.body._id) ||
+            local.utility2.uuidTime(),
+        id: swagger.paramDict.type ||
+            (swagger.paramDict.body && swagger.paramDict.body.type)
+    }] } }, -1);
+    // init _id
+    swagger.responseData.data[0]._id =
+        swagger.responseData.data[0]._id || local.utility2.uuidTime();
+    // get previously saved data
+    if (swagger.model) {
+        swagger.model.collection.findOne({
+            _id: swagger.responseData.data[0]._id
+        }, function (error, dataPrevious) {
+            // jslint-hack
+            local.utility2.nop(error);
+            swagger.dataPrevious = dataPrevious || {};
+            onNext();
+        });
+        return;
+    }
+    onNext();
+    break;
+case 5:
+    // run middlewareHookBefore
+    local.cms2.middlewareHookBefore(request, response, onNext);
+    break;
+case 6:
+    // run _requestHandler
+    if (swagger._requestHandler) {
+        swagger._requestHandler(request, response, onNext);
+        return;
+    }
+    onNext();
+    break;
+case 7:
+    // run middlewareHookAfter
+    local.cms2.middlewareHookAfter(request, response, onNext);
+    break;
+case 8:
+    // end response
+    response.end(JSON.stringify(
+        // rename _id to id
+        local.cms2.modelNormalizeIdSwagger(
+            // jsonCopy object to prevent side-effect
+            local.utility2.jsonCopy(swagger.responseData)
+        )
+    ));
+    break;
+default:
+    local.cms2.middlewareError(error, request, response, nextMiddleware);
 /* jslint-indent-end */
 
 
 
+                    }
+                } catch (errorCaught) {
+                    local.cms2.middlewareError(errorCaught, request, response, nextMiddleware);
+                }
+            };
+            onNext();
         };
 
         local.cms2.middlewareCrudDefault = function (request, response, nextMiddleware) {
@@ -707,7 +744,7 @@ onNext();
                             break;
                         case 'getByQueryMany':
                             swagger.model.collection
-                                .find(debugPrint(swagger.paramDict.query))
+                                .find(swagger.paramDict.query)
                                 .limit(swagger.paramDict.limit)
                                 .sort(swagger.paramDict.sort)
                                 .toArray(onNext);
@@ -980,7 +1017,7 @@ onNext();
                 local.swagger_ui_lite.__dirname + '/swagger-ui.rollup.js',
                 'utf8'
             )
-            // hack add object type
+            // swagger-hack - hack add object type
             .replace('var str;', 'var str = type === "object" ? "object" : undefined;');
         local.cms2['/assets/swagger-ui.explorer_icons.png'] = local.fs
             .readFileSync(local.swagger_ui_lite.__dirname +
@@ -1039,6 +1076,10 @@ onNext();
         // init User model
         local.cms2.modelCreate({
             _collectionName: 'User',
+            _createIndexList: [
+                [{ "email": 1 }, { "dropDups": true, "sparse": true, "unique": true }],
+                [{ "username": 1 }, { "dropDups": true, "sparse": true, "unique": true }]
+            ],
             _crudDefault: true,
             _modelName: 'User',
             _tags: [{ description: 'user api', name: 'User' }],
@@ -1105,7 +1146,7 @@ onNext();
                 queryParameterSubSchema: {
                     properties: {
                         type: {
-                            // hack swagger-tools.validate to allow object type
+                            // swagger-hack - hack swagger-tools.validate to allow object type
                             enum: ['string', 'number', 'boolean', 'integer', 'array', 'object']
                         }
                     }
@@ -1158,6 +1199,66 @@ onNext();
             'admin': 80,
             'root': 90
         };
+        // init swagger client
+        local.Handlebars = {
+            registerHelper: local.utility2.nop,
+            template: local.utility2.nop
+        };
+        local.$ = local.utility2.nop;
+        local.console = global.console;
+        local.location = {};
+        local.debugPrint = debugPrint;
+        local.window = local;
+        local.XMLHttpRequest = function () {
+            var self;
+            self = this;
+            self.headers = {};
+            //!! self.onreadystatechange;
+            //!! self.readyState;
+        };
+        local.XMLHttpRequest.prototype.abort = function () {
+            return;
+        };
+        local.XMLHttpRequest.prototype.open = function (method, url) {
+            this.method = method;
+            this.url = url;
+        };
+        local.XMLHttpRequest.prototype.send = function (data) {
+            var self;
+            self = this;
+            self.data = data;
+            local.utility2.ajax(self, function (error, data, response) {
+                self.response = response;
+            });
+        };
+        local.XMLHttpRequest.prototype.setRequestHeader = function (key, value) {
+            this.headers[key.toLowerCase()] = value;
+        };
+        try {
+            require('vm').runInNewContext(
+                local.fs.readFileSync(
+                    local.swagger_ui_lite.__dirname + '/swagger-ui.rollup.js',
+                    'utf8'
+                )
+                    .replace((/[\S\s]+?\/underscore-min\.js \*\//), function (match0) {
+                        return match0.replace((/\S+/g), '');
+                    }),
+                local,
+                __dirname + '/swagger-ui.rollup.js'
+            );
+            local.cms2.SwaggerClient = local.SwaggerClient;
+            local.cms2.SwaggerUi = local.SwaggerUi;
+            (function () {
+                var aa;
+                aa = global.aa = new local.cms2.SwaggerClient({
+                    url: 'http://localhost/swagger.json'
+                });
+                aa.buildFromSpec(local.cms2.swaggerJson);
+                aa.ContentDraft.getByIdOne({id:1}, debugPrint);
+            }());
+        } catch (errorCaught) {
+            console.error(errorCaught.stack);
+        }
         break;
     }
 }((function () {

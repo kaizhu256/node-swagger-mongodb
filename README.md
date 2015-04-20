@@ -60,6 +60,7 @@ instruction
     '<title>\n' +
     '{{envDict.npm_package_name}} [{{envDict.npm_package_version}}]\n' +
     '</title>\n' +
+    '{{envDict.npm_config_html_head_extra}}\n' +
     '<link rel="stylesheet" href="/assets/utility2.css">\n' +
     '<style>\n' +
     '* {\n' +
@@ -79,11 +80,11 @@ instruction
 '</head>\n' +
 '<body>\n' +
     '<div class="ajaxProgressDiv" style="display: none;">\n' +
-    '<div class="ajaxProgressBarDiv ajaxProgressBarDivLoading">loading</div>\n' +
+    '<div class="ajaxProgressBarDiv ajaxProgressBarDivLoading" \
+>loading</div>\n' +
     '</div>\n' +
-    '<h1>\n' +
-        '{{envDict.npm_package_name}} [{{envDict.npm_package_version}}]\n' +
-    '</h1>\n' +
+    '<h1 \
+>{{envDict.npm_package_name}} [{{envDict.npm_package_version}}]</h1>\n' +
     '<h3>{{envDict.npm_package_description}}</h3>\n' +
     '<div class="testReportDiv"></div>\n' +
     '<script src="/assets/utility2.js"></script>\n' +
@@ -103,7 +104,7 @@ instruction
 
 
 
-            String()).replace((/\{\{envDict\.\w+?\}\}/g), function (match0) {
+        String()).replace((/\{\{envDict\.\w+?\}\}/g), function (match0) {
             switch (match0) {
             case '{{envDict.npm_package_description}}':
                 return 'this is an example module';
