@@ -247,6 +247,25 @@ local.utility2.objectSetDefault(options, {
             summary: 'delete one {{_modelName}} object by id',
             tags: ['{{_modelName}}']
         } },
+        '/{{_modelName}}/existsByIdOne/{id}': { get: {
+            _requestHandler: local.cms2.middlewareCrudDefault,
+            parameters: [{
+                description: '{{_modelName}} id',
+                in: 'path',
+                name: 'id',
+                required: true,
+                type: 'string'
+            }],
+            responses: {
+                200: {
+                    description: '200 ok - ' +
+                        'http://jsonapi.org/format/#document-structure-top-level',
+                    schema: { $ref: '#/definitions/JsonApiResponseData{{_modelName}}' }
+                }
+            },
+            summary: 'check if {{_modelName}} object exists by id',
+            tags: ['{{_modelName}}']
+        } },
         '/{{_modelName}}/getByIdOne/{id}': { get: {
             _requestHandler: local.cms2.middlewareCrudDefault,
             parameters: [{
@@ -703,6 +722,9 @@ default:
                             modeNext = NaN;
                             swagger.model.collection.removeOne({ _id: data._id }, onNext);
                             break;
+                        case 'existsByIdOne':
+                            swagger.model.collection.findOne({ _id: data._id }, {}, onNext);
+                            break;
                         case 'getByIdOne':
                             swagger.model.collection.findOne({ _id: data._id }, onNext);
                             break;
@@ -756,6 +778,11 @@ default:
                                 { upsert: true },
                                 onNext
                             );
+                            break;
+                        case 'existsByIdOne':
+                            modeNext = NaN;
+                            swagger.responseData.data = !!data;
+                            onNext();
                             break;
                         case 'getByIdOne':
                         case 'getByQueryMany':

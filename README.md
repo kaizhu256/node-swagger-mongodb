@@ -60,7 +60,6 @@ instruction
     '<title>\n' +
     '{{envDict.npm_package_name}} [{{envDict.npm_package_version}}]\n' +
     '</title>\n' +
-    '{{envDict.npm_config_html_head_extra}}\n' +
     '<link rel="stylesheet" href="/assets/utility2.css">\n' +
     '<style>\n' +
     '* {\n' +
@@ -77,6 +76,7 @@ instruction
         'display: none;\n' +
     '}\n' +
     '</style>\n' +
+    '{{envDict.npm_config_html_head_extra}}\n' +
 '</head>\n' +
 '<body>\n' +
     '<div class="ajaxProgressDiv" style="display: none;">\n' +
@@ -98,6 +98,14 @@ instruction
         'npm_package_version: "{{envDict.npm_package_version}}"\n' +
     '};\n' +
     '</script>\n' +
+    '{{envDict.npm_config_html_body_extra}}\n' +
+    '<br>\n' +
+    '<iframe \
+height="512" \
+onload="this.height=screen.height;" \
+src="/assets/swagger-ui.html" \
+width="100%" \
+></iframe>\n' +
 '</body>\n' +
 '</html>\n' +
 /* jslint-ignore-end */
@@ -112,16 +120,14 @@ instruction
                 return 'example-module';
             case '{{envDict.npm_package_version}}':
                 return '0.0.1';
+            default:
+                return '';
             }
         });
-        local['/assets/cms2.js'] =
-            local.jslint_lite['/assets/cms2.js'];
-        local['/assets/utility2.css'] =
-            '';
-        local['/assets/utility2.js'] =
-            '';
-        local['/test/test.js'] =
-            '';
+        local['/assets/cms2.js'] = local.jslint_lite['/assets/cms2.js'];
+        local['/assets/utility2.css'] = '';
+        local['/assets/utility2.js'] = '';
+        local['/test/test.js'] = '';
         // create server
         local.server = local.http.createServer(function (request, response) {
             switch (local.url.parse(request.url).pathname) {

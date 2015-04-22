@@ -326,55 +326,35 @@ case 1:
                             element.message + ' - ' + JSON.stringify(element.path));
                     });
                 });
-
-
+            // init api
+            local.cms2.api = new local.cms2.SwaggerClient({
+                url: 'http://localhost:' + local.utility2.envDict.npm_config_server_port
+            });
+            local.cms2.api.buildFromSpec(local.cms2.swaggerJson);
             (function () {
-                var aa;
-                aa = global.aa = new local.cms2.SwaggerClient({
-                    url: 'http://localhost:' +
-                        local.utility2.envDict.npm_config_server_port +
-                        '/swagger.json'
-                });
-                aa.buildFromSpec(local.cms2.swaggerJson);
-                aa.ContentDraft.getByIdOne({ id: 1 }, function () {
-                    debugPrint(JSON.stringify(arguments, null, 4));
-                });
+                local.cms2.api.ContentDraft.getByIdOne({ id2: 1 }, debugPrint,
+                function () {
+                    debugPrint(arguments.length + '\n' + JSON.stringify(arguments, null, 4));
+                }, debugPrint);
             }());
-
-            //debugprint
-            //!! local.utility2.ajax({
-                //!! data: JSON.stringify({
-                    //!! _id: 'foo',
-                    //!! content: '1'
-                //!! }),
-                //!! method: 'PUT',
-                //!! url: '/api/v0.1/ContentDraft/updateOrCreateOne'
-            //!! }, debugPrint);
-            //!! local.utility2.ajax({
-                //!! method: 'GET',
-                //!! url: '/api/v0.1/ContentDraft/getByQueryMany?limit=1&projection={}'
-            //!! }, debugPrint);
         });
         // init assets
-        local['/'] =
-            local.utility2.stringFormat(local.fs
-                .readFileSync(__dirname + '/README.md', 'utf8')
-                .replace((/[\S\s]+?(<!DOCTYPE html>[\S\s]+?<\/html>)[\S\s]+/), '$1')
-                // parse '\' line-continuation
-                .replace((/\\\n/g), '')
-                .replace((/\\n' \+(\s*?)'/g), '$1'), { envDict: local.utility2.envDict });
-        local['/assets/cms2.js'] =
-            local.istanbul_lite.instrumentInPackage(
-                local.cms2['/assets/cms2.js'],
-                __dirname + '/index.js',
-                'cms2'
-            );
-        local['/test/test.js'] =
-            local.istanbul_lite.instrumentInPackage(
-                local.fs.readFileSync(__filename, 'utf8'),
-                __filename,
-                'cms2'
-            );
+        local['/'] = local.utility2.stringFormat(local.fs
+            .readFileSync(__dirname + '/README.md', 'utf8')
+            .replace((/[\S\s]+?(<!DOCTYPE html>[\S\s]+?<\/html>)[\S\s]+/), '$1')
+            // parse '\' line-continuation
+            .replace((/\\\n/g), '')
+            .replace((/\\n' \+(\s*?)'/g), '$1'), { envDict: local.utility2.envDict }, '');
+        local['/assets/cms2.js'] = local.istanbul_lite.instrumentInPackage(
+            local.cms2['/assets/cms2.js'],
+            __dirname + '/index.js',
+            'cms2'
+        );
+        local['/test/test.js'] = local.istanbul_lite.instrumentInPackage(
+            local.fs.readFileSync(__filename, 'utf8'),
+            __filename,
+            'cms2'
+        );
         // init middleware
         local.middleware = local.utility2.middlewareGroupCreate([
             local.utility2.middlewareInit,
@@ -399,10 +379,6 @@ case 1:
                 case '/':
                 case '/test/test.js':
                     response.end(local[request.urlParsed.pathnameNormalized]);
-                    break;
-                // debug request
-                case '/test/echo':
-                    local.utility2.serverRespondEcho(request, response);
                     break;
                 // default to nextMiddleware
                 default:
