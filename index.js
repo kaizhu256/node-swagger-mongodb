@@ -189,42 +189,6 @@
             return data;
         };
 
-        local.cms2.swaggerInit = function () {
-            /*
-                this function will init swagger from the swaggerJson
-            */
-            var api;
-            local.utility2.objectSetDefault(local.cms2, { swaggerUi: { api: {} } }, 2);
-            api = local.cms2.swaggerUi.api;
-            Object.keys(local.cms2.swaggerJson.paths).forEach(function (path) {
-                var collection;
-                //!! window.swaggerUi.api.ContentDraft.deleteByIdOne[0]
-                collection = api[path.split('/')[1]] = api[path.split('/')[1]] || {};
-                Object.keys(local.cms2.swaggerJson.paths[path]).forEach(function (method) {
-                    var pathMethod;
-                    pathMethod = local.cms2.swaggerJson.paths[path][method];
-                    collection[pathMethod.operationId] = function () {
-                        var data, url;
-                        url = local.cms2.swaggerJson.basePath + '/' + path + '?';
-                        pathMethod.parameters.forEach(function (param, ii) {
-                            switch (param.in) {
-                            case 'path':
-                                url = url.replace('{' + param.name + '}', arguments[ii]);
-                                break;
-                            }
-                        });
-                        local.utility2.ajax({
-                            data: data,
-                            method: method.toUpperCase(),
-                            url: url
-                        }, arguments[pathMethod.parameters.length - 1]);
-                    };
-                });
-                collection.foo = 1;
-
-            });
-        };
-
         local.cms2.userRoleHas = function (user, role) {
             /*
                 this function will check if the user has the given role
@@ -897,24 +861,6 @@ default:
 
     // run node js-env code
     case 'node':
-        // init mongodb client
-        local.utility2.onReady.counter += 1;
-        local.utility2.taskCacheCreateOrAddCallback(
-            { key: 'cms2.mongodbConnect' },
-            function (onError) {
-                local.mongodb.MongoClient.connect(
-                    process.env.npm_config_mongodb_url || 'mongodb://localhost:27017/test',
-                    function (error, db) {
-                        // validate no error occurred
-                        local.utility2.assert(!error, error);
-                        local.cms2.db = db;
-                        onError();
-                        local.utility2.onReady();
-                    }
-                );
-            },
-            local.utility2.nop
-        );
         // init assets
         local.cms2['/assets/cms2.js'] = local.fs
             .readFileSync(__filename, 'utf8');
@@ -1028,117 +974,6 @@ default:
         local.cms2['/assets/swagger-ui.throbber.gif'] = local.fs
             .readFileSync(local.swagger_ui_lite.__dirname +
                 '/swagger-ui.throbber.gif');
-        // init ContentDraft model
-        local.cms2.modelCreate({
-            _collectionName: 'ContentDraft',
-            _crudDefault: true,
-            _modelName: 'ContentDraft',
-            _tags: [{ description: 'draft content', name: 'ContentDraft' }],
-            definitions: {
-                ContentDraft: {
-                    properties: {
-                        content: { type: 'string' },
-                        summary: { type: 'string' },
-                        title: { type: 'string' }
-                    },
-                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
-                }
-            }
-        });
-        // init ContentHistory model
-        local.cms2.modelCreate({
-            _collectionName: 'ContentHistory',
-            _crudDefault: true,
-            _modelName: 'ContentHistory',
-            _tags: [{ description: 'history of published content', name: 'ContentHistory' }],
-            definitions: {
-                ContentHistory: {
-                    properties: {
-                        _contentId: { type: 'string' },
-                        _version: { type: 'integer' }
-                    },
-                    'x-inheritList': [{ $ref: '#/definitions/ContentDraft' }]
-                }
-            }
-        });
-        // init ContentPublish model
-        local.cms2.modelCreate({
-            _collectionName: 'ContentPublish',
-            _crudDefault: true,
-            _modelName: 'ContentPublish',
-            _tags: [{ description: 'published content', name: 'ContentPublish' }],
-            definitions: {
-                ContentPublish: {
-                    'x-inheritList': [{ $ref: '#/definitions/ContentDraft' }]
-                }
-            }
-        });
-        // init User model
-        local.cms2.modelCreate({
-            _collectionName: 'User',
-            _createIndexList: [
-                [{ "email": 1 }, { "dropDups": true, "sparse": true, "unique": true }],
-                [{ "username": 1 }, { "dropDups": true, "sparse": true, "unique": true }]
-            ],
-            _crudDefault: true,
-            _modelName: 'User',
-            _tags: [{ description: 'user api', name: 'User' }],
-            definitions: {
-                User: {
-                    properties: {
-                        email: { default: 'john@example.com', type: 'string' },
-                        roleList: {
-                            items: { default: 'guest', type: 'string' },
-                            type: 'array'
-                        },
-                        passwordHash: {
-                            default: '00000000-0000-0000-0000-000000000000',
-                            type: 'string'
-                        },
-                        passwordSalt: {
-                            default: '00000000-0000-0000-0000-000000000000',
-                            type: 'string'
-                        },
-                        username: { default: 'john', type: 'string' }
-                    },
-                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
-                }
-            },
-            paths: {
-                '/User/login': {
-                    put: {
-                        parameters: [{
-                            description: 'login username',
-                            in: 'header',
-                            name: 'username',
-                            required: true,
-                            type: 'string'
-                        }, {
-                            description: 'login password',
-                            in: 'header',
-                            name: 'password',
-                            required: true,
-                            type: 'string'
-                        }],
-                        summary: 'login user to new session',
-                        tags: ['User']
-                    }
-                },
-                '/User/logout': {
-                    delete: {
-                        parameters: [{
-                            description: 'logout sessionId',
-                            in: 'query',
-                            name: 'sessionId',
-                            required: true,
-                            type: 'string'
-                        }],
-                        summary: 'logout user from existing session',
-                        tags: ['User']
-                    }
-                }
-            }
-        });
         local.utility2.objectSetOverride(local.swagger_tools.v2.validators[
             'schema.json'
         ].cache['schema.json'], {
@@ -1153,40 +988,6 @@ default:
                 }
             }
         }, -1);
-        local.utility2.taskCacheCreateOrAddCallback({
-            key: 'utility2.onReady'
-        }, null, function () {
-            // validate swaggerJson
-            local.swagger_tools.v2
-                .validate(local.cms2.swaggerJson, function (error, result) {
-                    if (error) {
-                        local.utility2.onErrorDefault(error);
-                        return;
-                    }
-                    local._debugSwaggerJsonError = result;
-                    (result && result.errors && result.errors.length
-                        ? result.errors
-                        : result && result.warnings && result.warning.lengh
-                        ? result.warnings
-                        : []).slice(0, 4).forEach(function (element) {
-                        console.error('swagger schema - ' + element.code + ' - ' +
-                            element.message + ' - ' + JSON.stringify(element.path));
-                    });
-                });
-            //debugprint
-            //!! local.utility2.ajax({
-                //!! data: JSON.stringify({
-                    //!! _id: 'foo',
-                    //!! content: '1'
-                //!! }),
-                //!! method: 'PUT',
-                //!! url: '/api/v0.1/ContentDraft/updateOrCreateOne'
-            //!! }, debugPrint);
-            local.utility2.ajax({
-                method: 'GET',
-                url: '/api/v0.1/ContentDraft/getByQueryMany?limit=1&projection={}'
-            }, debugPrint);
-        });
         // init user roles
         local.cms2.userRoleDict = {
             'render': 10,
@@ -1199,47 +1000,44 @@ default:
             'admin': 80,
             'root': 90
         };
-        // init swagger client
-        local.Handlebars = {
-            registerHelper: local.utility2.nop,
-            template: local.utility2.nop
-        };
-        local.$ = local.utility2.nop;
-        local.console = global.console;
-        local.location = {};
-        local.debugPrint = debugPrint;
-        local.window = local;
-        local.XMLHttpRequest = function () {
-            var self;
-            self = this;
-            self.headers = {};
-            //!! self.onreadystatechange;
-            //!! self.readyState;
-        };
-        local.XMLHttpRequest.prototype.abort = function () {
-            return;
-        };
-        local.XMLHttpRequest.prototype.open = function (method, url) {
-            this.method = method;
-            this.url = url;
-        };
-        local.XMLHttpRequest.prototype.send = function (data) {
-            var self;
-            self = this;
-            self.data = data;
-            local.utility2.ajax(self, function (error, data, response) {
-                self.response = response;
-            });
-        };
-        local.XMLHttpRequest.prototype.setRequestHeader = function (key, value) {
-            this.headers[key.toLowerCase()] = value;
-        };
-        try {
-            require('vm').runInNewContext(
-                local.fs.readFileSync(
-                    local.swagger_ui_lite.__dirname + '/swagger-ui.rollup.js',
-                    'utf8'
-                )
+        // init SwaggerClient
+        (function () {
+            local.Handlebars = {
+                registerHelper: local.utility2.nop,
+                template: local.utility2.nop
+            };
+            local.XMLHttpRequest = function () {
+                var self;
+                self = this;
+                self.headers = {};
+            };
+            local.XMLHttpRequest.prototype.onreadystatechange = local.utility2.nop;
+            local.XMLHttpRequest.prototype.open = function (method, url) {
+                this.method = method;
+                this.url = url;
+            };
+            local.XMLHttpRequest.prototype.send = function (data) {
+                var self;
+                self = this;
+                self.data = data;
+                self.xhr = self;
+                local.utility2.ajax(self, local.utility2.nop);
+            };
+            local.XMLHttpRequest.prototype.setRequestHeader = function (key, value) {
+                this.headers[key.toLowerCase()] = value;
+            };
+            local.$ = local.utility2.nop;
+            local.console = console;
+            local.clearTimeout = clearTimeout;
+            local.location = {};
+            local.setTimeout = setTimeout;
+            local.window = local;
+            local.vm.runInNewContext(
+                local.fs
+                    .readFileSync(
+                        local.swagger_ui_lite.__dirname + '/swagger-ui.rollup.js',
+                        'utf8'
+                    )
                     .replace((/[\S\s]+?\/underscore-min\.js \*\//), function (match0) {
                         return match0.replace((/\S+/g), '');
                     }),
@@ -1248,17 +1046,7 @@ default:
             );
             local.cms2.SwaggerClient = local.SwaggerClient;
             local.cms2.SwaggerUi = local.SwaggerUi;
-            (function () {
-                var aa;
-                aa = global.aa = new local.cms2.SwaggerClient({
-                    url: 'http://localhost/swagger.json'
-                });
-                aa.buildFromSpec(local.cms2.swaggerJson);
-                aa.ContentDraft.getByIdOne({id:1}, debugPrint);
-            }());
-        } catch (errorCaught) {
-            console.error(errorCaught.stack);
-        }
+        }());
         break;
     }
 }((function () {
@@ -1316,6 +1104,7 @@ default:
         local.swagger_ui_lite = require('swagger-ui-lite');
         local.url = require('url');
         local.utility2 = require('utility2');
+        local.vm = require('vm');
         break;
     }
     return local;

@@ -177,6 +177,184 @@ case 1:
         local.swagger_ui_lite = require('swagger-ui-lite');
         local.url = require('url');
         local.utility2 = require('utility2');
+        // init mongodb client
+        local.utility2.onReady.counter += 1;
+        local.utility2.taskCacheCreateOrAddCallback(
+            { key: 'cms2.mongodbConnect' },
+            function (onError) {
+                local.mongodb.MongoClient.connect(
+                    process.env.npm_config_mongodb_url || 'mongodb://localhost:27017/test',
+                    function (error, db) {
+                        // validate no error occurred
+                        local.utility2.assert(!error, error);
+                        local.cms2.db = db;
+                        onError();
+                        local.utility2.onReady();
+                    }
+                );
+            },
+            local.utility2.nop
+        );
+        // init ContentDraft model
+        local.cms2.modelCreate({
+            _collectionName: 'ContentDraft',
+            _crudDefault: true,
+            _modelName: 'ContentDraft',
+            _tags: [{ description: 'draft content', name: 'ContentDraft' }],
+            definitions: {
+                ContentDraft: {
+                    properties: {
+                        content: { type: 'string' },
+                        summary: { type: 'string' },
+                        title: { type: 'string' }
+                    },
+                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
+                }
+            }
+        });
+        // init ContentHistory model
+        local.cms2.modelCreate({
+            _collectionName: 'ContentHistory',
+            _crudDefault: true,
+            _modelName: 'ContentHistory',
+            _tags: [{ description: 'history of published content', name: 'ContentHistory' }],
+            definitions: {
+                ContentHistory: {
+                    properties: {
+                        _contentId: { type: 'string' },
+                        _version: { type: 'integer' }
+                    },
+                    'x-inheritList': [{ $ref: '#/definitions/ContentDraft' }]
+                }
+            }
+        });
+        // init ContentPublish model
+        local.cms2.modelCreate({
+            _collectionName: 'ContentPublish',
+            _crudDefault: true,
+            _modelName: 'ContentPublish',
+            _tags: [{ description: 'published content', name: 'ContentPublish' }],
+            definitions: {
+                ContentPublish: {
+                    'x-inheritList': [{ $ref: '#/definitions/ContentDraft' }]
+                }
+            }
+        });
+        // init User model
+        local.cms2.modelCreate({
+            _collectionName: 'User',
+            _createIndexList: [
+                [{ "email": 1 }, { "dropDups": true, "sparse": true, "unique": true }],
+                [{ "username": 1 }, { "dropDups": true, "sparse": true, "unique": true }]
+            ],
+            _crudDefault: true,
+            _modelName: 'User',
+            _tags: [{ description: 'user api', name: 'User' }],
+            definitions: {
+                User: {
+                    properties: {
+                        email: { default: 'john@example.com', type: 'string' },
+                        roleList: {
+                            items: { default: 'guest', type: 'string' },
+                            type: 'array'
+                        },
+                        passwordHash: {
+                            default: '00000000-0000-0000-0000-000000000000',
+                            type: 'string'
+                        },
+                        passwordSalt: {
+                            default: '00000000-0000-0000-0000-000000000000',
+                            type: 'string'
+                        },
+                        username: { default: 'john', type: 'string' }
+                    },
+                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
+                }
+            },
+            paths: {
+                '/User/login': {
+                    put: {
+                        parameters: [{
+                            description: 'login username',
+                            in: 'header',
+                            name: 'username',
+                            required: true,
+                            type: 'string'
+                        }, {
+                            description: 'login password',
+                            in: 'header',
+                            name: 'password',
+                            required: true,
+                            type: 'string'
+                        }],
+                        summary: 'login user to new session',
+                        tags: ['User']
+                    }
+                },
+                '/User/logout': {
+                    delete: {
+                        parameters: [{
+                            description: 'logout sessionId',
+                            in: 'query',
+                            name: 'sessionId',
+                            required: true,
+                            type: 'string'
+                        }],
+                        summary: 'logout user from existing session',
+                        tags: ['User']
+                    }
+                }
+            }
+        });
+        local.utility2.taskCacheCreateOrAddCallback({
+            key: 'utility2.onReady'
+        }, null, function () {
+            // validate swaggerJson
+            local.swagger_tools.v2
+                .validate(local.cms2.swaggerJson, function (error, result) {
+                    if (error) {
+                        local.utility2.onErrorDefault(error);
+                        return;
+                    }
+                    local._debugSwaggerJsonError = result;
+                    (result && result.errors && result.errors.length
+                        ? result.errors
+                        : result && result.warnings && result.warning.lengh
+                        ? result.warnings
+                        : []).slice(0, 4).forEach(function (element) {
+                        console.error('swagger schema - ' + element.code + ' - ' +
+                            element.message + ' - ' + JSON.stringify(element.path));
+                    });
+                });
+
+
+            (function () {
+                var aa;
+                aa = global.aa = new local.cms2.SwaggerClient({
+                    url: 'http://localhost:' +
+                        local.utility2.envDict.npm_config_server_port +
+                        '/swagger.json'
+                });
+                aa.buildFromSpec(local.cms2.swaggerJson);
+                aa.ContentDraft.getByIdOne({ id: 1 }, function () {
+                    debugPrint(JSON.stringify(arguments, null, 4));
+                });
+            }());
+
+            //debugprint
+            //!! local.utility2.ajax({
+                //!! data: JSON.stringify({
+                    //!! _id: 'foo',
+                    //!! content: '1'
+                //!! }),
+                //!! method: 'PUT',
+                //!! url: '/api/v0.1/ContentDraft/updateOrCreateOne'
+            //!! }, debugPrint);
+            //!! local.utility2.ajax({
+                //!! method: 'GET',
+                //!! url: '/api/v0.1/ContentDraft/getByQueryMany?limit=1&projection={}'
+            //!! }, debugPrint);
+        });
         // init assets
         local['/'] =
             local.utility2.stringFormat(local.fs
