@@ -33,7 +33,7 @@
                     element._id = element._id || element.id;
                     delete element.id;
                 }
-            });
+            }, 8);
             return data;
         };
 
@@ -46,7 +46,7 @@
                     element.id = element.id || element._id;
                     delete element._id;
                 }
-            });
+            }, 8);
             return data;
         };
 
@@ -183,8 +183,8 @@
             // recurse - validate model according to property.$ref
             local.cms2.modelValidate({
                 data: data,
-                model: local.cms2.modelDereference(type),
-                key: options.key
+                key: options.key,
+                model: local.cms2.modelDereference(type)
             });
             return data;
         };
@@ -392,20 +392,12 @@ local.utility2.objectTraverse(options, function (element) {
             element[tmp] = local.utility2.stringFormat(element[tmp], options);
         }
     });
-});
+}, 8);
 // update swaggerJson.definitions
 // init modelDict
 local.cms2.modelDict = local.cms2.modelDict || {};
 // init model
 model = local.cms2.modelDict[options._modelName] = options.definitions[options._modelName];
-// init model.collection
-local.utility2.taskCacheCreateOrAddCallback(
-    { key: 'cms2.mongodbConnect' },
-    null,
-    function () {
-        model.collection = local.cms2.db.collection(options._collectionName);
-    }
-);
 // update swaggerJson.paths
 Object.keys(options.paths).forEach(function (path) {
     Object.keys(options.paths[path]).forEach(function (method) {
@@ -453,7 +445,7 @@ local.utility2.objectSetOverride(
                 }
             });
         }
-    }),
+    }, 8),
     2
 );
 // update swaggerJson.tags
@@ -463,8 +455,6 @@ tmp = {};
         tmp[element.name] = element;
     });
 });
-// jsonCopy object to prevent side-effect
-local.utility2.jsonCopy(tmp);
 local.cms2.swaggerJson.tags = Object
     .keys(tmp)
     // sort by name
@@ -472,6 +462,8 @@ local.cms2.swaggerJson.tags = Object
     .map(function (key) {
         return tmp[key];
     });
+// jsonCopy object to prevent side-effect
+local.cms2.swaggerJson = local.utility2.jsonCopy(local.cms2.swaggerJson);
 // init properties from x-inheritList
 [0, 1, 2, 3].forEach(function () {
     Object.keys(local.cms2.swaggerJson.definitions).forEach(function (model) {
@@ -485,6 +477,46 @@ local.cms2.swaggerJson.tags = Object
                 }, 2);
             });
     });
+});
+local.utility2.onReady.counter += 1;
+local.utility2.taskRunOrSubscribe({
+    key: 'cms2.mongodbConnect'
+}, function () {
+    var collection, swaggerJson;
+    // jsonCopy object to prevent side-effect
+    swaggerJson = local.utility2.jsonCopy(local.cms2.swaggerJson);
+    // validate swaggerJson
+    local.swagger_tools.v2
+        .validate(swaggerJson, function (error, result) {
+            if (error) {
+                local.utility2.onErrorDefault(error);
+                return;
+            }
+            local._debugSwaggerJsonError = result;
+            (result && result.errors && result.errors.length
+                ? result.errors
+                : result && result.warnings && result.warning.lengh
+                ? result.warnings
+                : []).slice(0, 8).forEach(function (element) {
+                console.error('swagger schema - ' + element.code + ' - ' +
+                    element.message + ' - ' + JSON.stringify(element.path));
+            });
+            if (result && result.errors && result.errors[0]) {
+                throw new Error(result.errors[0].message);
+            }
+        });
+    //!! // init api
+    //!! local.cms2.api.buildFromSpec(swaggerJson);
+    // init collection
+    collection = model.collection = local.cms2.db.collection(options._collectionName);
+    // init createIndexList
+    (
+        (!process.env.npm_config_mongodb_read_only && options._createIndexList) || []
+    ).forEach(function (index) {
+        local.utility2.onReady.counter += 1;
+        collection.createIndex(index[0], index[1], local.utility2.onReady);
+    });
+    local.utility2.onReady();
 });
 /* jslint-indent-end */
 
@@ -506,7 +538,7 @@ local.cms2.swaggerJson.tags = Object
 /* jslint-indent-begin 20 */
 /*jslint maxlen: 116, regexp: true*/
 modeNext = error instanceof Error
-    ? NaN
+    ? Infinity
     : modeNext + 1;
 switch (modeNext) {
 case 1:
@@ -558,7 +590,7 @@ case 2:
     tmp = swagger._requestHandler;
     // jsonCopy object to prevent side-effect
     swagger = request.swagger = local.utility2.jsonCopy(swagger);
-    global.swagger = swagger; //debugPrint
+    //!! global.swagger = swagger; //debugPrint
     // restore _requestHandler
     swagger._requestHandler = tmp;
     swagger.model = local.cms2.modelDict[swagger._modelName];
@@ -624,7 +656,7 @@ case 4:
             local.utility2.uuidTime(),
         id: swagger.paramDict.type ||
             (swagger.paramDict.body && swagger.paramDict.body.type)
-    }] } }, -1);
+    }] } }, 8);
     // init _id
     swagger.responseData.data[0]._id =
         swagger.responseData.data[0]._id || local.utility2.uuidTime();
@@ -691,7 +723,7 @@ default:
             onNext = function (error, data) {
                 try {
                     modeNext = error instanceof Error
-                        ? NaN
+                        ? Infinity
                         : modeNext + 1;
                     switch (modeNext) {
                     case 1:
@@ -719,7 +751,7 @@ default:
                             onNext(null, data);
                             break;
                         case 'deleteByIdOne':
-                            modeNext = NaN;
+                            modeNext = Infinity;
                             swagger.model.collection.removeOne({ _id: data._id }, onNext);
                             break;
                         case 'existsByIdOne':
@@ -765,12 +797,12 @@ default:
                     case 2:
                         switch (swagger.operationId) {
                         case 'createOne':
-                            modeNext = NaN;
+                            modeNext = Infinity;
                             // insert data
                             swagger.model.collection.insert(data, onNext);
                             break;
                         case 'replaceOrCreateOne':
-                            modeNext = NaN;
+                            modeNext = Infinity;
                             // upsert data
                             swagger.model.collection.update(
                                 { _id: data._id },
@@ -780,18 +812,18 @@ default:
                             );
                             break;
                         case 'existsByIdOne':
-                            modeNext = NaN;
+                            modeNext = Infinity;
                             swagger.responseData.data = !!data;
                             onNext();
                             break;
                         case 'getByIdOne':
                         case 'getByQueryMany':
-                            modeNext = NaN;
+                            modeNext = Infinity;
                             swagger.responseData.data = data;
                             onNext();
                             break;
                         case 'updateOrCreateOne':
-                            modeNext = NaN;
+                            modeNext = Infinity;
                             // init responseData.data[0]
                             swagger.responseData.data[0] = swagger.dataUpdated;
                             // upsert data
@@ -826,7 +858,7 @@ default:
                 nextMiddleware();
                 return;
             }
-            local.utility2.serverRespondSetHead(request, response, 500, {});
+            local.utility2.serverRespondHeadSet(request, response, 500, {});
             // rename _id to id
             response.end(JSON.stringify(local.cms2.modelNormalizeIdSwagger({ errors: [{
                 _id: request &&
@@ -850,7 +882,7 @@ default:
             modeNext = -1;
             onNext = function (error) {
                 modeNext = error instanceof Error
-                    ? NaN
+                    ? Infinity
                     : modeNext + 1;
                 if (modeNext < local.cms2.middlewareHookAfterList.length) {
                     local.cms2
@@ -886,8 +918,29 @@ default:
 
 
 
+    // run browser js-env code
+    case 'browser':
+        // export cms2
+        window.cms2 = local.cms2;
+        // require modules
+        local.utility2 = window.utility2;
+        break;
+
+
+
     // run node js-env code
     case 'node':
+        // export cms2
+        module.exports = local.cms2;
+        // require modules
+        local.fs = require('fs');
+        local.mongodb = require('mongodb');
+        local.path = require('path');
+        local.swagger_tools = require('swagger-ui-lite/swagger-tools-standalone-min.js');
+        local.swagger_ui_lite = require('swagger-ui-lite');
+        local.url = require('url');
+        local.utility2 = require('utility2');
+        local.vm = require('vm');
         // init assets
         local.cms2['/assets/cms2.js'] = local.fs
             .readFileSync(__filename, 'utf8');
@@ -1014,7 +1067,7 @@ default:
                     }
                 }
             }
-        }, -1);
+        }, 8);
         // init user roles
         local.cms2.userRoleDict = {
             'render': 10,
@@ -1027,53 +1080,57 @@ default:
             'admin': 80,
             'root': 90
         };
-        // init SwaggerClient
-        (function () {
-            local.Handlebars = {
-                registerHelper: local.utility2.nop,
-                template: local.utility2.nop
-            };
-            local.XMLHttpRequest = function () {
-                var self;
-                self = this;
-                self.headers = {};
-            };
-            local.XMLHttpRequest.prototype.onreadystatechange = local.utility2.nop;
-            local.XMLHttpRequest.prototype.open = function (method, url) {
-                this.method = method;
-                this.url = url;
-            };
-            local.XMLHttpRequest.prototype.send = function (data) {
-                var self;
-                self = this;
-                self.data = data;
-                self.xhr = self;
-                local.utility2.ajax(self, local.utility2.nop);
-            };
-            local.XMLHttpRequest.prototype.setRequestHeader = function (key, value) {
-                this.headers[key.toLowerCase()] = value;
-            };
-            local.$ = local.utility2.nop;
-            local.console = console;
-            local.clearTimeout = clearTimeout;
-            local.location = {};
-            local.setTimeout = setTimeout;
-            local.window = local;
-            local.vm.runInNewContext(
-                local.fs
-                    .readFileSync(
-                        local.swagger_ui_lite.__dirname + '/swagger-ui.rollup.js',
-                        'utf8'
-                    )
-                    .replace((/[\S\s]+?\/underscore-min\.js \*\//), function (match0) {
-                        return match0.replace((/\S+/g), '');
-                    }),
-                local,
-                __dirname + '/swagger-ui.rollup.js'
-            );
-            local.cms2.SwaggerClient = local.SwaggerClient;
-            local.cms2.SwaggerUi = local.SwaggerUi;
-        }());
+        //!! // init SwaggerClient
+        //!! (function () {
+            //!! local.Handlebars = {
+                //!! registerHelper: local.utility2.nop,
+                //!! template: local.utility2.nop
+            //!! };
+            //!! local.XMLHttpRequest = function () {
+                //!! var self;
+                //!! self = this;
+                //!! self.headers = {};
+            //!! };
+            //!! local.XMLHttpRequest.prototype.onreadystatechange = local.utility2.nop;
+            //!! local.XMLHttpRequest.prototype.open = function (method, url) {
+                //!! this.method = method;
+                //!! this.url = url;
+            //!! };
+            //!! local.XMLHttpRequest.prototype.send = function (data) {
+                //!! var self;
+                //!! self = this;
+                //!! self.data = data;
+                //!! self.xhr = self;
+                //!! local.utility2.ajax(self, local.utility2.nop);
+            //!! };
+            //!! local.XMLHttpRequest.prototype.setRequestHeader = function (key, value) {
+                //!! this.headers[key.toLowerCase()] = value;
+            //!! };
+            //!! local.$ = local.utility2.nop;
+            //!! local.console = console;
+            //!! local.clearTimeout = clearTimeout;
+            //!! local.location = {};
+            //!! local.setTimeout = setTimeout;
+            //!! local.window = local;
+            //!! local.vm.runInNewContext(
+                //!! local.fs
+                    //!! .readFileSync(
+                        //!! local.swagger_ui_lite.__dirname + '/swagger-ui.rollup.js',
+                        //!! 'utf8'
+                    //!! )
+                    //!! .replace((/[\S\s]+?\/underscore-min\.js \*\//), function (match0) {
+                        //!! return match0.replace((/\S+/g), '');
+                    //!! }),
+                //!! local,
+                //!! __dirname + '/swagger-ui.rollup.js'
+            //!! );
+            //!! local.cms2.SwaggerClient = local.SwaggerClient;
+            //!! local.cms2.SwaggerUi = local.SwaggerUi;
+        //!! }());
+        //!! // init api
+        //!! local.cms2.api = new local.cms2.SwaggerClient({
+            //!! url: 'http://localhost:' + debugPrint(local.utility2.serverPortInit())
+        //!! });
         break;
     }
 }((function () {
@@ -1105,34 +1162,5 @@ default:
         // init cms2
         local.cms2 = { local: local };
     }());
-    switch (local.modeJs) {
-
-
-
-    // run browser js-env code
-    case 'browser':
-        // export cms2
-        window.cms2 = local.cms2;
-        // require modules
-        local.utility2 = window.utility2;
-        break;
-
-
-
-    // run node js-env code
-    case 'node':
-        // export cms2
-        module.exports = local.cms2;
-        // require modules
-        local.fs = require('fs');
-        local.mongodb = require('mongodb');
-        local.path = require('path');
-        local.swagger_tools = require('swagger-ui-lite/swagger-tools-standalone-min.js');
-        local.swagger_ui_lite = require('swagger-ui-lite');
-        local.url = require('url');
-        local.utility2 = require('utility2');
-        local.vm = require('vm');
-        break;
-    }
     return local;
 }())));

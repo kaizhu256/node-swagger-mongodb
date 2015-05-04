@@ -43,7 +43,7 @@
 /* jslint-indent-begin 20 */
 /*jslint maxlen: 116, regexp: true*/
 modeNext = error instanceof Error
-    ? NaN
+    ? Infinity
     : modeNext + 1;
 switch (modeNext) {
 case 1:
@@ -130,7 +130,7 @@ case 1:
     // run node js-env code
     case 'node':
         // init tests
-        local.testCase_testPage_default = function (onError) {
+        local.aatestCase_testPage_default = function (onError) {
             /*
                 this function will test the test-page's
                 default handling behavior
@@ -179,9 +179,9 @@ case 1:
         local.utility2 = require('utility2');
         // init mongodb client
         local.utility2.onReady.counter += 1;
-        local.utility2.taskCacheCreateOrAddCallback(
-            { key: 'cms2.mongodbConnect' },
-            function (onError) {
+        local.utility2.taskRunOrSubscribe({
+            key: 'cms2.mongodbConnect',
+            onTask: function (onError) {
                 local.mongodb.MongoClient.connect(
                     process.env.npm_config_mongodb_url || 'mongodb://localhost:27017/test',
                     function (error, db) {
@@ -192,9 +192,8 @@ case 1:
                         local.utility2.onReady();
                     }
                 );
-            },
-            local.utility2.nop
-        );
+            }
+        });
         // init ContentDraft model
         local.cms2.modelCreate({
             _collectionName: 'ContentDraft',
@@ -306,37 +305,10 @@ case 1:
                 }
             }
         });
-        local.utility2.taskCacheCreateOrAddCallback({
+        local.utility2.taskRunOrSubscribe({
             key: 'utility2.onReady'
         }, null, function () {
-            // validate swaggerJson
-            local.swagger_tools.v2
-                .validate(local.cms2.swaggerJson, function (error, result) {
-                    if (error) {
-                        local.utility2.onErrorDefault(error);
-                        return;
-                    }
-                    local._debugSwaggerJsonError = result;
-                    (result && result.errors && result.errors.length
-                        ? result.errors
-                        : result && result.warnings && result.warning.lengh
-                        ? result.warnings
-                        : []).slice(0, 4).forEach(function (element) {
-                        console.error('swagger schema - ' + element.code + ' - ' +
-                            element.message + ' - ' + JSON.stringify(element.path));
-                    });
-                });
-            // init api
-            local.cms2.api = new local.cms2.SwaggerClient({
-                url: 'http://localhost:' + local.utility2.envDict.npm_config_server_port
-            });
-            local.cms2.api.buildFromSpec(local.cms2.swaggerJson);
-            (function () {
-                local.cms2.api.ContentDraft.getByIdOne({ id2: 1 }, debugPrint,
-                function () {
-                    debugPrint(arguments.length + '\n' + JSON.stringify(arguments, null, 4));
-                }, debugPrint);
-            }());
+            local.cms2.api.ContentDraft.getByIdOne({ id: 1 }, debugPrint, debugPrint);
         });
         // init assets
         local['/'] = local.utility2.stringFormat(local.fs
@@ -364,7 +336,7 @@ case 1:
                 */
                 if (request.urlParsed.pathnameNormalized
                         .indexOf(local.cms2.swaggerJson.basePath) === 0) {
-                    local.utility2.serverRespondSetHead(request, response, null, {
+                    local.utility2.serverRespondHeadSet(request, response, null, {
                         'Access-Control-Allow-Methods':
                             'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT',
                         // enable cors
@@ -393,6 +365,8 @@ case 1:
         // init dir
         local.fs.readdirSync(__dirname).forEach(function (file) {
             file = __dirname + '/' + file;
+            // if the file is modified, then restart the process
+            local.utility2.onFileModifiedRestart(file);
             switch (local.path.extname(file)) {
             case '.js':
             case '.json':
@@ -400,11 +374,9 @@ case 1:
                 local.jslint_lite.jslintAndPrint(local.fs.readFileSync(file, 'utf8'), file);
                 break;
             }
-            // if the file is modified, then restart the process
-            local.utility2.onFileModifiedRestart(file);
         });
         // init repl debugger
-        local.utility2.replStart({});
+        local.utility2.replStart();
         break;
     }
 }((function () {

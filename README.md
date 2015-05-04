@@ -168,7 +168,7 @@ width="100%" \
 
 
 
-# quickstart command-line example
+# quickstart cli example
 #### to run this example, follow the instruction in the script below
 ```
 # example.sh
@@ -203,7 +203,7 @@ shExampleSh
 
 
 
-## npm-dependencies
+# npm-dependencies
 - none
 
 
@@ -222,12 +222,12 @@ shExampleSh
     "dependencies": {
         "mongodb": "2.0.27",
         "swagger-ui-lite": "2.1.8-M1-2015-03-29-a",
-        "utility2": "2015.4.18-b"
+        "utility2": "2015.4.30-a"
     },
     "description": "yet another lightweight content-management-system \
 backed by mongodb with swagger-ui api",
     "devDependencies": {
-        "phantomjs-lite": "2015.4.18-a"
+        "phantomjs-lite": "2015.4.26-c"
     },
     "engines": { "node": ">=0.10 <=0.12" },
     "keywords": [
@@ -264,6 +264,13 @@ node_modules/.bin/utility2 test test.js"
 
 
 
+# change since 4c1c5aa6
+- passing npm test
+- use Infinity instead of NaN as fallback for modeNext
+- none
+
+
+
 # changelog of last 50 commits
 [![screen-capture](https://kaizhu256.github.io/node-cms2/build/screen-capture.gitLog.png)](https://github.com/kaizhu256/node-cms2/commits)
 
@@ -295,7 +302,7 @@ shBuild() {
     # run npm-test
     MODE_BUILD=npmTest shRunScreenCapture npm test || return $?
 
-    # do not continue if running legacy node
+    # if running legacy-node, then do not continue
     [ "$(node --version)" \< "v0.12" ] && return
 
     # if number of commits > 1024, then squash older commits
@@ -305,9 +312,6 @@ shBuild
 
 # save exit-code
 EXIT_CODE=$?
-
-# do not continue if running legacy node
-[ "$(node --version)" \< "v0.12" ] && exit $EXIT_CODE
 
 shBuildCleanup() {
     # this function will cleanup build-artifacts in local build dir
@@ -337,6 +341,9 @@ shBuildGithubUploadCleanup() {
     # this function will cleanup build-artifacts in local gh-pages repo
     return
 }
+
+# if running legacy-node, then do not continue
+[ "$(node --version)" \< "v0.12" ] && exit $EXIT_CODE
 
 # upload build-artifacts to github,
 # and if number of commits > 16, then squash older commits
