@@ -1,12 +1,21 @@
-cms2 [![NPM](https://img.shields.io/npm/v/cms2.svg?style=flat-square)](https://www.npmjs.org/package/cms2)
-====
+swagger-mongodb [![NPM](https://img.shields.io/npm/v/swagger-mongodb.svg?style=flat-square)](https://www.npmjs.org/package/swagger-mongodb)
+===============
 yet another content-management-system backed by mongodb with swagger-ui api
 
 
 
-# build-status [![travis-ci.org build-status](https://api.travis-ci.org/kaizhu256/node-cms2.svg)](https://travis-ci.org/kaizhu256/node-cms2)
+# build-status [![travis-ci.org build-status](https://api.travis-ci.org/kaizhu256/node-swagger-mongodb.svg)](https://travis-ci.org/kaizhu256/node-swagger-mongodb)
 
-[![build commit status](https://kaizhu256.github.io/node-cms2/build/build.badge.svg)](https://travis-ci.org/kaizhu256/node-cms2)
+[![build commit status](https://kaizhu256.github.io/node-swagger-mongodb/build/build.badge.svg)](https://travis-ci.org/kaizhu256/node-swagger-mongodb)
+
+
+
+| git-branch : | [alpha](https://github.com/kaizhu256/node-swagger-mongodb/tree/alpha) | [beta](https://github.com/kaizhu256/node-swagger-mongodb/tree/beta) | [master](https://github.com/kaizhu256/node-swagger-mongodb/tree/master)|
+|--:|:--|:--|:--|
+| test-server : | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-swagger-mongodb-alpha.herokuapp.com) | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-swagger-mongodb-beta.herokuapp.com) | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-swagger-mongodb-master.herokuapp.com)|
+| test-report : | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/test-report.html) | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/test-report.html) | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/test-report.html)|
+| coverage : | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/coverage.html/node-swagger-mongodb/index.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/coverage.html/node-swagger-mongodb/index.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/coverage.html/node-swagger-mongodb/index.html)|
+| build-artifacts : | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..alpha..travis-ci.org) | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..beta..travis-ci.org) | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..master..travis-ci.org)|
 
 
 
@@ -21,9 +30,9 @@ this node script will serve a web-page with interactive jslint
 instruction
     1. save this script as example.js
     2. run the shell command:
-          $ npm install cms2 && node example.js
+          $ npm install swagger-mongodb && node example.js
     3. open a browser to http://localhost:1337
-    4. edit or paste script in browser to jslint
+    4. interact with the swagger-ui api
 */
 
 /*jslint
@@ -43,7 +52,7 @@ instruction
         // init local
         local = {};
         // require modules
-        local.cms2 = require('cms2');
+        local.swagger_mongodb = require('swagger-mongodb');
         local.fs = require('fs');
         local.http = require('http');
         local.url = require('url');
@@ -56,51 +65,53 @@ instruction
 '<!DOCTYPE html>\n' +
 '<html>\n' +
 '<head>\n' +
-    '<meta charset="UTF-8">\n' +
-    '<title>\n' +
-    '{{envDict.npm_package_name}} [{{envDict.npm_package_version}}]\n' +
-    '</title>\n' +
-    '<link rel="stylesheet" href="/assets/utility2.css">\n' +
-    '<style>\n' +
-    '* {\n' +
-        'box-sizing: border-box;\n' +
-    '}\n' +
-    'body {\n' +
-        'background-color: #fff;\n' +
-        'font-family: Helvetical Neue, Helvetica, Arial, sans-serif;\n' +
-    '}\n' +
-    'body > div {\n' +
-        'margin-top: 20px;\n' +
-    '}\n' +
-    '.testReportDiv {\n' +
-        'display: none;\n' +
-    '}\n' +
-    '</style>\n' +
-    '{{envDict.npm_config_html_head_extra}}\n' +
+'    <meta charset="UTF-8">\n' +
+'    <title>\n' +
+'    {{envDict.npm_package_name}} [{{envDict.npm_package_version}}]\n' +
+'    </title>\n' +
+'    <link rel="stylesheet" href="/assets/utility2.css">\n' +
+'    <style>\n' +
+'    * {\n' +
+'        box-sizing: border-box;\n' +
+'    }\n' +
+'    body {\n' +
+'        background-color: #fff;\n' +
+'        font-family: Helvetical Neue, Helvetica, Arial, sans-serif;\n' +
+'    }\n' +
+'    body > div {\n' +
+'        margin-top: 20px;\n' +
+'    }\n' +
+'    .testReportDiv {\n' +
+'        display: none;\n' +
+'    }\n' +
+'    </style>\n' +
+'    {{envDict.npm_config_html_head_extra}}\n' +
 '</head>\n' +
 '<body>\n' +
-    '<div class="ajaxProgressDiv" style="display: none;">\n' +
-    '<div class="ajaxProgressBarDiv ajaxProgressBarDivLoading" \
+'    <div class="ajaxProgressDiv" style="display: none;">\n' +
+'    <div class="ajaxProgressBarDiv ajaxProgressBarDivLoading" \
 >loading</div>\n' +
-    '</div>\n' +
-    '<h1 \
+'    </div>\n' +
+'    <h1 \
 >{{envDict.npm_package_name}} [{{envDict.npm_package_version}}]</h1>\n' +
-    '<h3>{{envDict.npm_package_description}}</h3>\n' +
-    '<div class="testReportDiv"></div>\n' +
-    '<script src="/assets/utility2.js"></script>\n' +
-    '<script src="/assets/cms2.js"></script>\n' +
-    '<script src="/test/test.js"></script>\n' +
-    '<script>\n' +
-    'window.utility2 = window.utility2 || {};\n' +
-    'window.utility2.envDict = {\n' +
-        'npm_package_description: "{{envDict.npm_package_description}}",\n' +
-        'npm_package_name: "{{envDict.npm_package_name}}",\n' +
-        'npm_package_version: "{{envDict.npm_package_version}}"\n' +
-    '};\n' +
-    '</script>\n' +
-    '{{envDict.npm_config_html_body_extra}}\n' +
-    '<br>\n' +
-    '<iframe \
+'    <h3>{{envDict.npm_package_description}}</h3>\n' +
+'    <div class="testReportDiv"></div>\n' +
+'    <div id="swagger-ui-container" style="display: none;"></div>\n' +
+'    <script src="/assets/utility2.js"></script>\n' +
+'    <script src='/assets/swagger-ui.rollup.js'></script>\n' +
+'    <script src="/assets/swagger-mongodb.js"></script>\n' +
+'    <script src="/test/test.js"></script>\n' +
+'    <script>\n' +
+'    window.utility2 = window.utility2 || {};\n' +
+'    window.utility2.envDict = {\n' +
+'        npm_package_description: "{{envDict.npm_package_description}}",\n' +
+'        npm_package_name: "{{envDict.npm_package_name}}",\n' +
+'        npm_package_version: "{{envDict.npm_package_version}}"\n' +
+'    };\n' +
+'    </script>\n' +
+'    {{envDict.npm_config_html_body_extra}}\n' +
+'    <br>\n' +
+'    <iframe \
 height="512" \
 onload="this.height=screen.height;" \
 src="/assets/swagger-ui.html" \
@@ -124,7 +135,8 @@ width="100%" \
                 return '';
             }
         });
-        local['/assets/cms2.js'] = local.jslint_lite['/assets/cms2.js'];
+        local['/assets/swagger-mongodb.js'] =
+            local.utility2.jslint_lite['/assets/swagger-mongodb.js'];
         local['/assets/utility2.css'] = '';
         local['/assets/utility2.js'] = '';
         local['/test/test.js'] = '';
@@ -133,7 +145,7 @@ width="100%" \
             switch (local.url.parse(request.url).pathname) {
             // serve assets
             case '/':
-            case '/assets/cms2.js':
+            case '/assets/swagger-mongodb.js':
             case '/assets/utility2.css':
             case '/assets/utility2.js':
             case '/test/test.js':
@@ -164,42 +176,7 @@ width="100%" \
 }());
 ```
 #### output from shell
-[![screen-capture](https://kaizhu256.github.io/node-cms2/build/screen-capture.testExampleJs.png)](https://travis-ci.org/kaizhu256/node-cms2)
-
-
-
-# quickstart cli example
-#### to run this example, follow the instruction in the script below
-```
-# example.sh
-
-# this shell script will
-    # npm install cms2
-    # create foo.js
-    # create bar.css
-    # jslint foo.js and bar.css
-
-# instruction
-    # 1. copy and paste this entire shell script into a console and press enter
-    # 2. view jslint in console
-
-shExampleSh() {
-    # npm install cms2
-    npm install cms2 || return $?
-
-    # create foo.js
-    printf "console.log('hello');" > foo.js || return $?
-
-    # create bar.css
-    printf "body { margin: 0px; }" > bar.css || return $?
-
-    # jslint foo.js and bar.css
-    node_modules/.bin/cms2 foo.js bar.css || :
-}
-shExampleSh
-```
-#### output from shell
-[![screen-capture](https://kaizhu256.github.io/node-cms2/build/screen-capture.testExampleSh.png)](https://travis-ci.org/kaizhu256/node-cms2)
+[![screen-capture](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.testExampleJs.png)](https://travis-ci.org/kaizhu256/node-swagger-mongodb)
 
 
 
@@ -209,7 +186,7 @@ shExampleSh
 
 
 # package-listing
-[![screen-capture](https://kaizhu256.github.io/node-cms2/build/screen-capture.gitLsTree.png)](https://github.com/kaizhu256/node-cms2)
+[![screen-capture](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.gitLsTree.png)](https://github.com/kaizhu256/node-swagger-mongodb)
 
 
 
@@ -218,11 +195,11 @@ shExampleSh
 {
     "_packageJson": true,
     "author": "kai zhu <kaizhu256@gmail.com>",
-    "bin": { "cms2": "index.js" },
+    "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
         "mongodb": "2.0.27",
-        "swagger-ui-lite": "2.1.8-M1-2015-03-29-a",
-        "utility2": "2015.4.30-a"
+        "swagger-ui-lite": "2.1.0-M2-2015.5.6-a",
+        "utility2": "2015.5.6-c"
     },
     "description": "yet another lightweight content-management-system \
 backed by mongodb with swagger-ui api",
@@ -239,11 +216,11 @@ backed by mongodb with swagger-ui api",
         "web"
     ],
     "license": "MIT",
-    "name": "cms2",
+    "name": "swagger-mongodb",
     "os": ["darwin", "linux"],
     "repository" : {
         "type" : "git",
-        "url" : "https://github.com/kaizhu256/node-cms2.git"
+        "url" : "https://github.com/kaizhu256/node-swagger-mongodb.git"
     },
     "scripts": {
         "build-ci": "node_modules/.bin/utility2 shRun shReadmeBuild",
@@ -252,7 +229,7 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmePackageJsonExport && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.3.24-11"
+    "version": "2015.5.10-a"
 }
 ```
 
@@ -264,15 +241,20 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 4c1c5aa6
-- passing npm test
-- use Infinity instead of NaN as fallback for modeNext
+# change since 41df2bbb
+- migrating cms2 to node-swagger-mongodb
+- add swagger param parsing to middleware
+- working local crud
+- add middlewareAssetsCache and centralize assets into local.utility2.cacheDict.assets
+- npm publish 2015.5.10-a
+- add swagger param parsing to middleware
+- revampt to 100% use swagger-tools
 - none
 
 
 
 # changelog of last 50 commits
-[![screen-capture](https://kaizhu256.github.io/node-cms2/build/screen-capture.gitLog.png)](https://github.com/kaizhu256/node-cms2/commits)
+[![screen-capture](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.gitLog.png)](https://github.com/kaizhu256/node-swagger-mongodb/commits)
 
 
 
@@ -287,17 +269,6 @@ shBuild() {
 
     #!! # run npm-test on published package
     #!! shRun shNpmTestPublished || return $?
-
-    #!! # test example js script
-    #!! MODE_BUILD=testExampleJs \
-        #!! shRunScreenCapture shReadmeTestJs example.js || return $?
-    #!! # copy phantomjs screen-capture to $npm_config_dir_build
-    #!! cp /tmp/app/tmp/build/screen-capture.*.png $npm_config_dir_build || \
-        #!! return $?
-
-    #!! # test example shell script
-    #!! MODE_BUILD=testExampleSh \
-        #!! shRunScreenCapture shReadmeTestSh example.sh || return $?
 
     # run npm-test
     MODE_BUILD=npmTest shRunScreenCapture npm test || return $?
@@ -344,6 +315,22 @@ shBuildGithubUploadCleanup() {
 
 # if running legacy-node, then do not continue
 [ "$(node --version)" \< "v0.12" ] && exit $EXIT_CODE
+
+shGitSquashShift() {
+    # this function will squash $RANGE to the first commit
+    local BRANCH || return $?
+    local RANGE || return $?
+    BRANCH=$(git rev-parse --abbrev-ref HEAD) || return $?
+    RANGE=$1 || return $?
+    git checkout -q HEAD~$RANGE || return $?
+    git reset -q $(git rev-list --max-parents=0 HEAD) || return $?
+    git add . || return $?
+    git commit -m squash || :
+    git cherry-pick -X theirs --allow-empty --strategy=recursive $BRANCH~$RANGE..$BRANCH || \
+        return $?
+    git push -f . HEAD:$BRANCH || return $?
+    git checkout $BRANCH || return $?
+}
 
 # upload build-artifacts to github,
 # and if number of commits > 16, then squash older commits

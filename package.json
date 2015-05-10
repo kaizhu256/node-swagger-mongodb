@@ -1,11 +1,11 @@
 {
     "_packageJson": true,
     "author": "kai zhu <kaizhu256@gmail.com>",
-    "bin": { "cms2": "index.js" },
+    "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
         "mongodb": "2.0.27",
-        "swagger-ui-lite": "2.1.8-M1-2015-03-29-a",
-        "utility2": "2015.4.30-a"
+        "swagger-ui-lite": "2.1.0-M2-2015.5.6-a",
+        "utility2": "2015.5.6-c"
     },
     "description": "yet another lightweight content-management-system backed by mongodb with swagger-ui api",
     "devDependencies": {
@@ -21,16 +21,16 @@
         "web"
     ],
     "license": "MIT",
-    "name": "cms2",
+    "name": "swagger-mongodb",
     "os": ["darwin", "linux"],
     "repository" : {
         "type" : "git",
-        "url" : "https://github.com/kaizhu256/node-cms2.git"
+        "url" : "https://github.com/kaizhu256/node-swagger-mongodb.git"
     },
     "scripts": {
         "build-ci": "node_modules/.bin/utility2 shRun shReadmeBuild",
         "start": "npm_config_mode_auto_restart=1 node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmePackageJsonExport && node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.3.24-11"
+    "version": "2015.5.10-a"
 }
