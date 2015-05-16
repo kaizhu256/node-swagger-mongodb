@@ -1,6 +1,8 @@
-swagger-mongodb [![NPM](https://img.shields.io/npm/v/swagger-mongodb.svg?style=flat-square)](https://www.npmjs.org/package/swagger-mongodb)
+swagger-mongodb
 ===============
-yet another content-management-system backed by mongodb with swagger-ui api
+WORK IN PROGRESS - lightweight swagger-ui crud api backed by mongodb
+
+[![NPM](https://img.shields.io/npm/v/swagger-mongodb.svg?style=flat-square)](https://www.npmjs.org/package/swagger-mongodb)
 
 
 
@@ -8,14 +10,25 @@ yet another content-management-system backed by mongodb with swagger-ui api
 
 [![build commit status](https://kaizhu256.github.io/node-swagger-mongodb/build/build.badge.svg)](https://travis-ci.org/kaizhu256/node-swagger-mongodb)
 
-
-
 | git-branch : | [alpha](https://github.com/kaizhu256/node-swagger-mongodb/tree/alpha) | [beta](https://github.com/kaizhu256/node-swagger-mongodb/tree/beta) | [master](https://github.com/kaizhu256/node-swagger-mongodb/tree/master)|
 |--:|:--|:--|:--|
-| test-server : | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-swagger-mongodb-alpha.herokuapp.com) | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-swagger-mongodb-beta.herokuapp.com) | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-swagger-mongodb-master.herokuapp.com)|
+| test-server : | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-jslint-lite-alpha.herokuapp.com) | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-jslint-lite-beta.herokuapp.com) | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-jslint-lite-master.herokuapp.com)|
 | test-report : | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/test-report.html) | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/test-report.html) | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/test-report.html)|
 | coverage : | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/coverage.html/node-swagger-mongodb/index.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/coverage.html/node-swagger-mongodb/index.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/coverage.html/node-swagger-mongodb/index.html)|
 | build-artifacts : | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..alpha..travis-ci.org) | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..beta..travis-ci.org) | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..master..travis-ci.org)|
+
+#### alpha branch
+- unstable branch
+- HEAD is arbitrary
+- commit history may be rewritten
+
+#### beta branch
+- stable branch
+- HEAD should be latest, npm-published package
+
+#### master branch
+- stable branch
+- HEAD should be tagged, npm-published package
 
 
 
@@ -25,7 +38,8 @@ yet another content-management-system backed by mongodb with swagger-ui api
 /*
 example.js
 
-this node script will serve a web-page with interactive jslint
+this node script will serve a
+lightweight swagger-ui crud api backed by mongodb
 
 instruction
     1. save this script as example.js
@@ -52,7 +66,7 @@ instruction
         // init local
         local = {};
         // require modules
-        local.swagger_mongodb = require('swagger-mongodb');
+        local.swmgdb = require('swagger-mongodb');
         local.fs = require('fs');
         local.http = require('http');
         local.url = require('url');
@@ -79,7 +93,7 @@ instruction
 '        font-family: Helvetical Neue, Helvetica, Arial, sans-serif;\n' +
 '    }\n' +
 '    body > div {\n' +
-'        margin-top: 20px;\n' +
+'        margin: 20px 0 20px 0;\n' +
 '    }\n' +
 '    .testReportDiv {\n' +
 '        display: none;\n' +
@@ -97,6 +111,11 @@ instruction
 '    <h3>{{envDict.npm_package_description}}</h3>\n' +
 '    <div class="testReportDiv"></div>\n' +
 '    <div id="swagger-ui-container" style="display: none;"></div>\n' +
+'    <iframe \
+height="512" \
+src="/assets/swagger-ui.html" \
+width="100%" \
+></iframe>\n' +
 '    <script src="/assets/utility2.js"></script>\n' +
 '    <script src='/assets/swagger-ui.rollup.js'></script>\n' +
 '    <script src="/assets/swagger-mongodb.js"></script>\n' +
@@ -108,15 +127,19 @@ instruction
 '        npm_package_name: "{{envDict.npm_package_name}}",\n' +
 '        npm_package_version: "{{envDict.npm_package_version}}"\n' +
 '    };\n' +
+'    document.querySelector("iframe").onload = function () {\n' +
+'        var self;\n' +
+'        self = this;\n' +
+'        self.height = innerHeight - self.offsetTop - 20;\n' +
+'        self.contentWindow.location.hash = location.hash;\n' +
+'        self.contentWindow.onclick = function () {\n' +
+'            setTimeout(function () {\n' +
+'                location.hash = self.contentWindow.location.hash;\n' +
+'            });\n' +
+'        };\n' +
+'    };\n' +
 '    </script>\n' +
 '    {{envDict.npm_config_html_body_extra}}\n' +
-'    <br>\n' +
-'    <iframe \
-height="512" \
-onload="this.height=screen.height;" \
-src="/assets/swagger-ui.html" \
-width="100%" \
-></iframe>\n' +
 '</body>\n' +
 '</html>\n' +
 /* jslint-ignore-end */
@@ -126,11 +149,14 @@ width="100%" \
         String()).replace((/\{\{envDict\.\w+?\}\}/g), function (match0) {
             switch (match0) {
             case '{{envDict.npm_package_description}}':
-                return 'this is an example module';
+                return local.utility2.envDict.envDict.npm_package_description ||
+                    'this is an example module';
             case '{{envDict.npm_package_name}}':
-                return 'example-module';
+                return local.utility2.envDict.envDict.npm_package_name ||
+                    'example-module';
             case '{{envDict.npm_package_version}}':
-                return '0.0.1';
+                return local.utility2.envDict.envDict.npm_package_version ||
+                    '0.0.1';
             default:
                 return '';
             }
@@ -181,7 +207,7 @@ width="100%" \
 
 
 # npm-dependencies
-- none
+- utility2
 
 
 
@@ -197,12 +223,11 @@ width="100%" \
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
-        "mongodb": "2.0.27",
+        "mongodb": "2.0.31",
         "swagger-ui-lite": "2.1.0-M2-2015.5.6-a",
-        "utility2": "2015.5.6-c"
+        "utility2": "2015.5.15-a"
     },
-    "description": "yet another lightweight content-management-system \
-backed by mongodb with swagger-ui api",
+    "description": "lightweight swagger-ui crud api backed by mongodb",
     "devDependencies": {
         "phantomjs-lite": "2015.4.26-c"
     },
@@ -229,7 +254,7 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmePackageJsonExport && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.5.10-a"
+    "version": "2015.5.8-b"
 }
 ```
 
@@ -241,12 +266,10 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 41df2bbb
-- migrating cms2 to node-swagger-mongodb
-- add swagger param parsing to middleware
-- working local crud
-- add middlewareAssetsCache and centralize assets into local.utility2.cacheDict.assets
-- npm publish 2015.5.10-a
+# change since c023f6aa
+- npm publish 2015.5.8-b
+- add testCase_validateXxx_default
+- migrating to v0
 - add swagger param parsing to middleware
 - revampt to 100% use swagger-tools
 - none
@@ -263,6 +286,7 @@ node_modules/.bin/utility2 test test.js"
 # build.sh
 # this shell script will run the build for this package
 shBuild() {
+    # this function will run the main build
     # init env
     export npm_config_mode_slimerjs=1 || return $?
     . node_modules/.bin/utility2 && shInit || return $?
@@ -315,22 +339,6 @@ shBuildGithubUploadCleanup() {
 
 # if running legacy-node, then do not continue
 [ "$(node --version)" \< "v0.12" ] && exit $EXIT_CODE
-
-shGitSquashShift() {
-    # this function will squash $RANGE to the first commit
-    local BRANCH || return $?
-    local RANGE || return $?
-    BRANCH=$(git rev-parse --abbrev-ref HEAD) || return $?
-    RANGE=$1 || return $?
-    git checkout -q HEAD~$RANGE || return $?
-    git reset -q $(git rev-list --max-parents=0 HEAD) || return $?
-    git add . || return $?
-    git commit -m squash || :
-    git cherry-pick -X theirs --allow-empty --strategy=recursive $BRANCH~$RANGE..$BRANCH || \
-        return $?
-    git push -f . HEAD:$BRANCH || return $?
-    git checkout $BRANCH || return $?
-}
 
 # upload build-artifacts to github,
 # and if number of commits > 16, then squash older commits
