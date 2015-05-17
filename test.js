@@ -43,7 +43,7 @@
                     switch (modeNext) {
                     case 1:
                         // init api
-                        api = local.swmgdb.api.CrudModel;
+                        api = local.swmgdb.api.TestModel;
                         // init options
                         options.modeErrorData = true;
                         // delete object by id
@@ -129,7 +129,7 @@
                     switch (modeNext) {
                     case 1:
                         // init api
-                        api = local.swmgdb.api.CrudModel;
+                        api = local.swmgdb.api.TestModel;
                         // init options
                         options.body = {
                             fieldRequired: true,
@@ -197,7 +197,7 @@
                 method: 'get'
             }].forEach(function (options) {
                 options.parameters = local.swmgdb.swaggerJson
-                    .paths['/CrudModel/' + options.key][options.method]
+                    .paths['/TestModel/' + options.key][options.method]
                     .parameters;
                 local.swmgdb.validateParameters(options);
             });
@@ -214,7 +214,7 @@
                 try {
                     error = null;
                     options.parameters = local.swmgdb.swaggerJson
-                        .paths['/CrudModel/' + options.key][options.method]
+                        .paths['/TestModel/' + options.key][options.method]
                         .parameters;
                     local.swmgdb.validateParameters(options);
                 } catch (errorCaught) {
@@ -230,7 +230,7 @@
             });
             // test validateSchema's default handling behavior
             options = {
-                schema: local.swmgdb.swaggerJson.definitions.CrudModel,
+                schema: local.swmgdb.swaggerJson.definitions.TestModel,
                 data: { fieldRequired: true }
             };
             [

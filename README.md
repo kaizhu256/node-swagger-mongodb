@@ -1,9 +1,10 @@
 swagger-mongodb
 ===============
-WORK IN PROGRESS
-lightweight swagger-ui crud api backed by mongodb
+lightweight swagger-ui crud-api backed by mongodb
 
 [![NPM](https://img.shields.io/npm/v/swagger-mongodb.svg?style=flat-square)](https://www.npmjs.org/package/swagger-mongodb)
+
+- this package is work in progress
 
 
 
@@ -39,13 +40,16 @@ lightweight swagger-ui crud api backed by mongodb
 
 
 # quickstart web example
+
 #### to run this example, follow the instruction in the script below
+- example.js
+
 ```
 /*
 example.js
 
 this node script will serve a
-lightweight swagger-ui crud api backed by mongodb
+lightweight swagger-ui crud-api backed by mongodb
 
 instruction
     1. save this script as example.js
@@ -197,36 +201,6 @@ width="100%" \
         // init swmgdb
         local.swmgdb.apiUpdate({
             definitions: {
-                CrudModel: {
-                    _collectionName: 'SwmgdbCrudCollection',
-                    _crudApi: true,
-                    properties: {
-                        fieldArray: { items: {}, type: 'array' },
-                        fieldArraySubdoc: {
-                            items: { $ref: '#/definitions/CrudModel' },
-                            type: 'array'
-                        },
-                        fieldBoolean: { type: 'boolean' },
-                        fieldInteger: { type: 'integer' },
-                        fieldIntegerInt32: { format: 'int32', type: 'integer' },
-                        fieldIntegerInt64: { format: 'int64', type: 'integer' },
-                        fieldNumber: { type: 'number' },
-                        fieldNumberDouble: { format: 'double', type: 'number' },
-                        fieldNumberFloat: { format: 'float', type: 'number' },
-                        fieldObject: { type: 'object' },
-                        fieldObjectSubdoc: { $ref: '#/definitions/CrudModel' },
-                        fieldRequired: {},
-                        fieldString: { type: 'string' },
-                        fieldStringByte: { format: 'byte', type: 'string' },
-                        fieldStringDate: { format: 'date', type: 'string' },
-                        fieldStringDatetime: { format: 'date-time', type: 'string' },
-                        fieldStringEmail: { format: 'email', type: 'string' },
-                        fieldStringJson: { format: 'json', type: 'string' },
-                        fieldUndefined: {}
-                    },
-                    required: ['fieldRequired'],
-                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
-                },
                 PetModel: {
                     _collectionName: 'SwmgdbPetCollection',
                     _crudApi: true,
@@ -237,6 +211,36 @@ width="100%" \
                     _collectionName: 'SwmgdbStoreCollection',
                     _crudApi: true,
                     properties: {},
+                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
+                },
+                TestModel: {
+                    _collectionName: 'SwmgdbTestCollection',
+                    _crudApi: true,
+                    properties: {
+                        fieldArray: { items: {}, type: 'array' },
+                        fieldArraySubdoc: {
+                            items: { $ref: '#/definitions/TestModel' },
+                            type: 'array'
+                        },
+                        fieldBoolean: { type: 'boolean' },
+                        fieldInteger: { type: 'integer' },
+                        fieldIntegerInt32: { format: 'int32', type: 'integer' },
+                        fieldIntegerInt64: { format: 'int64', type: 'integer' },
+                        fieldNumber: { type: 'number' },
+                        fieldNumberDouble: { format: 'double', type: 'number' },
+                        fieldNumberFloat: { format: 'float', type: 'number' },
+                        fieldObject: { type: 'object' },
+                        fieldObjectSubdoc: { $ref: '#/definitions/TestModel' },
+                        fieldRequired: {},
+                        fieldString: { type: 'string' },
+                        fieldStringByte: { format: 'byte', type: 'string' },
+                        fieldStringDate: { format: 'date', type: 'string' },
+                        fieldStringDatetime: { format: 'date-time', type: 'string' },
+                        fieldStringEmail: { format: 'email', type: 'string' },
+                        fieldStringJson: { format: 'json', type: 'string' },
+                        fieldUndefined: {}
+                    },
+                    required: ['fieldRequired'],
                     'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
                 },
                 UserModel: {
@@ -252,9 +256,9 @@ width="100%" \
                 }
             },
             tags: [
-                { description: 'default mongodb crud api', name: 'CrudModel' },
                 { description: 'Everything about your pets', name: 'PetModel' },
                 { description: 'Access to Petstore orders', name: 'StoreModel' },
+                { description: 'internal test model', name: 'TestModel' },
                 { description: 'Operations about user', name: 'UserModel' }
             ]
         });
@@ -271,6 +275,7 @@ width="100%" \
     }());
 }());
 ```
+
 #### output from shell
 [![screen-capture](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.testExampleJs.png)](https://travis-ci.org/kaizhu256/node-swagger-mongodb)
 
@@ -280,7 +285,8 @@ width="100%" \
 
 
 # npm-dependencies
-- utility2
+- [swagger-ui-lite](https://www.npmjs.com/package/swagger-ui-lite)
+- [utility2](https://www.npmjs.com/package/utility2)
 
 
 
@@ -292,24 +298,23 @@ width="100%" \
 # package.json
 ```
 {
-    "_packageJson": true,
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
         "mongodb": "2.0.31",
         "swagger-ui-lite": "^2.1.0-M2-2015.5.6-a",
-        "utility2": "2015.5.15-d"
+        "utility2": "2015.5.15-e"
     },
-    "description": "lightweight swagger-ui crud api backed by mongodb",
+    "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
         "phantomjs-lite": "^2015.4.26-c"
     },
     "engines": { "node": ">=0.10 <=0.12" },
     "keywords": [
+        "api",
         "browser",
-        "cms",
+        "cms", "crud",
         "mongo", "mongodb",
-        "utility2",
         "swagger", "swagger-ui",
         "web"
     ],
@@ -322,13 +327,14 @@ width="100%" \
     },
     "scripts": {
         "build-ci": "node_modules/.bin/utility2 shRun shReadmeBuild",
-        "postinstall": "node_modules/.bin/utility2 shRun shReadmeExampleJsSave",
+        "postinstall": \
+"node_modules/.bin/utility2 shRun shReadmeExportFile example.js example.js",
         "start": "npm_config_mode_auto_restart=1 \
 node_modules/.bin/utility2 shRun node test.js",
-        "test": "node_modules/.bin/utility2 shRun shReadmePackageJsonExport && \
+        "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.5.17-b"
+    "version": "2015.5.17-c"
 }
 ```
 
@@ -342,9 +348,9 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 49d90223
-- npm publish 2015.5.17-b
-- add demo screen-capture
+# change since b4c2b303
+- npm publish 2015.5.17-c
+- update npm postinstall script
 - none
 
 
@@ -355,8 +361,9 @@ node_modules/.bin/utility2 test test.js"
 
 
 # internal build-script
+- build.sh
+
 ```
-# build.sh
 # this shell script will run the build for this package
 shBuild() {
     # this function will run the main build

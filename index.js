@@ -699,7 +699,7 @@ case 3:
         key: request.swmgdbPathname,
         parameters: request.swmgdbMethodPath.parameters
     });
-    // run default crud api
+    // run default crud-api
     if (request.swmgdbMethodPath._crudApi) {
         local.swmgdb._crudApi({
             collectionName: request.swmgdbMethodPath._collectionName,

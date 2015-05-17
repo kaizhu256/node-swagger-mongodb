@@ -1,22 +1,21 @@
 {
-    "_packageJson": true,
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
         "mongodb": "2.0.31",
         "swagger-ui-lite": "^2.1.0-M2-2015.5.6-a",
-        "utility2": "2015.5.15-d"
+        "utility2": "2015.5.15-e"
     },
-    "description": "lightweight swagger-ui crud api backed by mongodb",
+    "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
         "phantomjs-lite": "^2015.4.26-c"
     },
     "engines": { "node": ">=0.10 <=0.12" },
     "keywords": [
+        "api",
         "browser",
-        "cms",
+        "cms", "crud",
         "mongo", "mongodb",
-        "utility2",
         "swagger", "swagger-ui",
         "web"
     ],
@@ -29,9 +28,9 @@
     },
     "scripts": {
         "build-ci": "node_modules/.bin/utility2 shRun shReadmeBuild",
-        "postinstall": "node_modules/.bin/utility2 shRun shReadmeExampleJsSave",
+        "postinstall": "node_modules/.bin/utility2 shRun shReadmeExportFile example.js example.js",
         "start": "npm_config_mode_auto_restart=1 node_modules/.bin/utility2 shRun node test.js",
-        "test": "node_modules/.bin/utility2 shRun shReadmePackageJsonExport && node_modules/.bin/utility2 test test.js"
+        "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.5.17-b"
+    "version": "2015.5.17-c"
 }
