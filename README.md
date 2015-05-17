@@ -297,12 +297,12 @@ width="100%" \
     "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
         "mongodb": "2.0.31",
-        "swagger-ui-lite": "2.1.0-M2-2015.5.6-a",
+        "swagger-ui-lite": "^2.1.0-M2-2015.5.6-a",
         "utility2": "2015.5.15-d"
     },
     "description": "lightweight swagger-ui crud api backed by mongodb",
     "devDependencies": {
-        "phantomjs-lite": "2015.4.26-c"
+        "phantomjs-lite": "^2015.4.26-c"
     },
     "engines": { "node": ">=0.10 <=0.12" },
     "keywords": [
@@ -328,7 +328,7 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmePackageJsonExport && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.5.17-a"
+    "version": "2015.5.17-b"
 }
 ```
 
@@ -343,6 +343,7 @@ node_modules/.bin/utility2 test test.js"
 
 
 # change since 49d90223
+- npm publish 2015.5.17-b
 - add demo screen-capture
 - none
 

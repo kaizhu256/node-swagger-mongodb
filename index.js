@@ -441,30 +441,31 @@
             /*
                 this function will update the api
             */
-            var methodPath, schema, tmp;
+            var methodPath, tmp;
             options.definitions = options.definitions || {};
             options.paths = options.paths || {};
             Object.keys(options.definitions).forEach(function (schemaName) {
+                var collectionName, schema;
                 schema = options.definitions[schemaName];
-                local.utility2.objectSetDefault(options, schema._crudApi
-                    ? JSON.parse(JSON.stringify(local.swmgdb.crudSwaggerJson)
-                        .replace((/\{\{collectionName\}\}/g), schema._collectionName)
-                        .replace((/\{\{schemaName\}\}/g), schemaName)
-                        )
-                    : {}, 2);
+                collectionName = schema._collectionName;
+                if (!collectionName) {
+                    return;
+                }
+                // init _crudApi
+                if (schema._crudApi) {
+                    local.utility2.objectSetDefault(options, JSON.parse(
+                        JSON.stringify(local.swmgdb.crudSwaggerJson)
+                            .replace((/\{\{collectionName\}\}/g), collectionName)
+                            .replace((/\{\{schemaName\}\}/g), schemaName)
+                    ), 2);
+                }
                 // update cacheDict.collection
-                (function () {
-                    var collectionName;
-                    collectionName = schema._collectionName;
-                    if (collectionName) {
-                        local.utility2.taskRunOrSubscribe({
-                            key: 'swagger-mongodb.mongodbConnect'
-                        }, function () {
-                            local.swmgdb.cacheDict.collection[collectionName] =
-                                local.swmgdb.db.collection(collectionName);
-                        });
-                    }
-                }());
+                local.utility2.taskRunOrSubscribe({
+                    key: 'swagger-mongodb.mongodbConnect'
+                }, function () {
+                    local.swmgdb.cacheDict.collection[collectionName] =
+                        local.swmgdb.db.collection(collectionName);
+                });
             });
             // update paths
             Object.keys(options.paths).forEach(function (path) {
