@@ -334,7 +334,7 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.5.17-c"
+    "version": "2015.5.17-d"
 }
 ```
 
@@ -348,9 +348,9 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since b4c2b303
-- npm publish 2015.5.17-c
-- update npm postinstall script
+# change since 6a1c12bb
+- npm publish 2015.5.17-d
+- fix crudGetByQueryMany api
 - none
 
 
@@ -364,6 +364,8 @@ node_modules/.bin/utility2 test test.js"
 - build.sh
 
 ```
+# build.sh
+
 # this shell script will run the build for this package
 shBuild() {
     # this function will run the main build

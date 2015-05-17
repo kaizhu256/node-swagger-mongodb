@@ -347,8 +347,8 @@
                                 JSON.parse(options.data.fields),
                                 {
                                     hint: JSON.parse(options.data.hint),
-                                    limit: JSON.parse(options.data.limit),
-                                    skip: JSON.parse(options.data.skip),
+                                    limit: options.data.limit,
+                                    skip: options.data.skip,
                                     sort: JSON.parse(options.data.sort)
                                 }
                             );
@@ -395,10 +395,8 @@
                         break;
                     case 3:
                         // jsonCopy object to prevent side-effect
-                        options.response = {
-                            _id: options.data._id,
-                            meta: local.utility2.jsonCopy(data)
-                        };
+                        data = local.utility2.jsonCopy(data);
+                        options.response = { _id: options.data._id };
                         switch (options.operationId) {
                         case 'crudCountByQuery':
                         case 'crudGetByIdOne':
@@ -410,6 +408,7 @@
                         case 'crudReplaceOrCreateOne':
                         case 'crudUpdateOne':
                         case 'crudUpdateOrCreateOne':
+                            options.response.meta = data;
                             options.collection.findOne({ _id: options.data._id }, onNext);
                             return;
                         case 'crudExistsByIdOne':
@@ -1119,6 +1118,12 @@ local.swmgdb.crudSwaggerJson = { paths: {
             in: 'query',
             name: 'limit',
             required: true,
+            type: 'integer'
+        }, {
+            description: 'mongodb cursor skip param',
+            default: 0,
+            in: 'query',
+            name: 'skip',
             type: 'integer'
         }, {
             description: 'mongodb cursor sort param',
