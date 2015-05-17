@@ -8,7 +8,7 @@ lightweight swagger-ui crud api backed by mongodb
 
 
 # live test-server
-[![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.herokuTest.slimerjs..png)](https://hrku01-swagger-mongodb-beta.herokuapp.com)
+[![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.testExampleJs.slimerjs..png)](https://hrku01-swagger-mongodb-beta.herokuapp.com)
 
 
 
@@ -50,7 +50,8 @@ lightweight swagger-ui crud api backed by mongodb
 instruction
     1. save this script as example.js
     2. run the shell command:
-          $ npm install swagger-mongodb && node example.js
+          $ npm install swagger-mongodb && \
+              npm_config_server_port=1337 node example.js
     3. open a browser to http://localhost:1337
     4. interact with the swagger-ui api
 */
@@ -78,7 +79,7 @@ instruction
         } catch (errorCaught) {
             local.swmgdb = require('./index.js');
         }
-        local.utility2 = require('utility2');
+        local.utility2 = local.swmgdb.local.utility2;
         // init onReady
         local.utility2.onReadyInit();
         // import swmgdb.local
@@ -273,6 +274,9 @@ width="100%" \
 #### output from shell
 [![screen-capture](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.testExampleJs.png)](https://travis-ci.org/kaizhu256/node-swagger-mongodb)
 
+#### output from phantomjs-lite
+[![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.testExampleJs.slimerjs..png)](https://hrku01-swagger-mongodb-beta.herokuapp.com)
+
 
 
 # npm-dependencies
@@ -331,18 +335,15 @@ node_modules/.bin/utility2 test test.js"
 
 
 # todo
+- remove bson compiled dependency
+- cap test collections
 - add formData swagger parameter type
 - none
 
 
 
-# change since 9695c0ce
-- npm publish 2015.5.17-a
-- add heroku deploy
-- add testCase_validateXxx_default
-- migrating to v0
-- add swagger param parsing to middleware
-- revampt to 100% use swagger-tools
+# change since 49d90223
+- add demo screen-capture
 - none
 
 
@@ -364,6 +365,12 @@ shBuild() {
 
     # run npm-test on published package
     shRun shNpmTestPublished || return $?
+
+    # test example js script
+    export npm_config_timeout_exit=10000 || return $?
+    MODE_BUILD=testExampleJs \
+        shRunScreenCapture shReadmeTestJs example.js || return $?
+    unset npm_config_timeout_exit || return $?
 
     # run npm-test
     MODE_BUILD=npmTest shRunScreenCapture npm test || return $?
