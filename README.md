@@ -1,8 +1,14 @@
 swagger-mongodb
 ===============
-WORK IN PROGRESS - lightweight swagger-ui crud api backed by mongodb
+WORK IN PROGRESS
+lightweight swagger-ui crud api backed by mongodb
 
 [![NPM](https://img.shields.io/npm/v/swagger-mongodb.svg?style=flat-square)](https://www.npmjs.org/package/swagger-mongodb)
+
+
+
+# live test-server
+[![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.herokuTest.slimerjs..png)](https://hrku01-swagger-mongodb-beta.herokuapp.com)
 
 
 
@@ -10,25 +16,25 @@ WORK IN PROGRESS - lightweight swagger-ui crud api backed by mongodb
 
 [![build commit status](https://kaizhu256.github.io/node-swagger-mongodb/build/build.badge.svg)](https://travis-ci.org/kaizhu256/node-swagger-mongodb)
 
-| git-branch : | [alpha](https://github.com/kaizhu256/node-swagger-mongodb/tree/alpha) | [beta](https://github.com/kaizhu256/node-swagger-mongodb/tree/beta) | [master](https://github.com/kaizhu256/node-swagger-mongodb/tree/master)|
+| git-branch : | [master](https://github.com/kaizhu256/node-swagger-mongodb/tree/master) | [beta](https://github.com/kaizhu256/node-swagger-mongodb/tree/beta) | [alpha](https://github.com/kaizhu256/node-swagger-mongodb/tree/alpha)|
 |--:|:--|:--|:--|
-| test-server : | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-jslint-lite-alpha.herokuapp.com) | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-jslint-lite-beta.herokuapp.com) | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-jslint-lite-master.herokuapp.com)|
-| test-report : | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/test-report.html) | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/test-report.html) | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/test-report.html)|
-| coverage : | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/coverage.html/node-swagger-mongodb/index.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/coverage.html/node-swagger-mongodb/index.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/coverage.html/node-swagger-mongodb/index.html)|
-| build-artifacts : | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..alpha..travis-ci.org) | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..beta..travis-ci.org) | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..master..travis-ci.org)|
+| test-server : | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-swagger-mongodb-master.herokuapp.com) | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-swagger-mongodb-beta.herokuapp.com) | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-swagger-mongodb-alpha.herokuapp.com)|
+| test-report : | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/test-report.html) | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/test-report.html) | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/test-report.html)|
+| coverage : | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/coverage.html/node-swagger-mongodb/index.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/coverage.html/node-swagger-mongodb/index.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/coverage.html/node-swagger-mongodb/index.html)|
+| build-artifacts : | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..master..travis-ci.org) | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..beta..travis-ci.org) | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..alpha..travis-ci.org)|
 
-#### alpha branch
-- unstable branch
-- HEAD is arbitrary
-- commit history may be rewritten
+#### master branch
+- stable branch
+- HEAD should be tagged, npm-published package
 
 #### beta branch
 - stable branch
 - HEAD should be latest, npm-published package
 
-#### master branch
-- stable branch
-- HEAD should be tagged, npm-published package
+#### alpha branch
+- unstable branch
+- HEAD is arbitrary
+- commit history may be rewritten
 
 
 
@@ -52,7 +58,7 @@ instruction
 /*jslint
     browser: true,
     maxerr: 8,
-    maxlen: 80,
+    maxlen: 96,
     node: true,
     nomen: true,
     stupid: true
@@ -60,21 +66,29 @@ instruction
 
 (function () {
     'use strict';
-    var local;
     // run node js-env code
     (function () {
+        var local;
         // init local
         local = {};
-        // require modules
-        local.swmgdb = require('swagger-mongodb');
-        local.fs = require('fs');
-        local.http = require('http');
-        local.url = require('url');
+        local.global = global;
+        local.modeJs = 'node';
+        try {
+            local.swmgdb = require('swagger-mongodb');
+        } catch (errorCaught) {
+            local.swmgdb = require('./index.js');
+        }
+        local.utility2 = require('utility2');
+        // init onReady
+        local.utility2.onReadyInit();
+        // import swmgdb.local
+        Object.keys(local.swmgdb.local).forEach(function (key) {
+            local[key] = local[key] || local.swmgdb.local[key];
+        });
+        // export local
+        module.exports = local;
         // init assets
-        local['/'] = (String() +
-
-
-
+        local.utility2.cacheDict.assets['/'] = String() +
 /* jslint-ignore-begin */
 '<!DOCTYPE html>\n' +
 '<html>\n' +
@@ -117,7 +131,7 @@ src="/assets/swagger-ui.html" \
 width="100%" \
 ></iframe>\n' +
 '    <script src="/assets/utility2.js"></script>\n' +
-'    <script src='/assets/swagger-ui.rollup.js'></script>\n' +
+'    <script src="/assets/swagger-ui.rollup.js"></script>\n' +
 '    <script src="/assets/swagger-mongodb.js"></script>\n' +
 '    <script src="/test/test.js"></script>\n' +
 '    <script>\n' +
@@ -143,61 +157,116 @@ width="100%" \
 '</body>\n' +
 '</html>\n' +
 /* jslint-ignore-end */
-
-
-
-        String()).replace((/\{\{envDict\.\w+?\}\}/g), function (match0) {
-            switch (match0) {
-            case '{{envDict.npm_package_description}}':
-                return local.utility2.envDict.envDict.npm_package_description ||
-                    'this is an example module';
-            case '{{envDict.npm_package_name}}':
-                return local.utility2.envDict.envDict.npm_package_name ||
-                    'example-module';
-            case '{{envDict.npm_package_version}}':
-                return local.utility2.envDict.envDict.npm_package_version ||
-                    '0.0.1';
-            default:
-                return '';
+            String();
+        local.utility2.cacheDict.assets['/'] = local.utility2.stringFormat(
+            local.utility2.cacheDict.assets['/'],
+            { envDict: local.utility2.envDict },
+            ''
+        );
+        local.utility2.cacheDict.assets['/assets/swagger-mongodb.js'] =
+            local.utility2.istanbul_lite.instrumentInPackage(
+                local.swmgdb['/assets/swagger-mongodb.js'],
+                local.swmgdb.__dirname + '/index.js',
+                'swagger-mongodb'
+            );
+        local.utility2.cacheDict.assets['/test/test.js'] =
+            local.utility2.istanbul_lite.instrumentInPackage(
+                local.fs.readFileSync(local.swmgdb.__dirname + '/test.js', 'utf8'),
+                local.swmgdb.__dirname + '/test.js',
+                'swagger-mongodb'
+            );
+        // init mongodb-client
+        local.utility2.onReady.counter += 1;
+        local.utility2.taskRunOrSubscribe({
+            key: 'swagger-mongodb.mongodbConnect',
+            onTask: function (onError) {
+                local.mongodb.MongoClient.connect(
+                    local.utility2.envDict.npm_config_mongodb_url ||
+                        'mongodb://localhost:27017/test',
+                    function (error, db) {
+                            // validate no error occurred
+                            local.utility2.assert(!error, error);
+                            local.swmgdb.db = db;
+                            onError();
+                            local.utility2.onReady();
+                        }
+                );
             }
         });
-        local['/assets/swagger-mongodb.js'] =
-            local.utility2.jslint_lite['/assets/swagger-mongodb.js'];
-        local['/assets/utility2.css'] = '';
-        local['/assets/utility2.js'] = '';
-        local['/test/test.js'] = '';
-        // create server
-        local.server = local.http.createServer(function (request, response) {
-            switch (local.url.parse(request.url).pathname) {
-            // serve assets
-            case '/':
-            case '/assets/swagger-mongodb.js':
-            case '/assets/utility2.css':
-            case '/assets/utility2.js':
-            case '/test/test.js':
-                response.end(local[local.url.parse(request.url).pathname]);
-                break;
-            // default to 404 Not Found
-            default:
-                response.statusCode = 404;
-                response.end('404 Not Found');
-            }
+        // init swmgdb
+        local.swmgdb.apiUpdate({
+            definitions: {
+                CrudModel: {
+                    _collectionName: 'SwmgdbCrudCollection',
+                    _crudApi: true,
+                    properties: {
+                        fieldArray: { items: {}, type: 'array' },
+                        fieldArraySubdoc: {
+                            items: { $ref: '#/definitions/CrudModel' },
+                            type: 'array'
+                        },
+                        fieldBoolean: { type: 'boolean' },
+                        fieldInteger: { type: 'integer' },
+                        fieldIntegerInt32: { format: 'int32', type: 'integer' },
+                        fieldIntegerInt64: { format: 'int64', type: 'integer' },
+                        fieldNumber: { type: 'number' },
+                        fieldNumberDouble: { format: 'double', type: 'number' },
+                        fieldNumberFloat: { format: 'float', type: 'number' },
+                        fieldObject: { type: 'object' },
+                        fieldObjectSubdoc: { $ref: '#/definitions/CrudModel' },
+                        fieldRequired: {},
+                        fieldString: { type: 'string' },
+                        fieldStringByte: { format: 'byte', type: 'string' },
+                        fieldStringDate: { format: 'date', type: 'string' },
+                        fieldStringDatetime: { format: 'date-time', type: 'string' },
+                        fieldStringEmail: { format: 'email', type: 'string' },
+                        fieldStringJson: { format: 'json', type: 'string' },
+                        fieldUndefined: {}
+                    },
+                    required: ['fieldRequired'],
+                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
+                },
+                PetModel: {
+                    _collectionName: 'SwmgdbPetCollection',
+                    _crudApi: true,
+                    properties: {},
+                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
+                },
+                StoreModel: {
+                    _collectionName: 'SwmgdbStoreCollection',
+                    _crudApi: true,
+                    properties: {},
+                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
+                },
+                UserModel: {
+                    _collectionName: 'SwmgdbUserCollection',
+                    _crudApi: true,
+                    properties: {
+                        email: { format: 'email', type: 'string' },
+                        passwordHash: { type: 'string' },
+                        username: { type: 'string' }
+                    },
+                    required: ['passwordHash', 'username'],
+                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
+                }
+            },
+            tags: [
+                { description: 'default mongodb crud api', name: 'CrudModel' },
+                { description: 'Everything about your pets', name: 'PetModel' },
+                { description: 'Access to Petstore orders', name: 'StoreModel' },
+                { description: 'Operations about user', name: 'UserModel' }
+            ]
         });
-        // start server
-        local.serverPort = 1337;
-        console.log('server starting on port ' + local.serverPort);
-        local.server.listen(local.serverPort, function () {
-            // this internal build-code will screen-capture the server
-            // and then exit
-            if (process.env.MODE_BUILD === 'testExampleJs') {
-                console.log('server stopping on port ' + local.serverPort);
-                require(
-                    process.env.npm_config_dir_utility2 + '/index.js'
-                ).phantomScreenCapture({
-                    url: 'http://localhost:' + local.serverPort
-                }, process.exit);
-            }
-        });
+        // init middleware
+        local.middleware = local.utility2.middlewareGroupCreate([
+            local.utility2.middlewareInit,
+            local.utility2.middlewareAssetsCached,
+            local.swmgdb.middleware
+        ]);
+        // init middleware error-handler
+        local.onMiddlewareError = local.swmgdb.onMiddlewareError;
+        // run server-test
+        local.utility2.testRunServer(local);
     }());
 }());
 ```
@@ -225,7 +294,7 @@ width="100%" \
     "dependencies": {
         "mongodb": "2.0.31",
         "swagger-ui-lite": "2.1.0-M2-2015.5.6-a",
-        "utility2": "2015.5.15-a"
+        "utility2": "2015.5.15-d"
     },
     "description": "lightweight swagger-ui crud api backed by mongodb",
     "devDependencies": {
@@ -249,12 +318,13 @@ width="100%" \
     },
     "scripts": {
         "build-ci": "node_modules/.bin/utility2 shRun shReadmeBuild",
+        "postinstall": "node_modules/.bin/utility2 shRun shReadmeExampleJsSave",
         "start": "npm_config_mode_auto_restart=1 \
 node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmePackageJsonExport && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.5.8-b"
+    "version": "2015.5.17-a"
 }
 ```
 
@@ -266,8 +336,9 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since c023f6aa
-- npm publish 2015.5.8-b
+# change since 9695c0ce
+- npm publish 2015.5.17-a
+- add heroku deploy
 - add testCase_validateXxx_default
 - migrating to v0
 - add swagger param parsing to middleware
@@ -291,14 +362,29 @@ shBuild() {
     export npm_config_mode_slimerjs=1 || return $?
     . node_modules/.bin/utility2 && shInit || return $?
 
-    #!! # run npm-test on published package
-    #!! shRun shNpmTestPublished || return $?
+    # run npm-test on published package
+    shRun shNpmTestPublished || return $?
 
     # run npm-test
     MODE_BUILD=npmTest shRunScreenCapture npm test || return $?
 
     # if running legacy-node, then do not continue
     [ "$(node --version)" \< "v0.12" ] && return
+
+    # deploy app to heroku
+    shRun shHerokuDeploy hrku01-$npm_package_name-$CI_BRANCH || return $?
+
+    # test deployed app to heroku
+    if [ "$CI_BRANCH" = alpha ] ||
+        [ "$CI_BRANCH" = beta ] ||
+        [ "$CI_BRANCH" = master ]
+    then
+        TEST_URL="https://hrku01-$npm_package_name-$CI_BRANCH.herokuapp.com" \
+            || return $?
+        TEST_URL="$TEST_URL?modeTest=phantom&_testSecret={{_testSecret}}" || \
+            return $?
+        MODE_BUILD=herokuTest shRun shPhantomTest $TEST_URL || return $?
+    fi
 
     # if number of commits > 1024, then squash older commits
     shRun shGitBackupAndSquashAndPush 1024 > /dev/null || return $?
@@ -310,25 +396,11 @@ EXIT_CODE=$?
 
 shBuildCleanup() {
     # this function will cleanup build-artifacts in local build dir
-    # init env
-    . node_modules/.bin/utility2 && shInit || return $?
     # create package-listing
     MODE_BUILD=gitLsTree shRunScreenCapture shGitLsTree || return $?
     # create recent changelog of last 50 commits
     MODE_BUILD=gitLog shRunScreenCapture git log -50 --pretty="%ai\u000a%B" || \
         return $?
-    # add black border around phantomjs screen-capture
-    shBuildPrint phantomScreenCapture \
-        "add black border around phantomjs screen-capture" || return $?
-    local FILE_LIST="$(ls \
-        $npm_config_dir_build/screen-capture.*.phantomjs*.png \
-        $npm_config_dir_build/screen-capture.*.slimerjs*.png \
-        2>/dev/null)" || return $?
-    if [ "$FILE_LIST" ] && (mogrify --version > /dev/null 2>&1)
-    then
-        printf "$FILE_LIST" | \
-            xargs -n 1 mogrify -frame 1 -mattecolor black || return $?
-    fi
 }
 shBuildCleanup || exit $?
 

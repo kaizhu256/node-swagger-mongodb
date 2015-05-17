@@ -1,7 +1,7 @@
 *.log
 *~
-.DS_Store
-.travis.yml
+.*
+example.js
 Procfile
 node_modules
 tmp

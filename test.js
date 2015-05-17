@@ -4,6 +4,7 @@
     maxlen: 96,
     node: true,
     nomen: true,
+    regexp: true,
     stupid: true
 */
 (function (local) {
@@ -180,12 +181,12 @@
             onNext();
         };
 
-        local.testCase_validateAgainstXxx_default = function (onError) {
+        local.testCase_validateXxx_default = function (onError) {
             /*
-                this function will test validateAgainstXxx's default handling behavior
+                this function will test validateXxx's default handling behavior
             */
             var data, error, options;
-            // test validateAgainstParameters's default handling behavior
+            // test validateParameters's default handling behavior
             [{
                 data: { body: { fieldRequired: true } },
                 key: 'crudCreateOne',
@@ -198,9 +199,9 @@
                 options.parameters = local.swmgdb.swaggerJson
                     .paths['/CrudModel/' + options.key][options.method]
                     .parameters;
-                local.swmgdb.validateAgainstParameters(options);
+                local.swmgdb.validateParameters(options);
             });
-            // test validateAgainstParameters's error handling behavior
+            // test validateParameters's error handling behavior
             [{
                 data: { body: { fieldRequired: null } },
                 key: 'crudCreateOne',
@@ -215,19 +216,19 @@
                     options.parameters = local.swmgdb.swaggerJson
                         .paths['/CrudModel/' + options.key][options.method]
                         .parameters;
-                    local.swmgdb.validateAgainstParameters(options);
+                    local.swmgdb.validateParameters(options);
                 } catch (errorCaught) {
                     error = errorCaught;
                 }
                 // validate error occurred
                 local.utility2.assert(error, error);
             });
-            // test validateAgainstProperty's circular-reference handling behavior
-            local.swmgdb.validateAgainstProperty({
+            // test validateProperty's circular-reference handling behavior
+            local.swmgdb.validateProperty({
                 data: { fieldObject: {} },
                 property: { fieldObject: { type: 'object' } }
             });
-            // test validateAgainstSchema's default handling behavior
+            // test validateSchema's default handling behavior
             options = {
                 schema: local.swmgdb.swaggerJson.definitions.CrudModel,
                 data: { fieldRequired: true }
@@ -261,12 +262,12 @@
                 data.fieldArraySubdoc = data.fieldArraySubdoc || [data];
                 data.fieldObject = data.fieldObject || data;
                 data.fieldObjectSubdoc = data.fieldObjectSubdoc || data;
-                local.swmgdb.validateAgainstSchema({
+                local.swmgdb.validateSchema({
                     data: data,
                     schema: options.schema
                 });
             });
-            // test validateAgainstSchema's error handling behavior
+            // test validateSchema's error handling behavior
             [
                 { data: null },
                 { key: 'fieldArray', value: true },
@@ -297,7 +298,7 @@
                     error = null;
                     data = local.utility2.jsonCopy(options.data);
                     data[element.key] = element.value;
-                    local.swmgdb.validateAgainstSchema({
+                    local.swmgdb.validateSchema({
                         data: element.data === null
                             ? null
                             : data,
@@ -313,15 +314,6 @@
         };
     }());
     switch (local.modeJs) {
-
-
-
-    // run browser js-env code
-    case 'browser':
-        // init modePhantom
-        local.modePhantom = (/\bPhantomJS\b/).test(navigator.userAgent);
-        // init tests
-        break;
 
 
 
@@ -354,6 +346,8 @@
 
     // run browser js-env code
     case 'browser':
+        // init modePhantom
+        local.modePhantom = (/\bPhantomJS\b/).test(navigator.userAgent);
         // init swaggerUi
         local.utility2.onReady.counter += 1;
         window.swaggerUi = new window.SwaggerUi({
@@ -376,126 +370,9 @@
 
     // run node js-env code
     case 'node':
-        // init mongodb-client
-        local.utility2.onReady.counter += 1;
-        local.utility2.taskRunOrSubscribe({
-            key: 'swagger-mongodb.mongodbConnect',
-            onTask: function (onError) {
-                local.mongodb.MongoClient.connect(
-                    local.utility2.envDict.npm_config_mongodb_url ||
-                        'mongodb://localhost:27017/test',
-                    function (error, db) {
-                            // validate no error occurred
-                            local.utility2.assert(!error, error);
-                            local.swmgdb.db = db;
-                            onError();
-                            local.utility2.onReady();
-                            // run validation test
-                            local.testCase_validateAgainstXxx_default(
-                                local.utility2.onErrorDefault
-                            );
-                        }
-                );
-            }
-        });
-        // init swmgdb
-        local.swmgdb.apiUpdate({
-            definitions: {
-                CrudModel: {
-                    _collectionName: 'SwmgdbCrudCollection',
-                    _crudApi: true,
-                    properties: {
-                        fieldArray: { items: {}, type: 'array' },
-                        fieldArraySubdoc: {
-                            items: { $ref: '#/definitions/CrudModel' },
-                            type: 'array'
-                        },
-                        fieldBoolean: { type: 'boolean' },
-                        fieldInteger: { type: 'integer' },
-                        fieldIntegerInt32: { format: 'int32', type: 'integer' },
-                        fieldIntegerInt64: { format: 'int64', type: 'integer' },
-                        fieldNumber: { type: 'number' },
-                        fieldNumberDouble: { format: 'double', type: 'number' },
-                        fieldNumberFloat: { format: 'float', type: 'number' },
-                        fieldObject: { type: 'object' },
-                        fieldObjectSubdoc: { $ref: '#/definitions/CrudModel' },
-                        fieldRequired: {},
-                        fieldString: { type: 'string' },
-                        fieldStringByte: { format: 'byte', type: 'string' },
-                        fieldStringDate: { format: 'date', type: 'string' },
-                        fieldStringDatetime: { format: 'date-time', type: 'string' },
-                        fieldStringEmail: { format: 'email', type: 'string' },
-                        fieldStringJson: { format: 'json', type: 'string' },
-                        fieldUndefined: {}
-                    },
-                    required: ['fieldRequired'],
-                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
-                },
-                PetModel: {
-                    _collectionName: 'SwmgdbPetCollection',
-                    _crudApi: true,
-                    properties: {},
-                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
-                },
-                StoreModel: {
-                    _collectionName: 'SwmgdbStoreCollection',
-                    _crudApi: true,
-                    properties: {},
-                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
-                },
-                UserModel: {
-                    _collectionName: 'SwmgdbUserCollection',
-                    _crudApi: true,
-                    properties: {
-                        email: { format: 'email', type: 'string' },
-                        passwordHash: { type: 'string' },
-                        username: { type: 'string' }
-                    },
-                    required: ['passwordHash', 'username'],
-                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
-                }
-            },
-            tags: [
-                { description: 'default mongodb crud api', name: 'CrudModel' },
-                { description: 'Everything about your pets', name: 'PetModel' },
-                { description: 'Access to Petstore orders', name: 'StoreModel' },
-                { description: 'Operations about user', name: 'UserModel' }
-            ]
-        });
-        // init assets
-        local.utility2.cacheDict.assets['/'] =
-            local.utility2.cacheDict.assets['/test/test.html'] =
-            local.utility2.stringFormat(local.fs
-                .readFileSync(__dirname + '/README.md', 'utf8')
-                // extract html
-                .replace((/[\S\s]+?(<!DOCTYPE html>[\S\s]+?<\/html>)[\S\s]+/), '$1')
-                // parse '\' line-continuation
-                .replace((/\\\n/g), '')
-                // remove "\\n' +" and "'"
-                .replace((/\\n' \+(\s*?)'/g), '$1'), { envDict: local.utility2.envDict }, '');
-        local.utility2.cacheDict.assets['/assets/swagger-mongodb.js'] =
-            local.utility2.istanbul_lite.instrumentInPackage(
-                local.swmgdb['/assets/swagger-mongodb.js'],
-                __dirname + '/index.js',
-                'swagger-mongodb'
-            );
-        local.utility2.cacheDict.assets['/test/test.js'] =
-            local.utility2.istanbul_lite.instrumentInPackage(
-                local.fs.readFileSync(__filename, 'utf8'),
-                __filename,
-                'swagger-mongodb'
-            );
-        // init middleware
-        local.middleware = local.utility2.middlewareGroupCreate([
-            local.utility2.middlewareInit,
-            local.utility2.middlewareAssetsCached,
-            local.swmgdb.middleware
-        ]);
-        // init middleware error-handler
-        local.onMiddlewareError = local.swmgdb.onMiddlewareError;
-        // run server-test
-        local.utility2.testRunServer(local);
-        // init dir
+        // run validation test
+        local.testCase_validateXxx_default(local.utility2.onErrorDefault);
+        // jslint dir
         [
             __dirname
         ].forEach(function (dir) {
@@ -543,22 +420,22 @@
         local.global = local.modeJs === 'browser'
             ? window
             : global;
-        // export local
-        local.global.local = local;
         // init utility2
         local.utility2 = local.modeJs === 'browser'
             ? window.utility2
             : require('utility2');
+        if (local.modeJs === 'node') {
+            // init example.js
+            local = require('./example.js');
+        }
         // init onReady
         local.utility2.onReadyInit();
         // init swmgdb
         local.swmgdb = local.modeJs === 'browser'
             ? window.swmgdb
             : require('./index.js');
-        // import swmgdb.local
-        Object.keys(local.swmgdb.local).forEach(function (key) {
-            local[key] = local[key] || local.swmgdb.local[key];
-        });
+        // export local
+        local.global.local = local;
     }());
     return local;
 }())));

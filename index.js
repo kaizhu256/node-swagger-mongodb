@@ -68,7 +68,7 @@
             }
         };
 
-        local.swmgdb.validateAgainstParameters = function (options) {
+        local.swmgdb.validateParameters = function (options) {
             /*
                this function will validate options.data against options.parameters
             */
@@ -79,7 +79,7 @@
                 local.utility2.assert(data && typeof data === 'object', data);
                 options.parameters.forEach(function (param) {
                     key = param.name;
-                    local.swmgdb.validateAgainstProperty({
+                    local.swmgdb.validateProperty({
                         data: data[key],
                         key: key,
                         property: param,
@@ -94,7 +94,7 @@
             }
         };
 
-        local.swmgdb.validateAgainstProperty = function (options) {
+        local.swmgdb.validateProperty = function (options) {
             /*
                this function will validate options.data against options.property
             */
@@ -118,7 +118,7 @@
             // init type
             type = property.$ref || (property.schema && property.schema.$ref);
             if (type) {
-                local.swmgdb.validateAgainstSchema({
+                local.swmgdb.validateSchema({
                     circularList: options.circularList,
                     data: data,
                     schema: local.swmgdb.schemaDereference(type)
@@ -142,7 +142,7 @@
                 assert(Array.isArray(data));
                 // recurse - validate elements in list
                 data.forEach(function (element) {
-                    local.swmgdb.validateAgainstProperty({
+                    local.swmgdb.validateProperty({
                         circularList: options.circularList,
                         data: element,
                         key: options.key,
@@ -203,7 +203,7 @@
             }
         };
 
-        local.swmgdb.validateAgainstSchema = function (options) {
+        local.swmgdb.validateSchema = function (options) {
             /*
                this function will validate options.data against options.schema
             */
@@ -228,7 +228,7 @@
                 );
                 Object.keys(schema.properties).forEach(function (_) {
                     key = _;
-                    local.swmgdb.validateAgainstProperty({
+                    local.swmgdb.validateProperty({
                         circularList: options.circularList,
                         data: data[key],
                         depth: options.depth - 1,
@@ -265,7 +265,7 @@
                     switch (modeNext) {
                     case 1:
                         // validate parameters
-                        local.swmgdb.validateAgainstParameters({
+                        local.swmgdb.validateParameters({
                             data: options.data,
                             key: options.schemaName + '.' + options.operationId,
                             parameters: options.parameters
@@ -693,7 +693,7 @@ case 3:
         }
     });
     // validate parameters
-    local.swmgdb.validateAgainstParameters({
+    local.swmgdb.validateParameters({
         data: request.swmgdbParameters,
         key: request.swmgdbPathname,
         parameters: request.swmgdbMethodPath.parameters
@@ -769,6 +769,7 @@ default:
     case 'node':
         // export swagger-mongodb
         module.exports = local.swmgdb;
+        module.exports.__dirname = __dirname;
         // require modules
         local.fs = require('fs');
         local.mongodb = require('mongodb');
@@ -891,7 +892,7 @@ default:
                     'success = function (data) { onError(null, data); }; ' +
                 '} ' +
                 'try { ' +
-                    'window.swmgdb && window.swmgdb.validateAgainstParameters({ ' +
+                    'window.swmgdb && window.swmgdb.validateParameters({ ' +
                         'data: args, ' +
                         'key: this.operation.operationId, ' +
                         'parameters: this.parameters ' +
