@@ -43,7 +43,7 @@
                     switch (modeNext) {
                     case 1:
                         // init api
-                        api = local.swmgdb.api.TestModel;
+                        api = local.swmg.api.TestModel;
                         // init options
                         options.modeErrorData = true;
                         // delete object by id
@@ -129,7 +129,7 @@
                     switch (modeNext) {
                     case 1:
                         // init api
-                        api = local.swmgdb.api.TestModel;
+                        api = local.swmg.api.TestModel;
                         // init options
                         options.body = {
                             fieldRequired: true,
@@ -196,10 +196,10 @@
                 key: 'crudCountByQuery',
                 method: 'get'
             }].forEach(function (options) {
-                options.parameters = local.swmgdb.swaggerJson
+                options.parameters = local.swmg.swaggerJson
                     .paths['/TestModel/' + options.key][options.method]
                     .parameters;
-                local.swmgdb.validateParameters(options);
+                local.swmg.validateParameters(options);
             });
             // test validateParameters's error handling behavior
             [{
@@ -213,10 +213,10 @@
             }].forEach(function (options) {
                 try {
                     error = null;
-                    options.parameters = local.swmgdb.swaggerJson
+                    options.parameters = local.swmg.swaggerJson
                         .paths['/TestModel/' + options.key][options.method]
                         .parameters;
-                    local.swmgdb.validateParameters(options);
+                    local.swmg.validateParameters(options);
                 } catch (errorCaught) {
                     error = errorCaught;
                 }
@@ -224,13 +224,13 @@
                 local.utility2.assert(error, error);
             });
             // test validateProperty's circular-reference handling behavior
-            local.swmgdb.validateProperty({
+            local.swmg.validateProperty({
                 data: { fieldObject: {} },
                 property: { fieldObject: { type: 'object' } }
             });
             // test validateSchema's default handling behavior
             options = {
-                schema: local.swmgdb.swaggerJson.definitions.TestModel,
+                schema: local.swmg.swaggerJson.definitions.TestModel,
                 data: { fieldRequired: true }
             };
             [
@@ -262,7 +262,7 @@
                 data.fieldArraySubdoc = data.fieldArraySubdoc || [data];
                 data.fieldObject = data.fieldObject || data;
                 data.fieldObjectSubdoc = data.fieldObjectSubdoc || data;
-                local.swmgdb.validateSchema({
+                local.swmg.validateSchema({
                     data: data,
                     schema: options.schema
                 });
@@ -298,7 +298,7 @@
                     error = null;
                     data = local.utility2.jsonCopy(options.data);
                     data[element.key] = element.value;
-                    local.swmgdb.validateSchema({
+                    local.swmg.validateSchema({
                         data: element.data === null
                             ? null
                             : data,
@@ -353,7 +353,7 @@
         window.swaggerUi = new window.SwaggerUi({
             dom_id: "swagger-ui-container",
             onComplete: function () {
-                local.swmgdb.swaggerJson = local.swmgdb.api.swaggerJson;
+                local.swmg.swaggerJson = local.swmg.api.swaggerJson;
                 local.utility2.onReady();
             },
             supportedSubmitMethods: ['delete', 'get', 'patch', 'post', 'put'],
@@ -361,7 +361,7 @@
         });
         // init api
         window.swaggerUi.load();
-        local.swmgdb.api = window.swaggerUi.api;
+        local.swmg.api = window.swaggerUi.api;
         // run test
         local.utility2.testRun(local);
         break;
@@ -430,9 +430,9 @@
         }
         // init onReady
         local.utility2.onReadyInit();
-        // init swmgdb
-        local.swmgdb = local.modeJs === 'browser'
-            ? window.swmgdb
+        // init swmg
+        local.swmg = local.modeJs === 'browser'
+            ? window.swmg
             : require('./index.js');
         // export local
         local.global.local = local;

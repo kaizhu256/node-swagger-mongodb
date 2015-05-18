@@ -57,7 +57,7 @@ instruction
           $ npm install swagger-mongodb && \
               npm_config_server_port=1337 node example.js
     3. open a browser to http://localhost:1337
-    4. interact with the swagger-ui api
+    4. interact with the swagger-ui crud-api
 */
 
 /*jslint
@@ -79,16 +79,16 @@ instruction
         local.global = global;
         local.modeJs = 'node';
         try {
-            local.swmgdb = require('swagger-mongodb');
+            local.swmg = require('swagger-mongodb');
         } catch (errorCaught) {
-            local.swmgdb = require('./index.js');
+            local.swmg = require('./index.js');
         }
-        local.utility2 = local.swmgdb.local.utility2;
+        local.utility2 = local.swmg.local.utility2;
         // init onReady
         local.utility2.onReadyInit();
-        // import swmgdb.local
-        Object.keys(local.swmgdb.local).forEach(function (key) {
-            local[key] = local[key] || local.swmgdb.local[key];
+        // import swmg.local
+        Object.keys(local.swmg.local).forEach(function (key) {
+            local[key] = local[key] || local.swmg.local[key];
         });
         // export local
         module.exports = local;
@@ -170,14 +170,14 @@ width="100%" \
         );
         local.utility2.cacheDict.assets['/assets/swagger-mongodb.js'] =
             local.utility2.istanbul_lite.instrumentInPackage(
-                local.swmgdb['/assets/swagger-mongodb.js'],
-                local.swmgdb.__dirname + '/index.js',
+                local.swmg['/assets/swagger-mongodb.js'],
+                local.swmg.__dirname + '/index.js',
                 'swagger-mongodb'
             );
         local.utility2.cacheDict.assets['/test/test.js'] =
             local.utility2.istanbul_lite.instrumentInPackage(
-                local.fs.readFileSync(local.swmgdb.__dirname + '/test.js', 'utf8'),
-                local.swmgdb.__dirname + '/test.js',
+                local.fs.readFileSync(local.swmg.__dirname + '/test.js', 'utf8'),
+                local.swmg.__dirname + '/test.js',
                 'swagger-mongodb'
             );
         // init mongodb-client
@@ -191,30 +191,30 @@ width="100%" \
                     function (error, db) {
                             // validate no error occurred
                             local.utility2.assert(!error, error);
-                            local.swmgdb.db = db;
+                            local.swmg.db = db;
                             onError();
                             local.utility2.onReady();
                         }
                 );
             }
         });
-        // init swmgdb
-        local.swmgdb.apiUpdate({
+        // init crud-api
+        local.swmg.apiUpdate({
             definitions: {
                 PetModel: {
-                    _collectionName: 'SwmgdbPetCollection',
+                    _collectionName: 'SwmgPetCollection',
                     _crudApi: true,
                     properties: {},
                     'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
                 },
                 StoreModel: {
-                    _collectionName: 'SwmgdbStoreCollection',
+                    _collectionName: 'SwmgStoreCollection',
                     _crudApi: true,
                     properties: {},
                     'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
                 },
                 TestModel: {
-                    _collectionName: 'SwmgdbTestCollection',
+                    _collectionName: 'SwmgTestCollection',
                     _crudApi: true,
                     properties: {
                         fieldArray: { items: {}, type: 'array' },
@@ -244,11 +244,12 @@ width="100%" \
                     'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
                 },
                 UserModel: {
-                    _collectionName: 'SwmgdbUserCollection',
+                    _collectionName: 'SwmgUserCollection',
                     _crudApi: true,
                     properties: {
                         email: { format: 'email', type: 'string' },
                         passwordHash: { type: 'string' },
+                        passwordSalt: { type: 'string' },
                         username: { type: 'string' }
                     },
                     required: ['passwordHash', 'username'],
@@ -266,10 +267,10 @@ width="100%" \
         local.middleware = local.utility2.middlewareGroupCreate([
             local.utility2.middlewareInit,
             local.utility2.middlewareAssetsCached,
-            local.swmgdb.middleware
+            local.swmg.middleware
         ]);
         // init middleware error-handler
-        local.onMiddlewareError = local.swmgdb.onMiddlewareError;
+        local.onMiddlewareError = local.swmg.onMiddlewareError;
         // run server-test
         local.utility2.testRunServer(local);
     }());
@@ -285,6 +286,7 @@ width="100%" \
 
 
 # npm-dependencies
+- [mongodb](https://www.npmjs.com/package/mongodb)
 - [swagger-ui-lite](https://www.npmjs.com/package/swagger-ui-lite)
 - [utility2](https://www.npmjs.com/package/utility2)
 
@@ -303,7 +305,7 @@ width="100%" \
     "dependencies": {
         "mongodb": "2.0.31",
         "swagger-ui-lite": "^2.1.0-M2-2015.5.6-a",
-        "utility2": "2015.5.15-e"
+        "utility2": "2015.5.15-f"
     },
     "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
@@ -334,7 +336,7 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.5.17-d"
+    "version": "2015.5.17-e"
 }
 ```
 
@@ -348,9 +350,10 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 6a1c12bb
-- npm publish 2015.5.17-d
-- fix crudGetByQueryMany api
+# change since f7d802fd
+- npm publish 2015.5.17-e
+- rename namespace swmgdb to swmg
+- add passwordSalt field to UserModel
 - none
 
 

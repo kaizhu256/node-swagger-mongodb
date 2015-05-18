@@ -15,7 +15,7 @@
 
     // run shared js-env code
     (function () {
-        local.swmgdb.normalizeErrorJsonApi = function (error) {
+        local.swmg.normalizeErrorJsonApi = function (error) {
             /*
                 this function will normalize the error to jsonapi format,
                 http://jsonapi.org/format/#errors
@@ -28,10 +28,10 @@
                 detail: error.stack,
                 status: error.status
             }];
-            return local.swmgdb.normalizeIdSwagger(error);
+            return local.swmg.normalizeIdSwagger(error);
         };
 
-        local.swmgdb.normalizeIdMongodb = function (data) {
+        local.swmg.normalizeIdMongodb = function (data) {
             /*
                 this function will recursively convert the property id to _id
             */
@@ -44,7 +44,7 @@
             return data;
         };
 
-        local.swmgdb.normalizeIdSwagger = function (data) {
+        local.swmg.normalizeIdSwagger = function (data) {
             /*
                 this function will recursively convert the property _id to id
             */
@@ -57,18 +57,18 @@
             return data;
         };
 
-        local.swmgdb.schemaDereference = function ($ref) {
+        local.swmg.schemaDereference = function ($ref) {
             /*
                 this function will try to dereference the schema from $ref
             */
             try {
-                return local.swmgdb.swaggerJson
+                return local.swmg.swaggerJson
                     .definitions[(/^\#\/definitions\/(\w+)$/).exec($ref)[1]];
             } catch (ignore) {
             }
         };
 
-        local.swmgdb.validateParameters = function (options) {
+        local.swmg.validateParameters = function (options) {
             /*
                this function will validate options.data against options.parameters
             */
@@ -79,7 +79,7 @@
                 local.utility2.assert(data && typeof data === 'object', data);
                 options.parameters.forEach(function (param) {
                     key = param.name;
-                    local.swmgdb.validateProperty({
+                    local.swmg.validateProperty({
                         data: data[key],
                         key: key,
                         property: param,
@@ -94,7 +94,7 @@
             }
         };
 
-        local.swmgdb.validateProperty = function (options) {
+        local.swmg.validateProperty = function (options) {
             /*
                this function will validate options.data against options.property
             */
@@ -118,10 +118,10 @@
             // init type
             type = property.$ref || (property.schema && property.schema.$ref);
             if (type) {
-                local.swmgdb.validateSchema({
+                local.swmg.validateSchema({
                     circularList: options.circularList,
                     data: data,
-                    schema: local.swmgdb.schemaDereference(type)
+                    schema: local.swmg.schemaDereference(type)
                 });
                 return;
             }
@@ -136,13 +136,14 @@
                 options.circularList.push(data);
             }
             // validate property.type
-// https://github.com/swagger-api/swagger-spec/blob/master/versions/2.0.md#data-types
+            // https://github.com/swagger-api/swagger-spec/blob/master/versions/2.0.md
+            // #data-types
             switch (type) {
             case 'array':
                 assert(Array.isArray(data));
                 // recurse - validate elements in list
                 data.forEach(function (element) {
-                    local.swmgdb.validateProperty({
+                    local.swmg.validateProperty({
                         circularList: options.circularList,
                         data: element,
                         key: options.key,
@@ -203,7 +204,7 @@
             }
         };
 
-        local.swmgdb.validateSchema = function (options) {
+        local.swmg.validateSchema = function (options) {
             /*
                this function will validate options.data against options.schema
             */
@@ -228,7 +229,7 @@
                 );
                 Object.keys(schema.properties).forEach(function (_) {
                     key = _;
-                    local.swmgdb.validateProperty({
+                    local.swmg.validateProperty({
                         circularList: options.circularList,
                         data: data[key],
                         depth: options.depth - 1,
@@ -251,7 +252,7 @@
 
     // run node js-env code
     case 'node':
-        local.swmgdb._crudApi = function (options, onError) {
+        local.swmg._crudApi = function (options, onError) {
             /*
                 this function will run the low-level crud-api on the given options.data
             */
@@ -265,13 +266,13 @@
                     switch (modeNext) {
                     case 1:
                         // validate parameters
-                        local.swmgdb.validateParameters({
+                        local.swmg.validateParameters({
                             data: options.data,
                             key: options.schemaName + '.' + options.operationId,
                             parameters: options.parameters
                         });
                         // normalize id to mongodb format
-                        local.swmgdb.normalizeIdMongodb(options);
+                        local.swmg.normalizeIdMongodb(options);
                         // init body
                         options.data = options.data.body || options.data;
                         // init id
@@ -279,7 +280,7 @@
                             String(options.data._id || local.utility2.uuidTime());
                         // init collection
                         options.collection =
-                            local.swmgdb.cacheDict.collection[options.collectionName];
+                            local.swmg.cacheDict.collection[options.collectionName];
                         // init _timeCreated
                         switch (options.operationId) {
                         case 'crudReplaceOne':
@@ -426,17 +427,17 @@
                     default:
                         if (error) {
                             error._id = options.data._id;
-                            error = onError(local.swmgdb.normalizeErrorJsonApi(error));
+                            error = onError(local.swmg.normalizeErrorJsonApi(error));
                         }
                         // normalize id to swagger format
-                        onError(error, local.swmgdb.normalizeIdSwagger(options.response));
+                        onError(error, local.swmg.normalizeIdSwagger(options.response));
                     }
                 }, onNext);
             });
             onNext();
         };
 
-        local.swmgdb.apiUpdate = function (options) {
+        local.swmg.apiUpdate = function (options) {
             /*
                 this function will update the api
             */
@@ -453,7 +454,7 @@
                 // init _crudApi
                 if (schema._crudApi) {
                     local.utility2.objectSetDefault(options, JSON.parse(
-                        JSON.stringify(local.swmgdb.crudSwaggerJson)
+                        JSON.stringify(local.swmg.crudSwaggerJson)
                             .replace((/\{\{collectionName\}\}/g), collectionName)
                             .replace((/\{\{schemaName\}\}/g), schemaName)
                     ), 2);
@@ -462,8 +463,8 @@
                 local.utility2.taskRunOrSubscribe({
                     key: 'swagger-mongodb.mongodbConnect'
                 }, function () {
-                    local.swmgdb.cacheDict.collection[collectionName] =
-                        local.swmgdb.db.collection(collectionName);
+                    local.swmg.cacheDict.collection[collectionName] =
+                        local.swmg.db.collection(collectionName);
                 });
             });
             // update paths
@@ -486,7 +487,7 @@
                         }
                     } }, 2);
                     // update cacheDict.methodPath
-                    local.swmgdb.cacheDict.methodPath[method.toUpperCase() + ' ' + path.replace(
+                    local.swmg.cacheDict.methodPath[method.toUpperCase() + ' ' + path.replace(
                         (/\{.*/),
                         function (match0) {
                             return match0.replace((/[^\/]+/), '');
@@ -496,7 +497,7 @@
             });
             // update and save tags
             tmp = {};
-            [local.swmgdb.swaggerJson.tags, options.tags].forEach(function (tags) {
+            [local.swmg.swaggerJson.tags, options.tags].forEach(function (tags) {
                 (tags || []).forEach(function (element) {
                     tmp[element.name] = element;
                 });
@@ -506,7 +507,7 @@
             });
             // update swaggerJson with options, with underscored keys removed
             local.utility2.objectSetOverride(
-                local.swmgdb.swaggerJson,
+                local.swmg.swaggerJson,
                 local.utility2.objectTraverse(
                     // jsonCopy object to prevent side-effect
                     local.utility2.jsonCopy(options),
@@ -524,29 +525,29 @@
                 2
             );
             // restore tags
-            local.swmgdb.swaggerJson.tags = tmp;
+            local.swmg.swaggerJson.tags = tmp;
             // init properties from x-inheritList
             [0, 1, 2, 3].forEach(function () {
-                Object.keys(local.swmgdb.swaggerJson.definitions).forEach(function (schema) {
-                    schema = local.swmgdb.swaggerJson.definitions[schema];
+                Object.keys(local.swmg.swaggerJson.definitions).forEach(function (schema) {
+                    schema = local.swmg.swaggerJson.definitions[schema];
                     // jsonCopy object to prevent side-effect
                     local.utility2.jsonCopy(schema['x-inheritList'] || [])
                         .reverse()
                         .forEach(function (element) {
                             local.utility2.objectSetDefault(schema, {
                                 properties:
-                                    local.swmgdb.schemaDereference(element.$ref).properties
+                                    local.swmg.schemaDereference(element.$ref).properties
                             }, 2);
                         });
                 });
             });
             // jsonCopy object to prevent side-effect
-            local.swmgdb.swaggerJson =
-                JSON.parse(local.utility2.jsonStringifyOrdered(local.swmgdb.swaggerJson));
+            local.swmg.swaggerJson =
+                JSON.parse(local.utility2.jsonStringifyOrdered(local.swmg.swaggerJson));
             // validate swaggerJson
             local.swagger_tools.v2.validate(
                 // jsonCopy object to prevent side-effect
-                local.utility2.jsonCopy(local.swmgdb.swaggerJson),
+                local.utility2.jsonCopy(local.swmg.swaggerJson),
                 function (error, result) {
                     if (error) {
                         throw error;
@@ -564,14 +565,14 @@
                     }
                 }
             );
-            // init swagger-api
-            local.swmgdb.api = new local.swmgdb.SwaggerClient({
+            // init crud-api
+            local.swmg.api = new local.swmg.SwaggerClient({
                 url: 'http://localhost:' + local.utility2.serverPortInit()
             });
-            local.swmgdb.api.buildFromSpec(local.utility2.jsonCopy(local.swmgdb.swaggerJson));
+            local.swmg.api.buildFromSpec(local.utility2.jsonCopy(local.swmg.swaggerJson));
         };
 
-        local.swmgdb.middleware = function (request, response, nextMiddleware) {
+        local.swmg.middleware = function (request, response, nextMiddleware) {
             /*
                 this function will run the main swagger-middleware
             */
@@ -601,7 +602,7 @@ case 1:
         return;
     }
     // if request.url is not prefixed with swaggerJson.basePath, then default to nextMiddleware
-    if (request.urlParsed.pathnameNormalized.indexOf(local.swmgdb.swaggerJson.basePath) === 0) {
+    if (request.urlParsed.pathnameNormalized.indexOf(local.swmg.swaggerJson.basePath) === 0) {
         local.utility2.serverRespondHeadSet(request, response, null, {
             'Access-Control-Allow-Methods': 'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT',
             // enable cors
@@ -610,30 +611,30 @@ case 1:
             // init content-type
             'Content-Type': 'application/json; charset=UTF-8'
         });
-        // init swmgdbPathname
-        request.swmgdbPathname = request.method + ' ' + request.urlParsed.pathnameNormalized
-            .replace(local.swmgdb.swaggerJson.basePath, '');
-        switch (request.swmgdbPathname) {
+        // init swmgPathname
+        request.swmgPathname = request.method + ' ' + request.urlParsed.pathnameNormalized
+            .replace(local.swmg.swaggerJson.basePath, '');
+        switch (request.swmgPathname) {
         case 'GET /swagger.json':
-            response.end(JSON.stringify(local.swmgdb.swaggerJson));
+            response.end(JSON.stringify(local.swmg.swaggerJson));
             return;
         }
-        // init swmgdbMethodPath
+        // init swmgMethodPath
         while (true) {
-            request.swmgdbMethodPath =
-                local.swmgdb.cacheDict.methodPath[request.swmgdbPathname];
-            // if can init swmgdbMethodPath, then continue to onNext
-            if (request.swmgdbMethodPath) {
+            request.swmgMethodPath =
+                local.swmg.cacheDict.methodPath[request.swmgPathname];
+            // if can init swmgMethodPath, then continue to onNext
+            if (request.swmgMethodPath) {
                 onNext();
                 return;
             }
-            // if cannot init swmgdbMethodPath, then default to nextMiddleware
-            if (request.swmgdbPathname === request.swmgdbPathnameOld) {
+            // if cannot init swmgMethodPath, then default to nextMiddleware
+            if (request.swmgPathname === request.swmgPathnameOld) {
                 break;
             }
-            request.swmgdbPathnameOld = request.swmgdbPathname;
-            request.swmgdbPathname =
-                request.swmgdbPathname.replace((/\/[^\/]+?(\/*?)$/), '/$1');
+            request.swmgPathnameOld = request.swmgPathname;
+            request.swmgPathname =
+                request.swmgPathname.replace((/\/[^\/]+?(\/*?)$/), '/$1');
         }
     }
     // default to next middleware
@@ -643,69 +644,69 @@ case 1:
 case 2:
     onTaskEnd = local.utility2.onTaskEnd(onNext);
     onTaskEnd.counter += 1;
-    // init swmgdbParameters
-    request.swmgdbParameters = {};
+    // init swmgParameters
+    request.swmgParameters = {};
     // parse path param
-    tmp = request.urlParsed.pathname.replace(local.swmgdb.swaggerJson.basePath, '').split('/');
-    request.swmgdbMethodPath._path.split('/').forEach(function (key, ii) {
+    tmp = request.urlParsed.pathname.replace(local.swmg.swaggerJson.basePath, '').split('/');
+    request.swmgMethodPath._path.split('/').forEach(function (key, ii) {
         if ((/^\{\S*?\}$/).test(key)) {
-            request.swmgdbParameters[key.slice(1, -1)] = decodeURIComponent(tmp[ii]);
+            request.swmgParameters[key.slice(1, -1)] = decodeURIComponent(tmp[ii]);
         }
     });
-    request.swmgdbMethodPath.parameters.forEach(function (param) {
+    request.swmgMethodPath.parameters.forEach(function (param) {
         switch (param.in) {
         // parse body param
         case 'body':
             onTaskEnd.counter += 1;
             local.utility2.streamReadAll(request, local.utility2.onErrorJsonParse(
                 function (error, data) {
-                    request.swmgdbParameters[param.name] = data;
+                    request.swmgParameters[param.name] = data;
                     onTaskEnd(error);
                 }
             ));
             break;
         // parse header param
         case 'header':
-            request.swmgdbParameters[param.name] = request.headers[param.name];
+            request.swmgParameters[param.name] = request.headers[param.name];
             break;
         // parse query param
         case 'query':
-            request.swmgdbParameters[param.name] = request.urlParsed.query[param.name];
+            request.swmgParameters[param.name] = request.urlParsed.query[param.name];
             break;
         }
         // init default param
-        request.swmgdbParameters[param.name] =
-            request.swmgdbParameters[param.name] || param.default;
+        request.swmgParameters[param.name] =
+            request.swmgParameters[param.name] || param.default;
     });
     onTaskEnd();
     break;
 case 3:
-    request.swmgdbMethodPath.parameters.forEach(function (param) {
-        tmp = request.swmgdbParameters[param.name];
+    request.swmgMethodPath.parameters.forEach(function (param) {
+        tmp = request.swmgParameters[param.name];
         // init default value
         if (tmp === undefined) {
             // jsonCopy object to prevent side-effect
-            request.swmgdbParameters[param.name] = local.utility2.jsonCopy(param.default);
+            request.swmgParameters[param.name] = local.utility2.jsonCopy(param.default);
         }
-        // JSON.parse swmgdbParameters
+        // JSON.parse swmgParameters
         if (param.type !== 'string' && (typeof tmp === 'string' || Buffer.isBuffer(tmp))) {
-            request.swmgdbParameters[param.name] = JSON.parse(tmp);
+            request.swmgParameters[param.name] = JSON.parse(tmp);
         }
     });
     // validate parameters
-    local.swmgdb.validateParameters({
-        data: request.swmgdbParameters,
-        key: request.swmgdbPathname,
-        parameters: request.swmgdbMethodPath.parameters
+    local.swmg.validateParameters({
+        data: request.swmgParameters,
+        key: request.swmgPathname,
+        parameters: request.swmgMethodPath.parameters
     });
     // run default crud-api
-    if (request.swmgdbMethodPath._crudApi) {
-        local.swmgdb._crudApi({
-            collectionName: request.swmgdbMethodPath._collectionName,
-            data: request.swmgdbParameters,
-            operationId: request.swmgdbMethodPath.operationId,
-            parameters: request.swmgdbMethodPath.parameters,
-            schemaName: request.swmgdbMethodPath.tags[0]
+    if (request.swmgMethodPath._crudApi) {
+        local.swmg._crudApi({
+            collectionName: request.swmgMethodPath._collectionName,
+            data: request.swmgParameters,
+            operationId: request.swmgMethodPath.operationId,
+            parameters: request.swmgMethodPath.parameters,
+            schemaName: request.swmgMethodPath.tags[0]
         }, onNext);
         return;
     }
@@ -728,7 +729,7 @@ default:
             onNext();
         };
 
-        local.swmgdb.onMiddlewareError = function (error, request, response) {
+        local.swmg.onMiddlewareError = function (error, request, response) {
             /*
                 this function will handle errors according to http://jsonapi.org/format/#errors
             */
@@ -738,7 +739,7 @@ default:
             }
             error.message = request.method + ' ' + request.url + '\n' + error.message;
             error.stack = error.message + '\n' + error.stack;
-            error = local.swmgdb.normalizeErrorJsonApi(error);
+            error = local.swmg.normalizeErrorJsonApi(error);
             // if modeErrorIgnore is undefined in url search params,
             // then print error.stack to stderr
             if (!(local.global.__coverage__ &&
@@ -758,7 +759,7 @@ default:
     // run browser js-env code
     case 'browser':
         // export swagger-mongodb
-        window.swmgdb = local.swmgdb;
+        window.swmg = local.swmg;
         // require modules
         local.utility2 = window.utility2;
         break;
@@ -768,7 +769,7 @@ default:
     // run node js-env code
     case 'node':
         // export swagger-mongodb
-        module.exports = local.swmgdb;
+        module.exports = local.swmg;
         module.exports.__dirname = __dirname;
         // require modules
         local.fs = require('fs');
@@ -780,7 +781,7 @@ default:
         local.utility2 = require('utility2');
         local.vm = require('vm');
         // init swaggerJson
-        local.swmgdb.swaggerJson = {
+        local.swmg.swaggerJson = {
             basePath: local.utility2.envDict.npm_config_mode_api_prefix || '/api/v0',
             definitions: {
                 // http://jsonapi.org/format/#errors
@@ -844,7 +845,7 @@ default:
                 }
             },
             info: {
-                description: 'demo of swagger-mongodb swagger-api',
+                description: 'demo of swagger-mongodb crud-api',
                 title: 'swagger-mongodb api',
                 version: '0'
             },
@@ -853,7 +854,7 @@ default:
             tags: []
         };
         // init assets
-        local.swmgdb['/assets/swagger-mongodb.js'] =
+        local.swmg['/assets/swagger-mongodb.js'] =
             local.fs.readFileSync(__filename, 'utf8');
         local.utility2.cacheDict.assets['/assets/swagger-ui.html'] = local.fs
             .readFileSync(
@@ -862,7 +863,7 @@ default:
             )
             .replace(
                 'http://petstore.swagger.io/v2/swagger.json',
-                local.swmgdb.swaggerJson.basePath + '/swagger.json'
+                local.swmg.swaggerJson.basePath + '/swagger.json'
             );
         local.utility2.cacheDict.assets['/assets/swagger-ui.rollup.css'] = local.fs
             .readFileSync(
@@ -892,7 +893,7 @@ default:
                     'success = function (data) { onError(null, data); }; ' +
                 '} ' +
                 'try { ' +
-                    'window.swmgdb && window.swmgdb.validateParameters({ ' +
+                    'window.swmg && window.swmg.validateParameters({ ' +
                         'data: args, ' +
                         'key: this.operation.operationId, ' +
                         'parameters: this.parameters ' +
@@ -952,11 +953,11 @@ default:
                 local,
                 __dirname + '/swagger-ui.rollup.js'
             );
-            local.swmgdb.SwaggerClient = local.SwaggerClient;
-            local.swmgdb.SwaggerUi = local.SwaggerUi;
+            local.swmg.SwaggerClient = local.SwaggerClient;
+            local.swmg.SwaggerUi = local.SwaggerUi;
         }());
-        // init swagger-api
-        local.swmgdb.apiUpdate({});
+        // init crud-api
+        local.swmg.apiUpdate({});
         break;
     }
 }((function () {
@@ -990,7 +991,7 @@ default:
             ? window.utility2
             : require('utility2');
         // init swagger-mongodb
-        local.swmgdb = {
+        local.swmg = {
             cacheDict: {
                 collection: {},
                 methodPath: {}
@@ -1002,7 +1003,7 @@ default:
 
 /* jslint-indent-begin 8 */
 /*jslint maxlen: 104*/
-local.swmgdb.crudSwaggerJson = { paths: {
+local.swmg.crudSwaggerJson = { paths: {
     '/{{schemaName}}/crudCountByQuery': { get: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
