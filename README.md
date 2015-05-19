@@ -93,9 +93,8 @@ instruction
         // export local
         module.exports = local;
         // init assets
-        local.utility2.cacheDict.assets['/'] = String() +
+        local.utility2.cacheDict.assets['/'] = '<!DOCTYPE html>\n' +
 /* jslint-ignore-begin */
-'<!DOCTYPE html>\n' +
 '<html>\n' +
 '<head>\n' +
 '    <meta charset="UTF-8">\n' +
@@ -160,9 +159,8 @@ width="100%" \
 '    </script>\n' +
 '    {{envDict.npm_config_html_body_extra}}\n' +
 '</body>\n' +
-'</html>\n' +
 /* jslint-ignore-end */
-            String();
+            '</html>\n';
         local.utility2.cacheDict.assets['/'] = local.utility2.stringFormat(
             local.utility2.cacheDict.assets['/'],
             { envDict: local.utility2.envDict },
@@ -211,36 +209,6 @@ width="100%" \
                     _collectionName: 'SwmgStoreCollection',
                     _crudApi: true,
                     properties: {},
-                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
-                },
-                TestModel: {
-                    _collectionName: 'SwmgTestCollection',
-                    _crudApi: true,
-                    properties: {
-                        fieldArray: { items: {}, type: 'array' },
-                        fieldArraySubdoc: {
-                            items: { $ref: '#/definitions/TestModel' },
-                            type: 'array'
-                        },
-                        fieldBoolean: { type: 'boolean' },
-                        fieldInteger: { type: 'integer' },
-                        fieldIntegerInt32: { format: 'int32', type: 'integer' },
-                        fieldIntegerInt64: { format: 'int64', type: 'integer' },
-                        fieldNumber: { type: 'number' },
-                        fieldNumberDouble: { format: 'double', type: 'number' },
-                        fieldNumberFloat: { format: 'float', type: 'number' },
-                        fieldObject: { type: 'object' },
-                        fieldObjectSubdoc: { $ref: '#/definitions/TestModel' },
-                        fieldRequired: {},
-                        fieldString: { type: 'string' },
-                        fieldStringByte: { format: 'byte', type: 'string' },
-                        fieldStringDate: { format: 'date', type: 'string' },
-                        fieldStringDatetime: { format: 'date-time', type: 'string' },
-                        fieldStringEmail: { format: 'email', type: 'string' },
-                        fieldStringJson: { format: 'json', type: 'string' },
-                        fieldUndefined: {}
-                    },
-                    required: ['fieldRequired'],
                     'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
                 },
                 UserModel: {
@@ -336,13 +304,14 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.5.17-e"
+    "version": "2015.5.19-a"
 }
 ```
 
 
 
 # todo
+- add user /login /logout paths
 - remove bson compiled dependency
 - cap test collections
 - add formData swagger parameter type
@@ -350,10 +319,9 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since f7d802fd
-- npm publish 2015.5.17-e
-- rename namespace swmgdb to swmg
-- add passwordSalt field to UserModel
+# change since 2fdbd2e3
+- npm publish 2015.5.19-a
+- add _testCase_crudGetXxx_default
 - none
 
 

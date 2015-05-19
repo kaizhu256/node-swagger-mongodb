@@ -319,7 +319,10 @@
                         switch (options.operationId) {
                         case 'crudCountByQuery':
                             // count data
-                            options.collection.count(JSON.parse(options.data.query), onNext);
+                            options.collection.count(
+                                local.swmg.normalizeIdMongodb(JSON.parse(options.data.query)),
+                                onNext
+                            );
                             break;
                         case 'crudCreateOne':
                             // insert data
@@ -342,8 +345,7 @@
                             options.collection.findOne({ _id: options.data._id }, onNext);
                             break;
                         case 'crudGetByQueryMany':
-                            // find data
-                            options.cursor = options.collection.find(
+                            data = local.swmg.normalizeIdMongodb([
                                 JSON.parse(options.data.query),
                                 JSON.parse(options.data.fields),
                                 {
@@ -352,7 +354,9 @@
                                     skip: options.data.skip,
                                     sort: JSON.parse(options.data.sort)
                                 }
-                            );
+                            ]);
+                            // find data
+                            options.cursor = options.collection.find(data[0], data[1], data[2]);
                             options.cursor.toArray(onNext);
                             break;
                         case 'crudReplaceOne':
@@ -390,7 +394,7 @@
                             );
                             break;
                         default:
-                            onNext(new Error('invalid crud operation - ' +
+                            onNext(new Error('undefined crud operation - ' +
                                 options.schemaName + '.' + options.operationId));
                         }
                         break;
@@ -401,8 +405,10 @@
                         switch (options.operationId) {
                         case 'crudCountByQuery':
                         case 'crudGetByIdOne':
-                        case 'crudGetByQueryMany':
                             options.response.data = [data];
+                            break;
+                        case 'crudGetByQueryMany':
+                            options.response.data = data;
                             break;
                         case 'crudCreateOne':
                         case 'crudReplaceOne':
@@ -470,22 +476,25 @@
             // update paths
             Object.keys(options.paths).forEach(function (path) {
                 Object.keys(options.paths[path]).forEach(function (method) {
-                    methodPath = options.paths[path][method];
-                    methodPath._method = method;
-                    methodPath._path = path;
                     // init methodPath.responses
-                    local.utility2.objectSetDefault(methodPath, { responses: {
-                        200: {
-                            description: 'ok - ' +
-                                'http://jsonapi.org/format/#document-structure-top-level',
-                            schema: { $ref: '#/definitions/JsonApiResponseData' }
+                    methodPath = local.utility2.objectSetDefault(options.paths[path][method], {
+                        _method: method,
+                        _path: path,
+                        parameters: [],
+                        responses: {
+                            200: {
+                                description: 'ok - ' +
+                                    'http://jsonapi.org/format/#document-structure-top-level',
+                                schema: { $ref: '#/definitions/JsonApiResponseData' }
+                            },
+                            default: {
+                                description: 'internal server error - ' +
+                                    'http://jsonapi.org/format/#errors',
+                                schema: { $ref: '#/definitions/JsonApiResponseError' }
+                            }
                         },
-                        default: {
-                            description: 'internal server error - ' +
-                                'http://jsonapi.org/format/#errors',
-                            schema: { $ref: '#/definitions/JsonApiResponseError' }
-                        }
-                    } }, 2);
+                        tags: []
+                    }, 2);
                     // update cacheDict.methodPath
                     local.swmg.cacheDict.methodPath[method.toUpperCase() + ' ' + path.replace(
                         (/\{.*/),
@@ -667,7 +676,7 @@ case 2:
             break;
         // parse header param
         case 'header':
-            request.swmgParameters[param.name] = request.headers[param.name];
+            request.swmgParameters[param.name] = request.headers[param.name.toLowerCase()];
             break;
         // parse query param
         case 'query':
