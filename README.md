@@ -272,8 +272,8 @@ width="100%" \
     "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
         "mongodb": "2.0.31",
-        "swagger-ui-lite": "^2.1.0-M2-2015.5.6-a",
-        "utility2": "2015.5.15-f"
+        "swagger-ui-lite": "^2.1.5-M2-2015.5.28-b",
+        "utility2": "2015.6.1-a"
     },
     "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
@@ -304,7 +304,7 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.5.19-a"
+    "version": "2015.6.1-a"
 }
 ```
 
@@ -319,9 +319,9 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 2fdbd2e3
-- npm publish 2015.5.19-a
-- add _testCase_crudGetXxx_default
+# change since 8e65bcea
+- npm publish 2015.6.1-a
+- rename onTaskEnd to onParallel
 - none
 
 
@@ -345,7 +345,7 @@ shBuild() {
     . node_modules/.bin/utility2 && shInit || return $?
 
     # run npm-test on published package
-    shRun shNpmTestPublished || return $?
+    shNpmTestPublished || return $?
 
     # test example js script
     export npm_config_timeout_exit=10000 || return $?
@@ -360,7 +360,7 @@ shBuild() {
     [ "$(node --version)" \< "v0.12" ] && return
 
     # deploy app to heroku
-    shRun shHerokuDeploy hrku01-$npm_package_name-$CI_BRANCH || return $?
+    shHerokuDeploy hrku01-$npm_package_name-$CI_BRANCH || return $?
 
     # test deployed app to heroku
     if [ "$CI_BRANCH" = alpha ] ||
@@ -371,11 +371,11 @@ shBuild() {
             || return $?
         TEST_URL="$TEST_URL?modeTest=phantom&_testSecret={{_testSecret}}" || \
             return $?
-        MODE_BUILD=herokuTest shRun shPhantomTest $TEST_URL || return $?
+        MODE_BUILD=herokuTest shPhantomTest "$TEST_URL" || return $?
     fi
 
     # if number of commits > 1024, then squash older commits
-    shRun shGitBackupAndSquashAndPush 1024 > /dev/null || return $?
+    shGitBackupAndSquashAndPush 1024 > /dev/null || return $?
 }
 shBuild
 
@@ -402,7 +402,7 @@ shBuildGithubUploadCleanup() {
 
 # upload build-artifacts to github,
 # and if number of commits > 16, then squash older commits
-COMMIT_LIMIT=16 shRun shBuildGithubUpload || exit $?
+COMMIT_LIMIT=16 shBuildGithubUpload || exit $?
 
 # exit with $EXIT_CODE
 exit $EXIT_CODE

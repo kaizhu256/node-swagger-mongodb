@@ -585,7 +585,7 @@
             /*
                 this function will run the main swagger-middleware
             */
-            var modeNext, onNext, onTaskEnd, tmp;
+            var modeNext, onNext, onParallel, tmp;
             modeNext = 0;
             onNext = function (error, data) {
                 local.utility2.testTryCatch(function () {
@@ -651,8 +651,8 @@ case 1:
     onNext();
     break;
 case 2:
-    onTaskEnd = local.utility2.onTaskEnd(onNext);
-    onTaskEnd.counter += 1;
+    onParallel = local.utility2.onParallel(onNext);
+    onParallel.counter += 1;
     // init swmgParameters
     request.swmgParameters = {};
     // parse path param
@@ -666,11 +666,11 @@ case 2:
         switch (param.in) {
         // parse body param
         case 'body':
-            onTaskEnd.counter += 1;
+            onParallel.counter += 1;
             local.utility2.streamReadAll(request, local.utility2.onErrorJsonParse(
                 function (error, data) {
                     request.swmgParameters[param.name] = data;
-                    onTaskEnd(error);
+                    onParallel(error);
                 }
             ));
             break;
@@ -687,7 +687,7 @@ case 2:
         request.swmgParameters[param.name] =
             request.swmgParameters[param.name] || param.default;
     });
-    onTaskEnd();
+    onParallel();
     break;
 case 3:
     request.swmgMethodPath.parameters.forEach(function (param) {

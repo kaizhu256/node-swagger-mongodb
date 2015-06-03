@@ -209,7 +209,7 @@
             /*
                 this function will test crudXxx's default handling behavior
             */
-            var api, modeNext, onNext, onTaskEnd, options, optionsCopy;
+            var api, modeNext, onNext, onParallel, options, optionsCopy;
             modeNext = 0;
             onNext = function (error) {
                 local.utility2.testTryCatch(function () {
@@ -222,8 +222,8 @@
                             onNext();
                             return;
                         }
-                        onTaskEnd = local.utility2.onTaskEnd(onNext);
-                        onTaskEnd.counter += 1;
+                        onParallel = local.utility2.onParallel(onNext);
+                        onParallel.counter += 1;
                         // init api
                         api = local.swmg.api.TestCrudModel;
                         // init options
@@ -241,8 +241,8 @@
                             optionsCopy.$urlExtra = '?modeErrorIgnore=1';
                             optionsCopy.id = 'test_' + local.utility2.uuidTime();
                             optionsCopy.operationId = operationId;
-                            onTaskEnd.counter += 1;
-                            local._testCase_crudCreateXxx_default(optionsCopy, onTaskEnd);
+                            onParallel.counter += 1;
+                            local._testCase_crudCreateXxx_default(optionsCopy, onParallel);
                         });
                         // test crudGet* handling behavior
                         [
@@ -254,14 +254,14 @@
                             optionsCopy = local.utility2.jsonCopy(options);
                             optionsCopy.id = 'test_' + local.utility2.uuidTime();
                             optionsCopy.operationId = operationId;
-                            onTaskEnd.counter += 1;
-                            local._testCase_crudGetXxx_default(optionsCopy, onTaskEnd);
+                            onParallel.counter += 1;
+                            local._testCase_crudGetXxx_default(optionsCopy, onParallel);
                         });
                         // test echo handling behavior
                         optionsCopy = local.utility2.jsonCopy(options);
                         optionsCopy.id = 'test_' + local.utility2.uuidTime();
                         optionsCopy.paramHeader = 'hello';
-                        onTaskEnd.counter += 1;
+                        onParallel.counter += 1;
                         api.echo(optionsCopy, optionsCopy, function (error, data) {
                             local.utility2.testTryCatch(function () {
                                 // validate no error occurred
@@ -272,10 +272,10 @@
                                     .jsonStringifyOrdered(data) === JSON.stringify({
                                         paramHeader: 'hello'
                                     }), data);
-                                onTaskEnd();
-                            }, onTaskEnd);
+                                onParallel();
+                            }, onParallel);
                         });
-                        onTaskEnd();
+                        onParallel();
                         break;
                     default:
                         onError(error);
@@ -290,7 +290,7 @@
             /*
                 this function will test crudXxx's error handling behavior
             */
-            var api, modeNext, onNext, onTaskEnd, options, optionsCopy;
+            var api, modeNext, onNext, onParallel, options, optionsCopy;
             modeNext = 0;
             onNext = function (error) {
                 local.utility2.testTryCatch(function () {
@@ -298,8 +298,8 @@
                     switch (modeNext) {
                     // test create handling behavior
                     case 1:
-                        onTaskEnd = local.utility2.onTaskEnd(onNext);
-                        onTaskEnd.counter += 1;
+                        onParallel = local.utility2.onParallel(onNext);
+                        onParallel.counter += 1;
                         // init api
                         api = local.swmg.api.TestCrudModel;
                         // init options
@@ -316,15 +316,15 @@
                             optionsCopy.$urlExtra = '?modeErrorIgnore=1';
                             optionsCopy.id = 'test_' + local.utility2.uuidTime();
                             optionsCopy.operationId = operationId;
-                            onTaskEnd.counter += 1;
+                            onParallel.counter += 1;
                             api[
                                 optionsCopy.operationId
                             ](optionsCopy, optionsCopy, function (error) {
                                 local.utility2.testTryCatch(function () {
                                     // validate error occurred
                                     local.utility2.assert(error, error);
-                                    onTaskEnd();
-                                }, onTaskEnd);
+                                    onParallel();
+                                }, onParallel);
                             });
                         });
                         // test low-level ajax handling behavior
@@ -335,11 +335,11 @@
                                 local.utility2.testTryCatch(function () {
                                     // validate error occurred
                                     local.utility2.assert(error, error);
-                                    onTaskEnd();
-                                }, onTaskEnd);
+                                    onParallel();
+                                }, onParallel);
                             });
                         });
-                        onTaskEnd();
+                        onParallel();
                         break;
                     default:
                         onError(error);
