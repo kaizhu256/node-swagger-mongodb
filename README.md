@@ -21,7 +21,7 @@ lightweight swagger-ui crud-api backed by mongodb
 |--:|:--|:--|:--|
 | test-server : | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-swagger-mongodb-master.herokuapp.com) | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-swagger-mongodb-beta.herokuapp.com) | [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/heroku-logo.75x25.png)](https://hrku01-swagger-mongodb-alpha.herokuapp.com)|
 | test-report : | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/test-report.html) | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/test-report.html) | [![test-report](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/test-report.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/test-report.html)|
-| coverage : | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/coverage.html/node-swagger-mongodb/index.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/coverage.html/node-swagger-mongodb/index.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/coverage.html/node-swagger-mongodb/index.html)|
+| coverage : | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..master..travis-ci.org/coverage.html/index.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..beta..travis-ci.org/coverage.html/index.html) | [![istanbul-lite coverage](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/coverage.badge.svg)](https://kaizhu256.github.io/node-swagger-mongodb/build..alpha..travis-ci.org/coverage.html/index.html)|
 | build-artifacts : | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..master..travis-ci.org) | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..beta..travis-ci.org) | [![build-artifacts](https://kaizhu256.github.io/node-swagger-mongodb/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-swagger-mongodb/tree/gh-pages/build..alpha..travis-ci.org)|
 
 #### master branch
@@ -44,7 +44,7 @@ lightweight swagger-ui crud-api backed by mongodb
 #### to run this example, follow the instruction in the script below
 - example.js
 
-```
+```javascript
 /*
 example.js
 
@@ -266,18 +266,18 @@ width="100%" \
 
 
 # package.json
-```
+```json
 {
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
-        "mongodb": "2.0.31",
+        "mongodb-minimal": "^2.0.33-2015.06.01-f",
         "swagger-ui-lite": "^2.1.5-M2-2015.5.28-b",
-        "utility2": "2015.6.1-a"
+        "utility2": "2015.6.1-b"
     },
     "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
-        "phantomjs-lite": "^2015.4.26-c"
+        "phantomjs-lite": "^1.9.8-2015.6.1-b"
     },
     "engines": { "node": ">=0.10 <=0.12" },
     "keywords": [
@@ -304,7 +304,7 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.6.1-a"
+    "version": "2015.6.1-c"
 }
 ```
 
@@ -312,16 +312,15 @@ node_modules/.bin/utility2 test test.js"
 
 # todo
 - add user /login /logout paths
-- remove bson compiled dependency
 - cap test collections
 - add formData swagger parameter type
 - none
 
 
 
-# change since 8e65bcea
-- npm publish 2015.6.1-a
-- rename onTaskEnd to onParallel
+# change since 07419c2f
+- npm publish 2015.6.1-c
+- change dependency from mongodb to mongodb-minimal
 - none
 
 
@@ -334,7 +333,7 @@ node_modules/.bin/utility2 test test.js"
 # internal build-script
 - build.sh
 
-```
+```shell
 # build.sh
 
 # this shell script will run the build for this package

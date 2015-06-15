@@ -782,7 +782,7 @@ default:
         module.exports.__dirname = __dirname;
         // require modules
         local.fs = require('fs');
-        local.mongodb = require('mongodb');
+        local.mongodb = require('mongodb-minimal');
         local.path = require('path');
         local.swagger_tools = require('swagger-ui-lite/swagger-tools-standalone-min.js');
         local.swagger_ui_lite = require('swagger-ui-lite');
