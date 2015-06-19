@@ -272,8 +272,8 @@ width="100%" \
     "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
         "mongodb-minimal": "^2.0.33-2015.06.01-f",
-        "swagger-ui-lite": "^2.1.5-M2-2015.5.28-b",
-        "utility2": "2015.6.1-b"
+        "swagger-ui-lite": "^2.1.0-20150619a",
+        "utility2": "2015.6.10-a"
     },
     "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
@@ -304,7 +304,7 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.6.1-c"
+    "version": "2015.6.10-a"
 }
 ```
 
@@ -318,9 +318,9 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 07419c2f
-- npm publish 2015.6.1-c
-- change dependency from mongodb to mongodb-minimal
+# change since 35d5f022
+- npm publish 2015.6.10-a
+- remove modeErrorIgnore flag
 - none
 
 

@@ -17,9 +17,9 @@
     (function () {
         local.swmg.normalizeErrorJsonApi = function (error) {
             /*
-                this function will normalize the error to jsonapi format,
-                http://jsonapi.org/format/#errors
-            */
+             * this function will normalize the error to jsonapi format,
+             * http://jsonapi.org/format/#errors
+             */
             error.status = Number(error.status) || 500;
             error.errors = error.errors || [{
                 code: error.code,
@@ -33,8 +33,8 @@
 
         local.swmg.normalizeIdMongodb = function (data) {
             /*
-                this function will recursively convert the property id to _id
-            */
+             * this function will recursively convert the property id to _id
+             */
             local.utility2.objectTraverse(data, function (element) {
                 if (element && element.id) {
                     element._id = element._id || element.id;
@@ -46,8 +46,8 @@
 
         local.swmg.normalizeIdSwagger = function (data) {
             /*
-                this function will recursively convert the property _id to id
-            */
+             * this function will recursively convert the property _id to id
+             */
             local.utility2.objectTraverse(data, function (element) {
                 if (element && element._id) {
                     element.id = element.id || element._id;
@@ -59,8 +59,8 @@
 
         local.swmg.schemaDereference = function ($ref) {
             /*
-                this function will try to dereference the schema from $ref
-            */
+             * this function will try to dereference the schema from $ref
+             */
             try {
                 return local.swmg.swaggerJson
                     .definitions[(/^\#\/definitions\/(\w+)$/).exec($ref)[1]];
@@ -70,8 +70,8 @@
 
         local.swmg.validateParameters = function (options) {
             /*
-               this function will validate options.data against options.parameters
-            */
+             * this function will validate options.data against options.parameters
+             */
             var data, key;
             try {
                 data = options.data;
@@ -96,8 +96,8 @@
 
         local.swmg.validateProperty = function (options) {
             /*
-               this function will validate options.data against options.property
-            */
+             * this function will validate options.data against options.property
+             */
             var assert, data, format, property, tmp, type;
             assert = function (valid) {
                 if (!valid) {
@@ -206,8 +206,8 @@
 
         local.swmg.validateSchema = function (options) {
             /*
-               this function will validate options.data against options.schema
-            */
+             * this function will validate options.data against options.schema
+             */
             var data, key, schema;
             try {
                 data = options.data;
@@ -245,6 +245,31 @@
                 throw errorCaught;
             }
         };
+
+        local.swmg.validateSwaggerJson = function (swaggerJson) {
+            /*
+             * this function will validate the entire swagger json object
+             */
+            local.swagger_tools.v2.validate(
+                // jsonCopy object to prevent side-effect
+                local.utility2.jsonCopy(swaggerJson),
+                function (error, result) {
+                    // validate no error occurred
+                    local.utility2.assert(!error, error);
+                    ['errors', 'warnings'].forEach(function (errorType) {
+                        ((result && result[errorType]) || [
+                        ]).slice(0, 8).forEach(function (element) {
+                            console.error('swagger schema - ' + errorType.slice(0, -1) + ' - ' +
+                                element.code + ' - ' + element.message + ' - ' +
+                                JSON.stringify(element.path));
+                        });
+                    });
+                    error = result && result.errors && result.errors[0];
+                    // validate no error occurred
+                    local.utility2.assert(!error, new Error(error && error.message));
+                }
+            );
+        };
     }());
     switch (local.modeJs) {
 
@@ -254,8 +279,8 @@
     case 'node':
         local.swmg._crudApi = function (options, onError) {
             /*
-                this function will run the low-level crud-api on the given options.data
-            */
+             * this function will run the low-level crud-api on the given options.data
+             */
             var modeNext, onNext;
             modeNext = 0;
             onNext = local.utility2.onErrorWithStack(function (error, data) {
@@ -445,8 +470,8 @@
 
         local.swmg.apiUpdate = function (options) {
             /*
-                this function will update the api
-            */
+             * this function will update the api
+             */
             var methodPath, tmp;
             options.definitions = options.definitions || {};
             options.paths = options.paths || {};
@@ -554,26 +579,7 @@
             local.swmg.swaggerJson =
                 JSON.parse(local.utility2.jsonStringifyOrdered(local.swmg.swaggerJson));
             // validate swaggerJson
-            local.swagger_tools.v2.validate(
-                // jsonCopy object to prevent side-effect
-                local.utility2.jsonCopy(local.swmg.swaggerJson),
-                function (error, result) {
-                    if (error) {
-                        throw error;
-                    }
-                    (result && result.errors && result.errors.length
-                        ? result.errors
-                        : result && result.warnings && result.warnings.lengh
-                        ? result.warnings
-                        : []).slice(0, 8).forEach(function (element) {
-                        console.error('swagger schema - ' + element.code + ' - ' +
-                            element.message + ' - ' + JSON.stringify(element.path));
-                    });
-                    if (result && result.errors && result.errors[0]) {
-                        throw new Error(result.errors[0].message);
-                    }
-                }
-            );
+            local.swmg.validateSwaggerJson(local.swmg.swaggerJson);
             // init crud-api
             local.swmg.api = new local.swmg.SwaggerClient({
                 url: 'http://localhost:' + local.utility2.serverPortInit()
@@ -583,8 +589,8 @@
 
         local.swmg.middleware = function (request, response, nextMiddleware) {
             /*
-                this function will run the main swagger-middleware
-            */
+             * this function will run the main swagger-middleware
+             */
             var modeNext, onNext, onParallel, tmp;
             modeNext = 0;
             onNext = function (error, data) {
@@ -599,17 +605,6 @@ modeNext = error
     : modeNext + 1;
 switch (modeNext) {
 case 1:
-    switch (request.urlParsed.pathnameNormalized) {
-    case '/fonts/droid-sans-v6-latin-700.ttf':
-    case '/fonts/droid-sans-v6-latin-700.woff':
-    case '/fonts/droid-sans-v6-latin-700.woff2':
-    case '/fonts/droid-sans-v6-latin-regular.ttf':
-    case '/fonts/droid-sans-v6-latin-regular.woff':
-    case '/fonts/droid-sans-v6-latin-regular.woff2':
-        local.utility2.serverRespondHeadSet(request, response, 404, {});
-        response.end();
-        return;
-    }
     // if request.url is not prefixed with swaggerJson.basePath, then default to nextMiddleware
     if (request.urlParsed.pathnameNormalized.indexOf(local.swmg.swaggerJson.basePath) === 0) {
         local.utility2.serverRespondHeadSet(request, response, null, {
@@ -740,22 +735,17 @@ default:
 
         local.swmg.onMiddlewareError = function (error, request, response) {
             /*
-                this function will handle errors according to http://jsonapi.org/format/#errors
-            */
+             * this function will handle errors according to http://jsonapi.org/format/#errors
+             */
             if (!error) {
                 error = new Error('404 Not Found');
                 error.status = 404;
             }
             error.message = request.method + ' ' + request.url + '\n' + error.message;
             error.stack = error.message + '\n' + error.stack;
+            // print error.stack to stderr
+            local.utility2.onErrorDefault(error);
             error = local.swmg.normalizeErrorJsonApi(error);
-            // if modeErrorIgnore is undefined in url search params,
-            // then print error.stack to stderr
-            if (!(local.global.__coverage__ &&
-                    local.utility2.envDict.npm_config_mode_npm_test &&
-                    (/\bmodeErrorIgnore=1\b/).test(request.url))) {
-                local.utility2.onErrorDefault(error);
-            }
             local.utility2.serverRespondHeadSet(request, response, error.status, {});
             response.end(JSON.stringify(error));
         };
@@ -888,11 +878,6 @@ default:
             .replace(
                 'this.apis = {};',
                 'this.apis = {}; this.swaggerJson = JSON.parse(JSON.stringify(response))'
-            )
-            // swagger-hack - save swaggerJson
-            .replace(
-                'return url + requestUrl + querystring;',
-                'return url + requestUrl + querystring + (args.$urlExtra || "");'
             )
             // swagger-hack - add validation error handling
             .replace('var missingParams = this.getMissingParams(args);', String() +
