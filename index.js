@@ -251,7 +251,7 @@
              * this function will validate the entire swagger json object
              */
             local.swagger_tools.v2.validate(
-                // jsonCopy object to prevent side-effect
+                // jsonCopy object to prevent side-effects
                 local.utility2.jsonCopy(swaggerJson),
                 function (error, result) {
                     // validate no error occurred
@@ -281,7 +281,7 @@
             /*
              * this function will run the low-level crud-api on the given options.data
              */
-            var modeNext, onNext;
+            var modeNext, onNext, tmp;
             modeNext = 0;
             onNext = local.utility2.onErrorWithStack(function (error, data) {
                 local.utility2.testTryCatch(function () {
@@ -323,6 +323,7 @@
                         break;
                     case 2:
                         // init _timeCreated and _timeModified
+                        tmp = data && data._timeCreated;
                         switch (options.operationId) {
                         case 'crudCreateOne':
                             options.data._timeCreated = options.data._timeModified =
@@ -332,13 +333,11 @@
                         case 'crudReplaceOrCreateOne':
                         case 'crudUpdateOne':
                         case 'crudUpdateOrCreateOne':
-                            options.data._timeModified = new Date().toISOString();
-                            data = (data && data._timeCreated) || options.data._timeModified;
-                            options.data._timeCreated =
-                                data > options.data._timeCreated ||
-                                isNaN(new Date(data).getTime())
-                                ? options.data._timeModified
-                                : data;
+                            options.data._timeCreated = options.data._timeModified =
+                                new Date().toISOString();
+                            if (tmp < options.data._timeCreated && new Date(tmp).getTime()) {
+                                options.data._timeCreated = tmp;
+                            }
                             break;
                         }
                         switch (options.operationId) {
@@ -424,7 +423,7 @@
                         }
                         break;
                     case 3:
-                        // jsonCopy object to prevent side-effect
+                        // jsonCopy object to prevent side-effects
                         data = local.utility2.jsonCopy(data);
                         options.response = { _id: options.data._id };
                         switch (options.operationId) {
@@ -451,7 +450,7 @@
                         onNext(error);
                         break;
                     case 4:
-                        // jsonCopy object to prevent side-effect
+                        // jsonCopy object to prevent side-effects
                         options.response.data = [local.utility2.jsonCopy(data)];
                         onNext();
                         break;
@@ -543,7 +542,7 @@
             local.utility2.objectSetOverride(
                 local.swmg.swaggerJson,
                 local.utility2.objectTraverse(
-                    // jsonCopy object to prevent side-effect
+                    // jsonCopy object to prevent side-effects
                     local.utility2.jsonCopy(options),
                     function (element) {
                         if (element && typeof element === 'object') {
@@ -564,7 +563,7 @@
             [0, 1, 2, 3].forEach(function () {
                 Object.keys(local.swmg.swaggerJson.definitions).forEach(function (schema) {
                     schema = local.swmg.swaggerJson.definitions[schema];
-                    // jsonCopy object to prevent side-effect
+                    // jsonCopy object to prevent side-effects
                     local.utility2.jsonCopy(schema['x-inheritList'] || [])
                         .reverse()
                         .forEach(function (element) {
@@ -575,7 +574,7 @@
                         });
                 });
             });
-            // jsonCopy object to prevent side-effect
+            // jsonCopy object to prevent side-effects
             local.swmg.swaggerJson =
                 JSON.parse(local.utility2.jsonStringifyOrdered(local.swmg.swaggerJson));
             // validate swaggerJson
@@ -689,7 +688,7 @@ case 3:
         tmp = request.swmgParameters[param.name];
         // init default value
         if (tmp === undefined) {
-            // jsonCopy object to prevent side-effect
+            // jsonCopy object to prevent side-effects
             request.swmgParameters[param.name] = local.utility2.jsonCopy(param.default);
         }
         // JSON.parse swmgParameters
@@ -879,7 +878,7 @@ default:
                 'this.apis = {};',
                 'this.apis = {}; this.swaggerJson = JSON.parse(JSON.stringify(response))'
             )
-            // swagger-hack - add validation error handling
+            // swagger-hack - add modeErroData and validation handling
             .replace('var missingParams = this.getMissingParams(args);', String() +
                 'if (opts.modeErrorData) { ' +
                     'var onError = success; ' +
@@ -1171,7 +1170,7 @@ local.swmg.crudSwaggerJson = { paths: {
         summary: 'replace or create one {{schemaName}} object',
         tags: ['{{schemaName}}']
     } },
-    '/{{schemaName}}/crudUpdateOne': { patch: {
+    '/{{schemaName}}/crudUpdateOne': { put: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
         operationId: 'crudUpdateOne',
@@ -1189,7 +1188,7 @@ local.swmg.crudSwaggerJson = { paths: {
         summary: 'update one {{schemaName}} object',
         tags: ['{{schemaName}}']
     } },
-    '/{{schemaName}}/crudUpdateOrCreateOne': { patch: {
+    '/{{schemaName}}/crudUpdateOrCreateOne': { put: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
         operationId: 'crudUpdateOrCreateOne',

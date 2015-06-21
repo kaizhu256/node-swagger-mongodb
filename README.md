@@ -4,8 +4,6 @@ lightweight swagger-ui crud-api backed by mongodb
 
 [![NPM](https://img.shields.io/npm/v/swagger-mongodb.svg?style=flat-square)](https://www.npmjs.org/package/swagger-mongodb)
 
-- this package is work in progress
-
 
 
 # live test-server
@@ -273,7 +271,7 @@ width="100%" \
     "dependencies": {
         "mongodb-minimal": "^2.0.33-2015.06.01-f",
         "swagger-ui-lite": "^2.1.0-20150619a",
-        "utility2": "2015.6.10-a"
+        "utility2": "~2015.6.11-a"
     },
     "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
@@ -304,13 +302,16 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.6.10-a"
+    "version": "2015.6.11-a"
 }
 ```
 
 
 
 # todo
+- remove required validation in crudUpdateXxx
+- add createIndex feature to apiUpdate
+- add distinct and aggregate crud get api
 - add user /login /logout paths
 - cap test collections
 - add formData swagger parameter type
@@ -318,9 +319,10 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 35d5f022
-- npm publish 2015.6.10-a
-- remove modeErrorIgnore flag
+# change since dbe93c42
+- npm publish 2015.6.11-a
+- add testCase_crudUpdateXxx_default
+- add options parameter to testCase
 - none
 
 
@@ -368,13 +370,9 @@ shBuild() {
     then
         TEST_URL="https://hrku01-$npm_package_name-$CI_BRANCH.herokuapp.com" \
             || return $?
-        TEST_URL="$TEST_URL?modeTest=phantom&_testSecret={{_testSecret}}" || \
-            return $?
+        TEST_URL="$TEST_URL?modeTest=phantom&timeExit={{timeExit}}" || return $?
         MODE_BUILD=herokuTest shPhantomTest "$TEST_URL" || return $?
     fi
-
-    # if number of commits > 1024, then squash older commits
-    shGitBackupAndSquashAndPush 1024 > /dev/null || return $?
 }
 shBuild
 
