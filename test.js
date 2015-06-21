@@ -178,6 +178,7 @@
                     'crudCountByQuery',
                     'crudGetByIdOne',
                     'crudGetByQueryMany',
+                    'crudGetDistinctValueByFieldMany',
                     'crudExistsByIdOne'
                 ].forEach(function (operationId) {
                     onParallel.counter += 1;
@@ -201,6 +202,7 @@
                         // init api
                         api = local.swmg.api.TestCrudModel;
                         // init options
+                        options.field = 'id';
                         options.limit = 1;
                         options.query = JSON.stringify({ id: options.id });
                         // create object
