@@ -310,7 +310,8 @@
                         switch (options.operationId) {
                         case 'crudReplaceOne':
                         case 'crudReplaceOrCreateOne':
-                        case 'crudUpdateByIdOne':
+                        case 'crudUpdateOne':
+                        case 'crudUpdateOrCreateOne':
                             options.collection.findOne(
                                 { _id: options.data._id },
                                 { _timeCreated: 1 },
@@ -330,7 +331,8 @@
                             break;
                         case 'crudReplaceOne':
                         case 'crudReplaceOrCreateOne':
-                        case 'crudUpdateByIdOne':
+                        case 'crudUpdateOne':
+                        case 'crudUpdateOrCreateOne':
                             options.data._timeCreated = options.data._timeModified =
                                 new Date().toISOString();
                             if (tmp < options.data._timeCreated && new Date(tmp).getTime()) {
@@ -390,7 +392,6 @@
                             );
                             break;
                         case 'crudReplaceOne':
-                        case 'crudUpdateByIdOne':
                             // replace data
                             options.collection.update(
                                 { _id: options.data._id },
@@ -403,6 +404,23 @@
                             options.collection.update(
                                 { _id: options.data._id },
                                 options.data,
+                                { upsert: true },
+                                onNext
+                            );
+                            break;
+                        case 'crudUpdateOne':
+                            // update data
+                            options.collection.update(
+                                { _id: options.data._id },
+                                { $set: options.data },
+                                onNext
+                            );
+                            break;
+                        case 'crudUpdateOrCreateOne':
+                            // upsert data
+                            options.collection.update(
+                                { _id: options.data._id },
+                                { $set: options.data },
                                 { upsert: true },
                                 onNext
                             );
@@ -428,7 +446,8 @@
                         case 'crudCreateOne':
                         case 'crudReplaceOne':
                         case 'crudReplaceOrCreateOne':
-                        case 'crudUpdateByIdOne':
+                        case 'crudUpdateOne':
+                        case 'crudUpdateOrCreateOne':
                             options.response.meta = data;
                             if (!options.response.meta.n) {
                                 onError(new Error('crud operation failed'));
@@ -446,7 +465,7 @@
                     case 4:
                         // jsonCopy object to prevent side-effects
                         options.response.data = [local.utility2.jsonCopy(data)];
-                        onNext(error);
+                        onNext();
                         break;
                     default:
                         if (error) {
@@ -834,8 +853,6 @@ default:
                             type: 'array'
                         }
                     }
-                },
-                Object: {
                 }
             },
             info: {
@@ -1188,22 +1205,40 @@ local.swmg.crudSwaggerJson = { paths: {
         summary: 'replace or create one {{schemaName}} object',
         tags: ['{{schemaName}}']
     } },
-    '/{{schemaName}}/crudUpdateByIdOne': { put: {
+    '/{{schemaName}}/crudUpdateOne': { put: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
-        operationId: 'crudUpdateByIdOne',
+        operationId: 'crudUpdateOne',
         parameters: [{
-            description: 'mongodb update object',
+            description: '{{schemaName}} object',
             in: 'body',
             name: 'body',
             required: true,
-            schema: { $ref: '#/definitions/Object' }
+            schema: { $ref: '#/definitions/{{schemaName}}' }
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
             schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
         } },
         summary: 'update one {{schemaName}} object',
+        tags: ['{{schemaName}}']
+    } },
+    '/{{schemaName}}/crudUpdateOrCreateOne': { put: {
+        _collectionName: '{{collectionName}}',
+        _crudApi: true,
+        operationId: 'crudUpdateOrCreateOne',
+        parameters: [{
+            description: '{{schemaName}} object',
+            in: 'body',
+            name: 'body',
+            required: true,
+            schema: { $ref: '#/definitions/{{schemaName}}' }
+        }],
+        responses: { 200: {
+            description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
+            schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
+        } },
+        summary: 'update or create one {{schemaName}} object',
         tags: ['{{schemaName}}']
     } }
 // init default definitions

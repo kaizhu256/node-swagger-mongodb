@@ -45,7 +45,8 @@
                     'crudCreateOne',
                     'crudReplaceOne',
                     'crudReplaceOrCreateOne',
-                    'crudUpdateByIdOne'
+                    'crudUpdateOne',
+                    'crudUpdateOrCreateOne'
                 ].forEach(function (operationId) {
                     onParallel.counter += 1;
                     local.testCase_crudCreateXxx_default({
@@ -116,7 +117,7 @@
                     default:
                         switch (options.operationId) {
                         case 'crudReplaceOne':
-                        case 'crudUpdateByIdOne':
+                        case 'crudUpdateOne':
                             // validate error occurred
                             local.utility2.assert(error, error);
                             error = null;
@@ -263,9 +264,9 @@
             onNext(options.error);
         };
 
-        local.testCase_crudReplaceXxx_default = function (options, onError) {
+        local.testCase_crudUpdateXxx_default = function (options, onError) {
             /*
-             * this function will test crudReplaceXxx's default handling behavior
+             * this function will test crudUpdateXxx's default handling behavior
              */
             var api, modeNext, onNext, onParallel;
             if (!options) {
@@ -273,10 +274,12 @@
                 onParallel.counter += 1;
                 [
                     'crudReplaceOne',
-                    'crudReplaceOrCreateOne'
+                    'crudReplaceOrCreateOne',
+                    'crudUpdateOne',
+                    'crudUpdateOrCreateOne'
                 ].forEach(function (operationId) {
                     onParallel.counter += 1;
-                    local.testCase_crudReplaceXxx_default({
+                    local.testCase_crudUpdateXxx_default({
                         id: 'test_' + local.utility2.uuidTime(),
                         modeErrorData: true,
                         operationId: operationId
@@ -327,15 +330,39 @@
                             [data._timeModified, options._timeModified]
                         );
                         local.utility2.assert(data.fieldRequired === false, data.fieldRequired);
-                        local.utility2.assert(data.fieldExtra === undefined, data.fieldExtra);
+                        switch (options.operationId) {
+                        case 'crudReplaceOne':
+                        case 'crudReplaceOrCreateOne':
+                            local.utility2
+                                .assert(data.fieldExtra === undefined, data.fieldExtra);
+                            break;
+                        default:
+                            local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                        }
                         // get object
                         api.crudGetByIdOne({ id: options.id }, options, onNext);
                         break;
                     case 4:
                         // validate object
                         data = data.obj.data[0];
+                        local.utility2.assert(
+                            data._timeCreated === options._timeCreated,
+                            [data._timeCreated, options._timeCreated]
+                        );
+                        local.utility2.assert(
+                            data._timeModified > options._timeModified,
+                            [data._timeModified, options._timeModified]
+                        );
                         local.utility2.assert(data.fieldRequired === false, data.fieldRequired);
-                        local.utility2.assert(data.fieldExtra === undefined, data.fieldExtra);
+                        switch (options.operationId) {
+                        case 'crudReplaceOne':
+                        case 'crudReplaceOrCreateOne':
+                            local.utility2
+                                .assert(data.fieldExtra === undefined, data.fieldExtra);
+                            break;
+                        default:
+                            local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                        }
                         // delete object by id
                         local.testCase_crudDeleteById_default({ id: options.id }, onNext);
                         break;
@@ -399,7 +426,7 @@
                 'testCase_crudCreateXxx_default',
                 'testCase_crudGetXxx_default',
                 'testCase_crudDeleteById_default',
-                'testCase_crudReplaceXxx_default'
+                'testCase_crudUpdateXxx_default'
             ].forEach(function (testCase) {
                 onParallel.counter += 1;
                 local[testCase]({
