@@ -311,7 +311,6 @@ node_modules/.bin/utility2 test test.js"
 # todo
 - add max / min validation
 - add crudIncrement
-- remove required validation in crudUpdateXxx
 - add createIndex feature to apiUpdate
 - add aggregate crud api
 - add user /login /logout paths
@@ -322,6 +321,7 @@ node_modules/.bin/utility2 test test.js"
 
 
 # change since 96ae5f99
+- add x-modeNoRequired param to pathMethod to disable required-validation
 - add crudGetDistinctValueByFieldMany api
 - none
 

@@ -82,6 +82,7 @@
                     local.swmg.validateProperty({
                         data: data[key],
                         key: key,
+                        modeNoRequired: options.modeNoRequired,
                         property: param,
                         required: param.required
                     });
@@ -108,7 +109,7 @@
             data = options.data;
             // validate undefined data
             if (data === null || data === undefined) {
-                if (options.required) {
+                if (options.required && !options.modeNoRequired) {
                     throw new Error('required "' + options.key + ':' + format +
                         '" property cannot be null or undefined');
                 }
@@ -147,6 +148,7 @@
                         circularList: options.circularList,
                         data: element,
                         key: options.key,
+                        modeNoRequired: options.modeNoRequired,
                         property: property.items
                     });
                 });
@@ -234,6 +236,7 @@
                         data: data[key],
                         depth: options.depth - 1,
                         key: key,
+                        modeNoRequired: options.modeNoRequired,
                         property: schema.properties[key],
                         required: schema.required && schema.required.indexOf(key) >= 0
                     });
@@ -450,7 +453,7 @@
                         case 'crudUpdateOrCreateOne':
                             options.response.meta = data;
                             if (!options.response.meta.n) {
-                                onError(new Error('crud operation failed'));
+                                onNext(new Error('crud operation failed'));
                                 return;
                             }
                             options.collection.findOne({ _id: options.data._id }, onNext);
@@ -470,6 +473,7 @@
                     default:
                         if (error) {
                             error._id = options.data._id;
+                            error.meta = options.response && options.response.meta;
                             error = onError(local.swmg.normalizeErrorJsonApi(error));
                         }
                         // normalize id to swagger format
@@ -886,10 +890,18 @@ default:
                 local.swagger_ui_lite.__dirname + '/swagger-ui.rollup.js',
                 'utf8'
             )
+            // swagger-hack - disable source-map
+            .replace('//# sourceMappingURL=underscore-min.map', '//')
             // swagger-hack - save swaggerJson
             .replace(
                 'this.apis = {};',
                 'this.apis = {}; this.swaggerJson = JSON.parse(JSON.stringify(response))'
+            )
+            // swagger-hack - save pathMethod
+            .replace(
+                'this.parameterMacro = parent.parameterMacro',
+                'this.pathMethod = JSON.parse(JSON.stringify(args)); ' +
+                    'this.parameterMacro = parent.parameterMacro'
             )
             // swagger-hack - add modeErroData and validation handling
             .replace('var missingParams = this.getMissingParams(args);', String() +
@@ -902,6 +914,7 @@ default:
                     'window.swmg && window.swmg.validateParameters({ ' +
                         'data: args, ' +
                         'key: this.operation.operationId, ' +
+                        'modeNoRequired: this.pathMethod["x-modeNoRequired"],' +
                         'parameters: this.parameters ' +
                     '}); ' +
                 '} catch (errorCaught) { ' +
@@ -1221,7 +1234,8 @@ local.swmg.crudSwaggerJson = { paths: {
             schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
         } },
         summary: 'update one {{schemaName}} object',
-        tags: ['{{schemaName}}']
+        tags: ['{{schemaName}}'],
+        'x-modeNoRequired': true
     } },
     '/{{schemaName}}/crudUpdateOrCreateOne': { put: {
         _collectionName: '{{collectionName}}',
@@ -1239,7 +1253,8 @@ local.swmg.crudSwaggerJson = { paths: {
             schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
         } },
         summary: 'update or create one {{schemaName}} object',
-        tags: ['{{schemaName}}']
+        tags: ['{{schemaName}}'],
+        'x-modeNoRequired': true
     } }
 // init default definitions
 }, definitions: {
