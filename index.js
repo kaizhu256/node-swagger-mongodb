@@ -310,7 +310,7 @@
                         switch (options.operationId) {
                         case 'crudReplaceOne':
                         case 'crudReplaceOrCreateOne':
-                        case 'crudUpdateOne':
+                        case 'crudUpdateByIdOne':
                             options.collection.findOne(
                                 { _id: options.data._id },
                                 { _timeCreated: 1 },
@@ -330,7 +330,7 @@
                             break;
                         case 'crudReplaceOne':
                         case 'crudReplaceOrCreateOne':
-                        case 'crudUpdateOne':
+                        case 'crudUpdateByIdOne':
                             options.data._timeCreated = options.data._timeModified =
                                 new Date().toISOString();
                             if (tmp < options.data._timeCreated && new Date(tmp).getTime()) {
@@ -390,7 +390,7 @@
                             );
                             break;
                         case 'crudReplaceOne':
-                        case 'crudUpdateOne':
+                        case 'crudUpdateByIdOne':
                             // replace data
                             options.collection.update(
                                 { _id: options.data._id },
@@ -428,8 +428,12 @@
                         case 'crudCreateOne':
                         case 'crudReplaceOne':
                         case 'crudReplaceOrCreateOne':
-                        case 'crudUpdateOne':
+                        case 'crudUpdateByIdOne':
                             options.response.meta = data;
+                            if (!options.response.meta.n) {
+                                onError(new Error('crud operation failed'));
+                                return;
+                            }
                             options.collection.findOne({ _id: options.data._id }, onNext);
                             return;
                         case 'crudExistsByIdOne':
@@ -442,16 +446,6 @@
                     case 4:
                         // jsonCopy object to prevent side-effects
                         options.response.data = [local.utility2.jsonCopy(data)];
-                        switch (options.operationId) {
-                        case 'crudCreateOne':
-                        case 'crudReplaceOne':
-                        case 'crudReplaceOrCreateOne':
-                        case 'crudUpdateOne':
-                            if (!options.response.meta.n) {
-                                error = new Error('crud operation failed');
-                            }
-                            break;
-                        }
                         onNext(error);
                         break;
                     default:
@@ -841,20 +835,7 @@ default:
                         }
                     }
                 },
-                MongodbUpdateOperator: {
-                    properties: {
-                        // https://docs.mongodb.org/manual/reference/operator/update-field/
-                        $currentDate: { type: 'object' },
-                        $inc: { type: 'object' },
-                        $max: { type: 'object' },
-                        $min: { type: 'object' },
-                        $mul: { type: 'object' },
-                        $rename: { type: 'object' },
-                        $set: { type: 'object' },
-                        $setOnInsert: { type: 'object' },
-                        $unset: { type: 'object' }
-                        // https://docs.mongodb.org/manual/reference/operator/update/#fields
-                    }
+                Object: {
                 }
             },
             info: {
@@ -1207,16 +1188,16 @@ local.swmg.crudSwaggerJson = { paths: {
         summary: 'replace or create one {{schemaName}} object',
         tags: ['{{schemaName}}']
     } },
-    '/{{schemaName}}/crudUpdateOne': { put: {
+    '/{{schemaName}}/crudUpdateByIdOne': { put: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
-        operationId: 'crudUpdateOne',
+        operationId: 'crudUpdateByIdOne',
         parameters: [{
-            description: '{{schemaName}} object',
+            description: 'mongodb update object',
             in: 'body',
             name: 'body',
             required: true,
-            schema: { $ref: '#/definitions/MongodbUpdateOperator' }
+            schema: { $ref: '#/definitions/Object' }
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',

@@ -45,7 +45,7 @@
                     'crudCreateOne',
                     'crudReplaceOne',
                     'crudReplaceOrCreateOne',
-                    'crudUpdateOne'
+                    'crudUpdateByIdOne'
                 ].forEach(function (operationId) {
                     onParallel.counter += 1;
                     local.testCase_crudCreateXxx_default({
@@ -116,7 +116,7 @@
                     default:
                         switch (options.operationId) {
                         case 'crudReplaceOne':
-                        case 'crudUpdateOne':
+                        case 'crudUpdateByIdOne':
                             // validate error occurred
                             local.utility2.assert(error, error);
                             error = null;
