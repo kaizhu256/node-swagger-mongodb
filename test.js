@@ -264,9 +264,9 @@
             onNext(options.error);
         };
 
-        local.testCase_crudUpdateXxx_default = function (options, onError) {
+        local.testCase_crudReplaceXxx_default = function (options, onError) {
             /*
-             * this function will test crudUpdateXxx's default handling behavior
+             * this function will test crudReplaceXxx's default handling behavior
              */
             var api, modeNext, onNext, onParallel;
             if (!options) {
@@ -279,7 +279,7 @@
                     'crudUpdateOrCreateOne'
                 ].forEach(function (operationId) {
                     onParallel.counter += 1;
-                    local.testCase_crudUpdateXxx_default({
+                    local.testCase_crudReplaceXxx_default({
                         id: 'test_' + local.utility2.uuidTime(),
                         modeErrorData: true,
                         operationId: operationId
@@ -375,6 +375,110 @@
             onNext(options.error);
         };
 
+        local.testCase_crudUpdateXxx_default = function (options, onError) {
+            /*
+             * this function will test crudUpdateXxx's default handling behavior
+             */
+            var api, modeNext, onNext, onParallel;
+            if (!options) {
+                onParallel = local.utility2.onParallel(onError);
+                onParallel.counter += 1;
+                [
+                    //!! 'crudReplaceOne',
+                    //!! 'crudReplaceOrCreateOne',
+                    //!! 'crudUpdateOne',
+                    'crudUpdateOrCreateOne'
+                ].forEach(function (operationId) {
+                    onParallel.counter += 1;
+                    local.testCase_crudUpdateXxx_default({
+                        id: 'test_' + local.utility2.uuidTime(),
+                        modeErrorData: true,
+                        operationId: operationId
+                    }, onParallel);
+                });
+                onParallel();
+                return;
+            }
+            modeNext = 0;
+            onNext = function (error, data) {
+                local.utility2.testTryCatch(function () {
+                    modeNext = error
+                        ? Infinity
+                        : modeNext + 1;
+                    switch (modeNext) {
+                    case 1:
+                        // init api
+                        api = local.swmg.api.TestCrudModel;
+                        // init options
+                        options.body = {
+                            fieldExtra: 'bye',
+                            id: options.id
+                        };
+                        // create object
+                        local.testCase_crudCreateXxx_default({
+                            id: options.id,
+                            modeErrorData: true,
+                            modeNoDelete: true,
+                            operationId: 'crudCreateOne'
+                        }, onNext);
+                        break;
+                    case 2:
+                        options._timeCreated = data._timeCreated;
+                        options._timeModified = data._timeModified;
+                        // test updateXxx's default handling behavior
+                        data = local.utility2.jsonCopy(options);
+                        api[options.operationId](data, options, onNext);
+                        break;
+                    case 3:
+                        // validate object
+                        data = data.obj.data[0];
+                        local.utility2.assert(
+                            data._timeCreated === options._timeCreated,
+                            [data._timeCreated, options._timeCreated]
+                        );
+                        local.utility2.assert(
+                            data._timeModified > options._timeModified,
+                            [data._timeModified, options._timeModified]
+                        );
+                        local.utility2.assert(data.fieldExtra === 'bye', data.fieldExtra);
+                        local.utility2.assert(data.fieldRequired === true, data.fieldRequired);
+                        // get object
+                        api.crudGetByIdOne({ id: options.id }, options, onNext);
+                        break;
+                    case 4:
+                        // validate object
+                        data = data.obj.data[0];
+                        local.utility2.assert(
+                            data._timeCreated === options._timeCreated,
+                            [data._timeCreated, options._timeCreated]
+                        );
+                        local.utility2.assert(
+                            data._timeModified > options._timeModified,
+                            [data._timeModified, options._timeModified]
+                        );
+                        local.utility2.assert(data.fieldExtra === 'bye', data.fieldExtra);
+                        local.utility2.assert(data.fieldRequired === true, data.fieldRequired);
+                        // delete object by id
+                        local.testCase_crudDeleteById_default({ id: options.id }, onNext);
+                        break;
+                    default:
+                        switch (options.operationId) {
+                        case 'crudCreateOne':
+                        case 'crudReplaceOne':
+                        case 'crudReplaceOrCreateOne':
+                            // validate error occurred
+                            local.utility2.assert(error, error);
+                            error = null;
+                            break;
+                        }
+                        onError(error);
+                        break;
+                    }
+                }, onError);
+            };
+            onNext(options.error);
+        };
+
         local.testCase_crudXxx_error = function (options, onError) {
             /*
              * this function will test crudXxx's error handling behavior
@@ -442,9 +546,9 @@
             onParallel();
         };
 
-        local.testCase_validateParameter_default = function (options, onError) {
+        local.testCase_validateParameters_default = function (options, onError) {
             /*
-             * this function will test validateParameter's default handling behavior
+             * this function will test validateParameters's default handling behavior
              */
             var error;
             // jslint-hack
@@ -764,7 +868,7 @@
             ]
         });
         // run validation test
-        local.testCase_validateParameter_default(null, local.utility2.onErrorDefault);
+        local.testCase_validateParameters_default(null, local.utility2.onErrorDefault);
         local.testCase_validateSchema_default(null, local.utility2.onErrorDefault);
         local.testCase_validateSwaggerJson_default(null, local.utility2.onErrorDefault);
         // jslint dir

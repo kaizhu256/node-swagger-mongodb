@@ -109,7 +109,8 @@
             data = options.data;
             // validate undefined data
             if (data === null || data === undefined) {
-                if (options.required && !options.modeNoRequired) {
+                //!! if (options.required && !options.modeNoRequired) {
+                if (options.required) {
                     throw new Error('required "' + options.key + ':' + format +
                         '" property cannot be null or undefined');
                 }
@@ -876,6 +877,12 @@ default:
                 local.swagger_ui_lite.__dirname + '/swagger-ui.html',
                 'utf8'
             )
+            //!! .replace(
+                //!! "<script src='swagger-ui.rollup.js' type='text/javascript'></script>",
+                //!! '<script src="/assets/utility2.js"></script> ' +
+                    //!! "<script src='swagger-ui.rollup.js' type='text/javascript'></script>" +
+                    //!! '<script src="/assets/swagger-mongodb.js"></script>'
+            //!! )
             .replace(
                 'http://petstore.swagger.io/v2/swagger.json',
                 local.swmg.swaggerJson.basePath + '/swagger.json'
@@ -900,7 +907,7 @@ default:
             // swagger-hack - save pathMethod
             .replace(
                 'this.parameterMacro = parent.parameterMacro',
-                'this.pathMethod = JSON.parse(JSON.stringify(args)); ' +
+                'this.pathMethod = JSON.stringify(args); ' +
                     'this.parameterMacro = parent.parameterMacro'
             )
             // swagger-hack - add modeErroData and validation handling
@@ -914,11 +921,13 @@ default:
                     'window.swmg && window.swmg.validateParameters({ ' +
                         'data: args, ' +
                         'key: this.operation.operationId, ' +
-                        'modeNoRequired: this.pathMethod["x-modeNoRequired"],' +
+                        'modeNoRequired: this.pathMethod["x-modeNoRequired"], ' +
                         'parameters: this.parameters ' +
                     '}); ' +
                 '} catch (errorCaught) { ' +
-                    'error(errorCaught); ' +
+                    'errorCaught.data = errorCaught.stack || errorCaught.message; ' +
+                    'errorCaught.headers = {}; ' +
+                    'error(errorCaught, parent); ' +
                     'return; ' +
                 '} ' +
                 'var missingParams = this.getMissingParams(args);');
