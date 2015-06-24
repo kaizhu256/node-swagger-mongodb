@@ -383,6 +383,14 @@
                             options.cursor = options.collection.find(data[0], data[1], data[2]);
                             options.cursor.toArray(onNext);
                             break;
+                        case 'crudGetDistinctValueByFieldMany':
+                            // find data
+                            options.collection.distinct(
+                                options.data.field.replace((/^id$/), '_id'),
+                                local.swmg.normalizeIdMongodb(JSON.parse(options.data.query)),
+                                onNext
+                            );
+                            break;
                         case 'crudReplaceOne':
                             // replace data
                             options.collection.update(
@@ -431,6 +439,7 @@
                         case 'crudGetByIdOne':
                             options.response.data = [data];
                             break;
+                        case 'crudGetDistinctValueByFieldMany':
                         case 'crudGetByQueryMany':
                             options.response.data = data;
                             break;
@@ -440,6 +449,10 @@
                         case 'crudUpdateOne':
                         case 'crudUpdateOrCreateOne':
                             options.response.meta = data;
+                            if (!options.response.meta.n) {
+                                onError(new Error('crud operation failed'));
+                                return;
+                            }
                             options.collection.findOne({ _id: options.data._id }, onNext);
                             return;
                         case 'crudExistsByIdOne':
@@ -1042,6 +1055,28 @@ local.swmg.crudSwaggerJson = { paths: {
             type: 'string'
         }],
         summary: 'delete one {{schemaName}} object by id',
+        tags: ['{{schemaName}}']
+    } },
+    '/{{schemaName}}/crudGetDistinctValueByFieldMany': { get: {
+        _collectionName: '{{collectionName}}',
+        _crudApi: true,
+        operationId: 'crudGetDistinctValueByFieldMany',
+        parameters: [{
+            description: 'mongodb query param',
+            default: 'id',
+            in: 'query',
+            name: 'field',
+            required: true,
+            type: 'string'
+        }, {
+            description: 'mongodb query param',
+            default: '{}',
+            format: 'json',
+            in: 'query',
+            name: 'query',
+            type: 'string'
+        }],
+        summary: 'get distinct {{schemaName}} values by field',
         tags: ['{{schemaName}}']
     } },
     '/{{schemaName}}/crudExistsByIdOne/{id}': { get: {
