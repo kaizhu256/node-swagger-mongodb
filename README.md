@@ -269,13 +269,13 @@ width="100%" \
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
-        "mongodb-minimal": "^2.0.33-2015.06.01-f",
-        "swagger-ui-lite": "^2.1.0-20150619a",
+        "mongodb-minimal": "^2015.6.1",
+        "swagger-ui-lite": "^2015.6.1",
         "utility2": "~2015.6.12"
     },
     "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
-        "phantomjs-lite": "^1.9.8-2015.6.1-b"
+        "phantomjs-lite": "^2015.6.1"
     },
     "engines": { "node": ">=0.10 <=0.12" },
     "keywords": [
@@ -302,7 +302,7 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.6.12"
+    "version": "2015.6.13"
 }
 ```
 
@@ -321,10 +321,9 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 96ae5f99
-- npm publish 2015.6.12
-- fix version breakage with latest npm install
-- add crudGetDistinctValueByFieldMany api
+# change since b208e670
+- npm publish 2015.6.13
+- update dependencies
 - none
 
 
