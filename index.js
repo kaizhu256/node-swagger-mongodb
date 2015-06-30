@@ -121,6 +121,7 @@
                 local.swmg.validateSchema({
                     circularList: options.circularList,
                     data: data,
+                    key: type,
                     schema: local.swmg.schemaDereference(type)
                 });
                 return;
@@ -256,7 +257,7 @@
                 function (error, result) {
                     // validate no error occurred
                     local.utility2.assert(!error, error);
-                    ['errors', 'warnings'].forEach(function (errorType) {
+                    ['errors', 'undefined', 'warnings'].forEach(function (errorType) {
                         ((result && result[errorType]) || [
                         ]).slice(0, 8).forEach(function (element) {
                             console.error('swagger schema - ' + errorType.slice(0, -1) + ' - ' +
@@ -458,6 +459,8 @@
                         case 'crudExistsByIdOne':
                             options.response.data = [!!data];
                             break;
+                        default:
+                            options.response.meta = data;
                         }
                         modeNext += 1;
                         onNext(error);
@@ -494,13 +497,29 @@
                 if (!collectionName) {
                     return;
                 }
-                // init _crudApi
-                if (schema._crudApi) {
-                    local.utility2.objectSetDefault(options, JSON.parse(
-                        JSON.stringify(local.swmg.crudSwaggerJson)
-                            .replace((/\{\{collectionName\}\}/g), collectionName)
-                            .replace((/\{\{schemaName\}\}/g), schemaName)
+                // init JsonApiResponseData{{schemaName}}
+                local.utility2.objectSetDefault(options, JSON.parse(JSON.stringify({
+                    definitions: {
+                        'JsonApiResponseData{{schemaName}}': {
+                            properties: { data: {
+                                items: { $ref: '#/definitions/{{schemaName}}' },
+                                type: 'array'
+                            } },
+                            'x-inheritList': [{ $ref: '#/definitions/JsonApiResponseData' }]
+                        }
+                    }
+                })
+                    .replace((/\{\{collectionName\}\}/g), collectionName)
+                    .replace((/\{\{schemaName\}\}/g), schemaName)
                     ), 2);
+                // init crud-api
+                if (schema._crudApi) {
+                    local.utility2.objectSetDefault(options, JSON.parse(JSON.stringify(
+                        local.swmg.cacheDict.swaggerJsonPathsCrudDefault
+                    )
+                        .replace((/\{\{collectionName\}\}/g), collectionName)
+                        .replace((/\{\{schemaName\}\}/g), schemaName)
+                        ), 2);
                 }
                 // update cacheDict.collection
                 local.utility2.taskRunOrSubscribe({
@@ -513,10 +532,21 @@
             // update paths
             Object.keys(options.paths).forEach(function (path) {
                 Object.keys(options.paths[path]).forEach(function (method) {
-                    // init methodPath.responses
-                    methodPath = local.utility2.objectSetDefault(options.paths[path][method], {
-                        _method: method,
-                        _path: path,
+                    methodPath = options.paths[path][method];
+                    methodPath._method = method;
+                    methodPath._path = path;
+                    // init crud-api
+                    if (methodPath._crudApi && local.swmg.cacheDict
+                            .methodPathCrudDefault[methodPath.operationId]) {
+                        local.utility2.objectSetDefault(methodPath, JSON.parse(JSON.stringify(
+                            local.swmg.cacheDict.methodPathCrudDefault[methodPath.operationId]
+                        )
+                            .replace((/\{\{collectionName\}\}/g), methodPath._collectionName)
+                            .replace((/\{\{schemaName\}\}/g), methodPath._schemaName)
+                            ), 2);
+                    }
+                    // init defaults
+                    local.utility2.objectSetDefault(methodPath, {
                         parameters: [],
                         responses: {
                             200: {
@@ -628,8 +658,8 @@ case 1:
             'Content-Type': 'application/json; charset=UTF-8'
         });
         // init swmgPathname
-        request.swmgPathname = request.method + ' ' + request.urlParsed.pathnameNormalized
-            .replace(local.swmg.swaggerJson.basePath, '');
+        request.swmgPathname = request.method + ' ' +
+            request.urlParsed.pathnameNormalized.replace(local.swmg.swaggerJson.basePath, '');
         switch (request.swmgPathname) {
         case 'GET /swagger.json':
             response.end(JSON.stringify(local.swmg.swaggerJson));
@@ -637,8 +667,7 @@ case 1:
         }
         // init swmgMethodPath
         while (true) {
-            request.swmgMethodPath =
-                local.swmg.cacheDict.methodPath[request.swmgPathname];
+            request.swmgMethodPath = local.swmg.cacheDict.methodPath[request.swmgPathname];
             // if can init swmgMethodPath, then continue to onNext
             if (request.swmgMethodPath) {
                 onNext();
@@ -649,8 +678,7 @@ case 1:
                 break;
             }
             request.swmgPathnameOld = request.swmgPathname;
-            request.swmgPathname =
-                request.swmgPathname.replace((/\/[^\/]+?(\/*?)$/), '/$1');
+            request.swmgPathname = request.swmgPathname.replace((/\/[^\/]+?(\/*?)$/), '/$1');
         }
     }
     // default to next middleware
@@ -865,8 +893,12 @@ default:
             tags: []
         };
         // init assets
-        local.swmg['/assets/swagger-mongodb.js'] =
-            local.fs.readFileSync(__filename, 'utf8');
+        local.utility2.cacheDict.assets['/assets/swagger-mongodb.js'] =
+            local.utility2.istanbul_lite.instrumentInPackage(
+                local.fs.readFileSync(__filename, 'utf8'),
+                __filename,
+                'swagger-mongodb'
+            );
         local.utility2.cacheDict.assets['/assets/swagger-ui.html'] = local.fs
             .readFileSync(
                 local.swagger_ui_lite.__dirname + '/swagger-ui.html',
@@ -886,6 +918,8 @@ default:
                 local.swagger_ui_lite.__dirname + '/swagger-ui.rollup.js',
                 'utf8'
             )
+            // swagger-hack - disable underscore-min.map
+            .replace('//# sourceMappingURL=underscore-min.map', '')
             // swagger-hack - save swaggerJson
             .replace(
                 'this.apis = {};',
@@ -962,8 +996,6 @@ default:
             local.swmg.SwaggerClient = local.SwaggerClient;
             local.swmg.SwaggerUi = local.SwaggerUi;
         }());
-        // init crud-api
-        local.swmg.apiUpdate({});
         break;
     }
 }((function () {
@@ -1009,7 +1041,8 @@ default:
 
 /* jslint-indent-begin 8 */
 /*jslint maxlen: 104*/
-local.swmg.crudSwaggerJson = { paths: {
+// init swaggerJsonPathsCrudDefault
+local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
     '/{{schemaName}}/crudCountByQuery': { get: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
@@ -1241,16 +1274,20 @@ local.swmg.crudSwaggerJson = { paths: {
         summary: 'update or create one {{schemaName}} object',
         tags: ['{{schemaName}}']
     } }
-// init default definitions
-}, definitions: {
-    'JsonApiResponseData{{schemaName}}': {
-        properties: { data: {
-            items: { $ref: '#/definitions/{{schemaName}}' },
-            type: 'array'
-        } },
-        'x-inheritList': [{ $ref: '#/definitions/JsonApiResponseData' }]
-    }
 } };
+// init methodPathCrudDefault
+(function () {
+    var dict;
+    dict = local.swmg.cacheDict.swaggerJsonPathsCrudDefault.paths;
+    local.swmg.cacheDict.methodPathCrudDefault = {};
+    Object.keys(dict).forEach(function (path) {
+        Object.keys(dict[path]).forEach(function (method) {
+            var methodPath;
+            methodPath = dict[path][method];
+            local.swmg.cacheDict.methodPathCrudDefault[methodPath.operationId] = methodPath;
+        });
+    });
+}());
 /* jslint-indent-end */
 
 

@@ -164,12 +164,6 @@ width="100%" \
             { envDict: local.utility2.envDict },
             ''
         );
-        local.utility2.cacheDict.assets['/assets/swagger-mongodb.js'] =
-            local.utility2.istanbul_lite.instrumentInPackage(
-                local.swmg['/assets/swagger-mongodb.js'],
-                local.swmg.__dirname + '/index.js',
-                'swagger-mongodb'
-            );
         local.utility2.cacheDict.assets['/test/test.js'] =
             local.utility2.istanbul_lite.instrumentInPackage(
                 local.fs.readFileSync(local.swmg.__dirname + '/test.js', 'utf8'),
@@ -211,21 +205,92 @@ width="100%" \
                 },
                 UserModel: {
                     _collectionName: 'SwmgUserCollection',
-                    _crudApi: true,
                     properties: {
                         email: { format: 'email', type: 'string' },
                         passwordHash: { type: 'string' },
                         passwordSalt: { type: 'string' },
                         username: { type: 'string' }
                     },
-                    required: ['passwordHash', 'username'],
                     'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
                 }
+            },
+            paths: {
+                // test undefined api handling behavior
+                '/TestCrudModel/errorUndefinedApi': { get: {
+                    operationId: 'errorUndefinedApi',
+                    tags: ['TestCrudModel']
+                } },
+                // test undefined crud-api handling behavior
+                '/TestCrudModel/errorUndefinedCrud': { get: {
+                    _collectionName: 'SwmgTestCollection',
+                    _crudApi: true,
+                    operationId: 'errorUndefinedCrud',
+                    tags: ['TestCrudModel']
+                } },
+                '/UserModel/crudReplaceOrCreateOne': { put: {
+                    _collectionName: 'SwmgUserCollection',
+                    _crudApi: true,
+                    _schemaName: 'UserModel',
+                    operationId: 'crudReplaceOrCreateOne'
+                } },
+                '/UserModel/crudDeleteByIdOne/{id}': { delete: {
+                    _collectionName: 'SwmgUserCollection',
+                    _crudApi: true,
+                    _schemaName: 'UserModel',
+                    operationId: 'crudDeleteByIdOne'
+                } },
+                '/UserModel/userLogin': { get: {
+                    _collectionName: 'SwmgUserCollection',
+                    operationId: 'login',
+                    parameters: [{
+                        description: 'password param',
+                        in: 'query',
+                        name: 'password',
+                        required: true,
+                        type: 'string'
+                    }, {
+                        description: 'username param',
+                        in: 'query',
+                        name: 'username',
+                        required: true,
+                        type: 'string'
+                    }],
+                    tags: ['UserModel']
+                } },
+                '/UserModel/userLogout': { get: {
+                    _collectionName: 'SwmgUserCollection',
+                    operationId: 'logout',
+                    parameters: [{
+                        description: 'sessionId param',
+                        in: 'query',
+                        name: 'sessionId',
+                        required: true,
+                        type: 'string'
+                    }],
+                    tags: ['UserModel']
+                } },
+                '/UserModel/userPasswordUpdate': { put: {
+                    _collectionName: 'SwmgUserCollection',
+                    operationId: 'passwordUpdate',
+                    parameters: [{
+                        description: 'password param',
+                        in: 'query',
+                        name: 'password',
+                        required: true,
+                        type: 'string'
+                    }, {
+                        description: 'username param',
+                        in: 'query',
+                        name: 'username',
+                        required: true,
+                        type: 'string'
+                    }],
+                    tags: ['UserModel']
+                } }
             },
             tags: [
                 { description: 'Everything about your pets', name: 'PetModel' },
                 { description: 'Access to Petstore orders', name: 'StoreModel' },
-                { description: 'internal test model', name: 'TestModel' },
                 { description: 'Operations about user', name: 'UserModel' }
             ]
         });
@@ -297,12 +362,13 @@ width="100%" \
         "build-ci": "node_modules/.bin/utility2 shRun shReadmeBuild",
         "postinstall": \
 "node_modules/.bin/utility2 shRun shReadmeExportFile example.js example.js",
-        "start": "npm_config_mode_auto_restart=1 \
-node_modules/.bin/utility2 shRun node test.js",
-        "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
+        "start": "npm run-script postinstall && \
+npm_config_mode_auto_restart=1 node_modules/.bin/utility2 shRun node test.js",
+        "test": "npm run-script postinstall && \
+node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.6.13"
+    "version": "2015.7.1"
 }
 ```
 
@@ -321,9 +387,9 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since b208e670
-- npm publish 2015.6.13
-- update dependencies
+# change since 092c73fe
+- npm publish 2015.7.1
+- revamping crudApi
 - none
 
 
@@ -340,6 +406,7 @@ node_modules/.bin/utility2 test test.js"
 # build.sh
 
 # this shell script will run the build for this package
+
 shBuild() {
     # this function will run the main build
     # init env

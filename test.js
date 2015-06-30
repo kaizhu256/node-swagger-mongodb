@@ -679,6 +679,7 @@
             }
         });
         // init crud-api
+        local.swmg.apiUpdate({});
         local.swmg.apiUpdate({
             definitions: {
                 TestCrudModel: {
@@ -742,25 +743,10 @@
                         type: 'string'
                     }],
                     tags: ['TestCrudModel']
-                } },
-                // test undefined api handling behavior
-                '/TestCrudModel/errorUndefinedApi': { get: {
-                    operationId: 'errorUndefinedApi',
-                    tags: ['TestCrudModel']
-                } },
-                // test undefined crud-api handling behavior
-                '/TestCrudModel/errorUndefinedCrud': { get: {
-                    _collectionName: 'SwmgTestCollection',
-                    _crudApi: true,
-                    operationId: 'errorUndefinedCrud',
-                    tags: ['TestCrudModel']
                 } }
             },
             tags: [
-                { description: 'Everything about your pets', name: 'PetModel' },
-                { description: 'Access to Petstore orders', name: 'StoreModel' },
-                { description: 'internal test model', name: 'TestCrudModel' },
-                { description: 'Operations about user', name: 'UserModel' }
+                { description: 'internal test model', name: 'TestCrudModel' }
             ]
         });
         // run validation test
