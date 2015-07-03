@@ -68,6 +68,24 @@
             }
         };
 
+        local.swmg.swaggerJsonTagsMerge = function (options) {
+            /*
+             * this function will merge options.tags into swaggerJson
+             */
+            var dict;
+            dict = {};
+            [local.swmg.swaggerJson.tags, options.tags].forEach(function (tags) {
+                (tags || []).forEach(function (element) {
+                    dict[element.name] = element;
+                });
+            });
+            dict = Object.keys(dict).sort().map(function (key) {
+                return dict[key];
+            });
+            local.swmg.swaggerJson.tags = dict;
+            return dict;
+        };
+
         local.swmg.validateParameters = function (options) {
             /*
              * this function will validate options.data against options.parameters
@@ -141,6 +159,10 @@
             // #data-types
             switch (type) {
             case 'array':
+                // ignore csv array
+                if (property.collectionFormat && typeof data === 'string') {
+                    break;
+                }
                 assert(Array.isArray(data));
                 // recurse - validate elements in list
                 data.forEach(function (element) {
@@ -571,16 +593,8 @@
                     )] = methodPath;
                 });
             });
-            // update and save tags
-            tmp = {};
-            [local.swmg.swaggerJson.tags, options.tags].forEach(function (tags) {
-                (tags || []).forEach(function (element) {
-                    tmp[element.name] = element;
-                });
-            });
-            tmp = Object.keys(tmp).sort().map(function (key) {
-                return tmp[key];
-            });
+            // merge tags
+            tmp = local.utility2.jsonCopy(local.swmg.swaggerJsonTagsMerge(options));
             // update swaggerJson with options, with underscored keys removed
             local.utility2.objectSetOverride(
                 local.swmg.swaggerJson,
@@ -702,12 +716,14 @@ case 2:
         // parse body param
         case 'body':
             onParallel.counter += 1;
-            local.utility2.streamReadAll(request, local.utility2.onErrorJsonParse(
-                function (error, data) {
-                    request.swmgParameters[param.name] = data;
-                    onParallel(error);
-                }
-            ));
+            local.utility2.middlewareBodyGet(request, response, function (error) {
+                (local.utility2.onErrorJsonParse(
+                    function (error, data) {
+                        request.swmgParameters[param.name] = data;
+                        onParallel(error);
+                    }
+                ))(error, request.bodyRaw);
+            });
             break;
         // parse header param
         case 'header':
@@ -732,10 +748,38 @@ case 3:
             // jsonCopy object to prevent side-effects
             request.swmgParameters[param.name] = local.utility2.jsonCopy(param.default);
         }
+        // parse csv array
+        if (param.type === 'array' && param.collectionFormat && typeof tmp === 'string') {
+            switch (param.collectionFormat) {
+            case 'csv':
+                tmp = tmp.split(',');
+                break;
+            case 'pipes':
+                tmp = tmp.split('|');
+                break;
+            case 'ssv':
+                tmp = tmp.split(' ');
+                break;
+            case 'tsv':
+                tmp = tmp.split('\t');
+                break;
+            }
+        }
         // JSON.parse swmgParameters
         if (param.type !== 'string' && (typeof tmp === 'string' || Buffer.isBuffer(tmp))) {
-            request.swmgParameters[param.name] = JSON.parse(tmp);
+            try {
+                tmp = JSON.parse(tmp);
+            } catch (ignore) {
+            }
         }
+        request.swmgParameters[param.name] = tmp;
+    });
+    // init extra param
+    Object.keys(request.swmgMethodPath._paramExtraDict || {}).forEach(function (key) {
+        request.swmgParameters[key] = local.utility2.stringFormat(
+            request.swmgMethodPath._paramExtraDict[key],
+            request.swmgParameters
+        );
     });
     // validate parameters
     local.swmg.validateParameters({
@@ -807,6 +851,23 @@ default:
 
     // run node js-env code
     case 'node':
+        // legacy-hack
+        /* istanbul ignore next */
+        local.utility2.middlewareBodyGet = function (request, response, nextMiddleware) {
+            /*
+             * this function will read the request-body and save it as request.bodyRaw
+             */
+            // jslint-hack
+            local.utility2.nop(response);
+            if (!request.readable) {
+                nextMiddleware();
+                return;
+            }
+            local.utility2.streamReadAll(request, function (error, data) {
+                request.bodyRaw = request.bodyRaw || data;
+                nextMiddleware(error);
+            });
+        };
         // export swagger-mongodb
         module.exports = local.swmg;
         module.exports.__dirname = __dirname;
@@ -852,9 +913,7 @@ default:
                     properties: {
                         _timeCreated: { format: 'date-time', type: 'string' },
                         _timeModified: { format: 'date-time', type: 'string' },
-                        parentId: { type: 'string' },
                         id: { type: 'string' },
-                        subtype: { type: 'string' },
                         type: { type: 'string' }
                     }
                 },
@@ -881,7 +940,8 @@ default:
                             type: 'array'
                         }
                     }
-                }
+                },
+                Object: {}
             },
             info: {
                 description: 'demo of swagger-mongodb crud-api',

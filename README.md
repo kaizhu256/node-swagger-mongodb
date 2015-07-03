@@ -188,112 +188,6 @@ width="100%" \
                 );
             }
         });
-        // init crud-api
-        local.swmg.apiUpdate({
-            definitions: {
-                PetModel: {
-                    _collectionName: 'SwmgPetCollection',
-                    _crudApi: true,
-                    properties: {},
-                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
-                },
-                StoreModel: {
-                    _collectionName: 'SwmgStoreCollection',
-                    _crudApi: true,
-                    properties: {},
-                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
-                },
-                UserModel: {
-                    _collectionName: 'SwmgUserCollection',
-                    properties: {
-                        email: { format: 'email', type: 'string' },
-                        passwordHash: { type: 'string' },
-                        passwordSalt: { type: 'string' },
-                        username: { type: 'string' }
-                    },
-                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
-                }
-            },
-            paths: {
-                // test undefined api handling behavior
-                '/TestCrudModel/errorUndefinedApi': { get: {
-                    operationId: 'errorUndefinedApi',
-                    tags: ['TestCrudModel']
-                } },
-                // test undefined crud-api handling behavior
-                '/TestCrudModel/errorUndefinedCrud': { get: {
-                    _collectionName: 'SwmgTestCollection',
-                    _crudApi: true,
-                    operationId: 'errorUndefinedCrud',
-                    tags: ['TestCrudModel']
-                } },
-                '/UserModel/crudReplaceOrCreateOne': { put: {
-                    _collectionName: 'SwmgUserCollection',
-                    _crudApi: true,
-                    _schemaName: 'UserModel',
-                    operationId: 'crudReplaceOrCreateOne'
-                } },
-                '/UserModel/crudDeleteByIdOne/{id}': { delete: {
-                    _collectionName: 'SwmgUserCollection',
-                    _crudApi: true,
-                    _schemaName: 'UserModel',
-                    operationId: 'crudDeleteByIdOne'
-                } },
-                '/UserModel/userLogin': { get: {
-                    _collectionName: 'SwmgUserCollection',
-                    operationId: 'login',
-                    parameters: [{
-                        description: 'password param',
-                        in: 'query',
-                        name: 'password',
-                        required: true,
-                        type: 'string'
-                    }, {
-                        description: 'username param',
-                        in: 'query',
-                        name: 'username',
-                        required: true,
-                        type: 'string'
-                    }],
-                    tags: ['UserModel']
-                } },
-                '/UserModel/userLogout': { get: {
-                    _collectionName: 'SwmgUserCollection',
-                    operationId: 'logout',
-                    parameters: [{
-                        description: 'sessionId param',
-                        in: 'query',
-                        name: 'sessionId',
-                        required: true,
-                        type: 'string'
-                    }],
-                    tags: ['UserModel']
-                } },
-                '/UserModel/userPasswordUpdate': { put: {
-                    _collectionName: 'SwmgUserCollection',
-                    operationId: 'passwordUpdate',
-                    parameters: [{
-                        description: 'password param',
-                        in: 'query',
-                        name: 'password',
-                        required: true,
-                        type: 'string'
-                    }, {
-                        description: 'username param',
-                        in: 'query',
-                        name: 'username',
-                        required: true,
-                        type: 'string'
-                    }],
-                    tags: ['UserModel']
-                } }
-            },
-            tags: [
-                { description: 'Everything about your pets', name: 'PetModel' },
-                { description: 'Access to Petstore orders', name: 'StoreModel' },
-                { description: 'Operations about user', name: 'UserModel' }
-            ]
-        });
         // init middleware
         local.middleware = local.utility2.middlewareGroupCreate([
             local.utility2.middlewareInit,
@@ -302,6 +196,138 @@ width="100%" \
         ]);
         // init middleware error-handler
         local.onMiddlewareError = local.swmg.onMiddlewareError;
+        // init petstore-api
+        (function () {
+            var methodPath, options, schema;
+            options = local.utility2.jsonCopy(require(local.swmg.local
+                .swagger_ui_lite.__dirname + '/swagger.json'));
+            options = {
+                definitions: options.definitions,
+                paths: options.paths,
+                tags: options.tags
+            };
+            Object.keys(options.definitions).forEach(function (schemaName) {
+                schema = options.definitions[schemaName];
+                schema._collectionName = 'Swmg' + schemaName + 'Collection';
+                schema.properties.id = { type: 'string' };
+                schema['x-inheritList'] =
+                    [{ $ref: '#/definitions/JsonApiResource' }];
+            });
+            Object.keys(options.paths).forEach(function (path) {
+                Object.keys(options.paths[path]).forEach(function (method) {
+                    methodPath = options.paths[path][method];
+                    methodPath._schemaName =
+                        path.split('/')[1][0].toUpperCase() +
+                        path.split('/')[1].slice(1);
+                    if (methodPath._schemaName === 'Store') {
+                        methodPath._schemaName = 'Order';
+                    }
+                    methodPath._collectionName =
+                        'Swmg' + methodPath._schemaName + 'Collection';
+                    methodPath.produces =
+                        methodPath.responses =
+                        methodPath.security =
+                        undefined;
+                    switch (methodPath.operationId) {
+                    case 'addPet':
+                    case 'createUser':
+                    case 'placeOrder':
+                        methodPath._crudApi = true;
+                        methodPath.operationId = 'crudCreateOne';
+                        break;
+                    case 'deleteOrder':
+                    case 'deletePet':
+                    case 'deleteUser':
+                        methodPath._crudApi = true;
+                        methodPath.operationId = 'crudDeleteByIdOne';
+                        break;
+                    case 'getPetById':
+                    case 'getOrderById':
+                    case 'getUserByName':
+                        methodPath._crudApi = true;
+                        methodPath.operationId = 'crudGetByIdOne';
+                        break;
+                    case 'updatePet':
+                    case 'updateUser':
+                        methodPath._crudApi = true;
+                        methodPath.operationId = 'crudUpdateOne';
+                        break;
+                    }
+                    // init id
+                    methodPath.parameters.forEach(function (param) {
+                        switch (param.name) {
+                        case 'orderId':
+                        case 'petId':
+                        case 'username':
+                            methodPath._paramExtraDict = { id: '{{' + param.name + '}}' };
+                            param.format = undefined;
+                            param.type = 'string';
+                            break;
+                        }
+                    });
+                });
+            });
+            local.swmg.apiUpdate(options);
+        }());
+        // init petstore-middleware
+        local.middleware.middlewareList.push(function (request, response, nextMiddleware) {
+            var modeNext, onNext;
+            modeNext = 0;
+            onNext = function (error, data) {
+                local.utility2.testTryCatch(function () {
+                    modeNext = error
+                        ? Infinity
+                        : modeNext + 1;
+                    switch (modeNext) {
+                    case 1:
+                        switch (request.swmgPathname) {
+                        case 'GET /pet/findByStatus':
+                            local.swmg._crudApi({
+                                collectionName: request.swmgMethodPath._collectionName,
+                                data: {
+                                    fields: '{}',
+                                    hint: '{}',
+                                    limit: 20,
+                                    query: JSON.stringify({
+                                        status: { $in: request.swmgParameters.status }
+                                    }),
+                                    skip: 0,
+                                    sort: '{"_timeModified":-1}'
+                                },
+                                operationId: 'crudGetByQueryMany',
+                                parameters: [],
+                                schemaName: 'Pet'
+                            }, onNext);
+                            return;
+                        case 'GET /pet/findByTags':
+                            local.swmg._crudApi({
+                                collectionName: request.swmgMethodPath._collectionName,
+                                data: {
+                                    fields: '{}',
+                                    hint: '{}',
+                                    limit: 10,
+                                    query: JSON.stringify({
+                                        'tags.name': { $in: request.swmgParameters.tags }
+                                    }),
+                                    skip: 0,
+                                    sort: '{"_timeModified":-1}'
+                                },
+                                operationId: 'crudGetByQueryMany',
+                                parameters: [],
+                                schemaName: 'Pet'
+                            }, onNext);
+                            return;
+                        }
+                        break;
+                    default:
+                        response.end(JSON.stringify(error || data));
+                        return;
+                    }
+                    nextMiddleware();
+                }, nextMiddleware);
+            };
+            onNext();
+        });
         // run server-test
         local.utility2.testRunServer(local);
     }());
@@ -336,7 +362,7 @@ width="100%" \
     "dependencies": {
         "mongodb-minimal": "^2015.6.1",
         "swagger-ui-lite": "^2015.6.1",
-        "utility2": "~2015.6.12"
+        "utility2": "~2015.7.1"
     },
     "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
@@ -362,22 +388,20 @@ width="100%" \
         "build-ci": "node_modules/.bin/utility2 shRun shReadmeBuild",
         "postinstall": \
 "node_modules/.bin/utility2 shRun shReadmeExportFile example.js example.js",
-        "start": "npm run-script postinstall && \
-npm_config_mode_auto_restart=1 node_modules/.bin/utility2 shRun node test.js",
-        "test": "npm run-script postinstall && \
-node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
+        "start": "npm_config_mode_auto_restart=1 \
+node_modules/.bin/utility2 shRun node test.js",
+        "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.7.1"
+    "version": "2015.7.2"
 }
 ```
 
 
 
 # todo
+- add aggregation feature
 - add max / min validation
-- add crudIncrement
-- remove required validation in crudUpdateXxx
 - add createIndex feature to apiUpdate
 - add aggregate crud api
 - add user /login /logout paths
@@ -387,9 +411,12 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 092c73fe
-- npm publish 2015.7.1
-- revamping crudApi
+# change since a90c3c40
+- npm publish 2015.7.2
+- auto-export example.js in test.js
+- replace utility2.streamReadAll with utility2.middlewareBodyGet for parsing http-body
+- add collectionFormat option for csv array
+- revamp petstore-api
 - none
 
 

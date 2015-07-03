@@ -139,6 +139,16 @@
             local.utility2.nop(options);
             local.swmg.api.TestCrudModel.echo({
                 id: 'test_' + local.utility2.uuidTime(),
+                // test array-csv-param handling behavior
+                paramArrayCsv: 'aa,bb',
+                // test array-pipes-param handling behavior
+                paramArrayPipes: 'aa|bb',
+                // test array-ssv-param handling behavior
+                paramArraySsv: 'aa bb',
+                // test array-tsv-param handling behavior
+                paramArrayTsv: 'aa\tbb',
+                // test extra-param handling behavior
+                paramExtra: 'hello',
                 // test header-param handling behavior
                 paramHeader: 'hello'
             }, { modeErrorData: true }, function (error, data) {
@@ -149,6 +159,12 @@
                     data = data.obj;
                     local.utility2.assert(local.utility2
                         .jsonStringifyOrdered(data) === JSON.stringify({
+                            paramArrayCsv: ['aa', 'bb'],
+                            paramArrayPipes: ['aa', 'bb'],
+                            paramArraySsv: ['aa', 'bb'],
+                            paramArrayTsv: ['aa', 'bb'],
+                            paramExtra: 'hello',
+                            paramExtra2: 'hello',
                             paramHeader: 'hello'
                         }), data);
                     onError();
@@ -398,9 +414,7 @@
                 optionsCopy.id = 'test_' + local.utility2.uuidTime();
                 optionsCopy.operationId = operationId;
                 onParallel.counter += 1;
-                api[
-                    optionsCopy.operationId
-                ](optionsCopy, optionsCopy, function (error) {
+                api[optionsCopy.operationId](optionsCopy, optionsCopy, function (error) {
                     local.utility2.testTryCatch(function () {
                         // validate error occurred
                         local.utility2.assert(error, error);
@@ -668,18 +682,19 @@
 
     // run node js-env code
     case 'node':
-        // init extra middleware
+        // init test-middleware
         local.middleware.middlewareList.push(function (request, response, nextMiddleware) {
-            switch (request.urlParsed.pathnameNormalized) {
-            case '/api/v0/TestCrudModel/echo':
+            switch (request.swmgPathname) {
+            case 'GET /TestCrudModel/echo':
                 response.end(JSON.stringify(request.swmgParameters));
                 break;
             default:
                 nextMiddleware();
             }
         });
-        // init crud-api
+        // test null apiUpdate handling behavior
         local.swmg.apiUpdate({});
+        // init crud-api
         local.swmg.apiUpdate({
             definitions: {
                 TestCrudModel: {
@@ -725,23 +740,75 @@
                 }
             },
             paths: {
+                // test custom api handling behavior
                 '/TestCrudModel/echo': { get: {
                     _collectionName: 'SwmgTestCollection',
+                    // test extra-param handling behavior
+                    _paramExtraDict: { paramExtra2: '{{paramExtra}}' },
                     operationId: 'echo',
                     parameters: [{
+                        description: 'extra param',
+                        in: 'query',
+                        // test extra-param handling behavior
+                        name: 'paramExtra',
+                        type: 'string'
+                    }, {
+                        // test array-csv-param handling behavior
+                        collectionFormat: 'csv',
+                        description: 'csv-array param',
+                        in: 'query',
+                        items: { type: 'string' },
+                        name: 'paramArrayCsv',
+                        type: 'array'
+                    }, {
+                        // test array-pipes-param handling behavior
+                        collectionFormat: 'pipes',
+                        description: 'pipes-array param',
+                        in: 'query',
+                        items: { type: 'string' },
+                        name: 'paramArrayPipes',
+                        type: 'array'
+                    }, {
+                        // test array-ssv-param handling behavior
+                        collectionFormat: 'ssv',
+                        description: 'ssv-array param',
+                        in: 'query',
+                        items: { type: 'string' },
+                        name: 'paramArraySsv',
+                        type: 'array'
+                    }, {
+                        // test array-tsv-param handling behavior
+                        collectionFormat: 'tsv',
+                        description: 'tsv-array param',
+                        in: 'query',
+                        items: { type: 'string' },
+                        name: 'paramArrayTsv',
+                        type: 'array'
+                    }, {
                         description: 'header param',
                         // test header-param handling behavior
                         in: 'header',
                         name: 'paramHeader',
-                        required: true,
                         type: 'string'
                     }, {
                         description: 'optional param',
-                        // test optional-param handling behavior
                         in: 'query',
+                        // test optional-param handling behavior
                         name: 'paramOptional',
                         type: 'string'
                     }],
+                    tags: ['TestCrudModel']
+                } },
+                // test undefined api handling behavior
+                '/TestCrudModel/errorUndefinedApi': { get: {
+                    operationId: 'errorUndefinedApi',
+                    tags: ['TestCrudModel']
+                } },
+                // test undefined crud-api handling behavior
+                '/TestCrudModel/errorUndefinedCrud': { get: {
+                    _collectionName: 'SwmgTestCollection',
+                    _crudApi: true,
+                    operationId: 'errorUndefinedCrud',
                     tags: ['TestCrudModel']
                 } }
             },
@@ -806,6 +873,16 @@
             ? window.utility2
             : require('utility2');
         if (local.modeJs === 'node') {
+            require('fs').writeFileSync(
+                './example.js',
+                require('fs').readFileSync('./README.md', 'utf8')
+                    // support syntax-highlighting
+                    .replace((/[\S\s]+?\n.*?example.js\s*?```\w*?\n/), function (match0) {
+                        // preserve lineno
+                        return match0.replace((/.+/g), '');
+                    })
+                    .replace((/\n```[\S\s]+/), '')
+            );
             // init example.js
             local = require('./example.js');
         }
