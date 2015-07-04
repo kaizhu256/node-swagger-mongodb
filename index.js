@@ -326,6 +326,7 @@
                         // init id
                         options.data._id =
                             String(options.data._id || local.utility2.uuidTime());
+                        options.optionsId = options.optionsId || { _id: options.data._id };
                         // init collection
                         options.collection =
                             local.swmg.cacheDict.collection[options.collectionName];
@@ -336,7 +337,7 @@
                         case 'crudUpdateOne':
                         case 'crudUpdateOrCreateOne':
                             options.collection.findOne(
-                                { _id: options.data._id },
+                                options.optionsId,
                                 { _timeCreated: 1 },
                                 onNext
                             );
@@ -377,19 +378,19 @@
                             break;
                         case 'crudDeleteByIdOne':
                             // delete data
-                            options.collection.removeOne({ _id: options.data._id }, onNext);
+                            options.collection.removeOne(options.optionsId, onNext);
                             break;
                         case 'crudExistsByIdOne':
                             // find data
                             options.collection.findOne(
-                                { _id: options.data._id },
+                                options.optionsId,
                                 { _id: 1 },
                                 onNext
                             );
                             break;
                         case 'crudGetByIdOne':
                             // find data
-                            options.collection.findOne({ _id: options.data._id }, onNext);
+                            options.collection.findOne(options.optionsId, onNext);
                             break;
                         case 'crudGetByQueryMany':
                             data = local.swmg.normalizeIdMongodb([
@@ -417,7 +418,7 @@
                         case 'crudReplaceOne':
                             // replace data
                             options.collection.update(
-                                { _id: options.data._id },
+                                options.optionsId,
                                 options.data,
                                 onNext
                             );
@@ -425,7 +426,7 @@
                         case 'crudReplaceOrCreateOne':
                             // upsert data
                             options.collection.update(
-                                { _id: options.data._id },
+                                options.optionsId,
                                 options.data,
                                 { upsert: true },
                                 onNext
@@ -434,7 +435,7 @@
                         case 'crudUpdateOne':
                             // update data
                             options.collection.update(
-                                { _id: options.data._id },
+                                options.optionsId,
                                 { $set: options.data },
                                 onNext
                             );
@@ -442,7 +443,7 @@
                         case 'crudUpdateOrCreateOne':
                             // upsert data
                             options.collection.update(
-                                { _id: options.data._id },
+                                options.optionsId,
                                 { $set: options.data },
                                 { upsert: true },
                                 onNext
@@ -462,10 +463,6 @@
                         case 'crudGetByIdOne':
                             options.response.data = [data];
                             break;
-                        case 'crudGetDistinctValueByFieldMany':
-                        case 'crudGetByQueryMany':
-                            options.response.data = data;
-                            break;
                         case 'crudCreateOne':
                         case 'crudReplaceOne':
                         case 'crudReplaceOrCreateOne':
@@ -473,16 +470,21 @@
                         case 'crudUpdateOrCreateOne':
                             options.response.meta = data;
                             if (!options.response.meta.n) {
-                                onError(new Error('crud operation failed'));
+                                onNext(new Error('crud operation failed'));
                                 return;
                             }
-                            options.collection.findOne({ _id: options.data._id }, onNext);
+                            options.collection.findOne(options.optionsId, onNext);
                             return;
+                        case 'crudDeleteByIdOne':
+                            options.response.meta = data;
+                            break;
                         case 'crudExistsByIdOne':
                             options.response.data = [!!data];
                             break;
-                        default:
-                            options.response.meta = data;
+                        case 'crudGetDistinctValueByFieldMany':
+                        case 'crudGetByQueryMany':
+                            options.response.data = data;
+                            break;
                         }
                         modeNext += 1;
                         onNext(error);
@@ -513,10 +515,9 @@
             options.definitions = options.definitions || {};
             options.paths = options.paths || {};
             Object.keys(options.definitions).forEach(function (schemaName) {
-                var collectionName, schema;
+                var schema;
                 schema = options.definitions[schemaName];
-                collectionName = schema._collectionName;
-                if (!collectionName) {
+                if (!schema._collectionName) {
                     return;
                 }
                 // init JsonApiResponseData{{schemaName}}
@@ -531,7 +532,6 @@
                         }
                     }
                 })
-                    .replace((/\{\{collectionName\}\}/g), collectionName)
                     .replace((/\{\{schemaName\}\}/g), schemaName)
                     ), 2);
                 // init crud-api
@@ -539,7 +539,8 @@
                     local.utility2.objectSetDefault(options, JSON.parse(JSON.stringify(
                         local.swmg.cacheDict.swaggerJsonPathsCrudDefault
                     )
-                        .replace((/\{\{collectionName\}\}/g), collectionName)
+                        .replace((/\{\{collectionName\}\}/g), schema._collectionName)
+                        .replace((/\{\{crudApi\}\}/g), schema._crudApi)
                         .replace((/\{\{schemaName\}\}/g), schemaName)
                         ), 2);
                 }
@@ -547,8 +548,7 @@
                 local.utility2.taskRunOrSubscribe({
                     key: 'swagger-mongodb.mongodbConnect'
                 }, function () {
-                    local.swmg.cacheDict.collection[collectionName] =
-                        local.swmg.db.collection(collectionName);
+                    local.swmg.collectionCreate(schema, local.utility2.onErrorDefault);
                 });
             });
             // update paths
@@ -606,7 +606,7 @@
                             Object.keys(element).forEach(function (key) {
                                 // security - remove underscored key
                                 if (key[0] === '_') {
-                                    delete element[key];
+                                    element[key] = undefined;
                                 }
                             });
                         }
@@ -641,6 +641,78 @@
                 url: 'http://localhost:' + local.utility2.serverPortInit()
             });
             local.swmg.api.buildFromSpec(local.utility2.jsonCopy(local.swmg.swaggerJson));
+        };
+
+        local.swmg.collectionCreate = function (schema, onError) {
+            /*
+             * this function will create a mongodb collection
+             */
+            var collection, modeNext, onNext;
+            modeNext = 0;
+            onNext = function (error) {
+                modeNext = error
+                    ? Infinity
+                    : modeNext + 1;
+                switch (modeNext) {
+                case 1:
+                    collection = local.swmg.cacheDict.collection[schema._collectionName] =
+                        local.swmg.db.collection(schema._collectionName);
+                    // if $npm_config_mode_mongodb_readonly, then return this function
+                    if (local.utility2.envDict.npm_config_mode_mongodb_readonly ||
+                            schema._collectionReadonly) {
+                        onError();
+                        return;
+                    }
+                    // drop collection
+                    if (schema._collectionDrop) {
+                        console.warn('dropping collection ' + schema._collectionName + ' ...');
+                        local.swmg.db.command({ drop: schema._collectionName }, function () {
+                            onNext();
+                        });
+                        return;
+                    }
+                    onNext();
+                    return;
+                case 2:
+                    // create collection
+                    if (schema._collectionCreate) {
+                        local.swmg.db.createCollection(
+                            schema._collectionName,
+                            schema._collectionCreate,
+                            function () {
+                                // convert existing collection to capped collection
+                                collection.isCapped(function (error, data) {
+                                    if (!error && !data && schema._collectionCreate.capped) {
+                                        local.swmg.db.command({
+                                            convertToCapped: schema._collectionName,
+                                            size: schema._collectionCreate.size
+                                        }, onNext);
+                                        return;
+                                    }
+                                    onNext();
+                                });
+                            }
+                        );
+                        return;
+                    }
+                    onNext();
+                    return;
+                case 3:
+                    // create index
+                    if (schema._collectionCreateIndexList) {
+                        local.swmg.db.command({
+                            createIndexes: schema._collectionName,
+                            indexes: schema._collectionCreateIndexList
+                        }, onNext);
+                        return;
+                    }
+                    onNext();
+                    return;
+                default:
+                    onError(error);
+                }
+            };
+            onNext();
         };
 
         local.swmg.middleware = function (request, response, nextMiddleware) {
@@ -776,10 +848,11 @@ case 3:
     });
     // init extra param
     Object.keys(request.swmgMethodPath._paramExtraDict || {}).forEach(function (key) {
-        request.swmgParameters[key] = local.utility2.stringFormat(
-            request.swmgMethodPath._paramExtraDict[key],
-            request.swmgParameters
-        );
+        tmp = request.swmgMethodPath._paramExtraDict[key];
+        if (typeof tmp === 'string') {
+            tmp = local.utility2.stringFormat(tmp, request.swmgParameters);
+        }
+        request.swmgParameters[key] = tmp;
     });
     // validate parameters
     local.swmg.validateParameters({
@@ -794,7 +867,7 @@ case 3:
             data: request.swmgParameters,
             operationId: request.swmgMethodPath.operationId,
             parameters: request.swmgMethodPath.parameters,
-            schemaName: request.swmgMethodPath.tags[0]
+            schemaName: request.swmgMethodPath._schemaName
         }, onNext);
         return;
     }
@@ -851,23 +924,6 @@ default:
 
     // run node js-env code
     case 'node':
-        // legacy-hack
-        /* istanbul ignore next */
-        local.utility2.middlewareBodyGet = function (request, response, nextMiddleware) {
-            /*
-             * this function will read the request-body and save it as request.bodyRaw
-             */
-            // jslint-hack
-            local.utility2.nop(response);
-            if (!request.readable) {
-                nextMiddleware();
-                return;
-            }
-            local.utility2.streamReadAll(request, function (error, data) {
-                request.bodyRaw = request.bodyRaw || data;
-                nextMiddleware(error);
-            });
-        };
         // export swagger-mongodb
         module.exports = local.swmg;
         module.exports.__dirname = __dirname;
@@ -940,8 +996,7 @@ default:
                             type: 'array'
                         }
                     }
-                },
-                Object: {}
+                }
             },
             info: {
                 description: 'demo of swagger-mongodb crud-api',
@@ -1033,7 +1088,7 @@ default:
                 self = this;
                 self.data = data;
                 self.xhr = self;
-                local.utility2.ajax(self, local.utility2.nop);
+                local.utility2.ajax(self, local.utility2.onErrorDefault);
             };
             local.XMLHttpRequest.prototype.setRequestHeader = function (key, value) {
                 this.headers[key.toLowerCase()] = value;
@@ -1103,7 +1158,7 @@ default:
 /*jslint maxlen: 104*/
 // init swaggerJsonPathsCrudDefault
 local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
-    '/{{schemaName}}/crudCountByQuery': { get: {
+    '/{{crudApi}}/crudCountByQuery': { get: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
         operationId: 'crudCountByQuery',
@@ -1116,9 +1171,9 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             type: 'string'
         }],
         summary: 'count {{schemaName}} objects by query',
-        tags: ['{{schemaName}}']
+        tags: ['{{crudApi}}']
     } },
-    '/{{schemaName}}/crudCreateOne': { post: {
+    '/{{crudApi}}/crudCreateOne': { post: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
         operationId: 'crudCreateOne',
@@ -1134,9 +1189,9 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
         } },
         summary: 'create one {{schemaName}} object',
-        tags: ['{{schemaName}}']
+        tags: ['{{crudApi}}']
     } },
-    '/{{schemaName}}/crudDeleteByIdOne/{id}': { delete: {
+    '/{{crudApi}}/crudDeleteByIdOne/{id}': { delete: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
         operationId: 'crudDeleteByIdOne',
@@ -1148,9 +1203,9 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             type: 'string'
         }],
         summary: 'delete one {{schemaName}} object by id',
-        tags: ['{{schemaName}}']
+        tags: ['{{crudApi}}']
     } },
-    '/{{schemaName}}/crudGetDistinctValueByFieldMany': { get: {
+    '/{{crudApi}}/crudGetDistinctValueByFieldMany': { get: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
         operationId: 'crudGetDistinctValueByFieldMany',
@@ -1170,9 +1225,9 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             type: 'string'
         }],
         summary: 'get distinct {{schemaName}} values by field',
-        tags: ['{{schemaName}}']
+        tags: ['{{crudApi}}']
     } },
-    '/{{schemaName}}/crudExistsByIdOne/{id}': { get: {
+    '/{{crudApi}}/crudExistsByIdOne/{id}': { get: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
         operationId: 'crudExistsByIdOne',
@@ -1188,9 +1243,9 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
         } },
         summary: 'check if {{schemaName}} object exists by id',
-        tags: ['{{schemaName}}']
+        tags: ['{{crudApi}}']
     } },
-    '/{{schemaName}}/crudGetByIdOne/{id}': { get: {
+    '/{{crudApi}}/crudGetByIdOne/{id}': { get: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
         operationId: 'crudGetByIdOne',
@@ -1206,9 +1261,9 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
         } },
         summary: 'get one {{schemaName}} object by id',
-        tags: ['{{schemaName}}']
+        tags: ['{{crudApi}}']
     } },
-    '/{{schemaName}}/crudGetByQueryMany': { get: {
+    '/{{crudApi}}/crudGetByQueryMany': { get: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
         operationId: 'crudGetByQueryMany',
@@ -1260,9 +1315,9 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
         } },
         summary: 'get many {{schemaName}} objects by query',
-        tags: ['{{schemaName}}']
+        tags: ['{{crudApi}}']
     } },
-    '/{{schemaName}}/crudReplaceOne': { put: {
+    '/{{crudApi}}/crudReplaceOne': { put: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
         operationId: 'crudReplaceOne',
@@ -1278,9 +1333,9 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
         } },
         summary: 'replace one {{schemaName}} object',
-        tags: ['{{schemaName}}']
+        tags: ['{{crudApi}}']
     } },
-    '/{{schemaName}}/crudReplaceOrCreateOne': { put: {
+    '/{{crudApi}}/crudReplaceOrCreateOne': { put: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
         operationId: 'crudReplaceOrCreateOne',
@@ -1296,9 +1351,9 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
         } },
         summary: 'replace or create one {{schemaName}} object',
-        tags: ['{{schemaName}}']
+        tags: ['{{crudApi}}']
     } },
-    '/{{schemaName}}/crudUpdateOne': { put: {
+    '/{{crudApi}}/crudUpdateOne': { put: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
         operationId: 'crudUpdateOne',
@@ -1314,9 +1369,9 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
         } },
         summary: 'update one {{schemaName}} object',
-        tags: ['{{schemaName}}']
+        tags: ['{{crudApi}}']
     } },
-    '/{{schemaName}}/crudUpdateOrCreateOne': { put: {
+    '/{{crudApi}}/crudUpdateOrCreateOne': { put: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
         operationId: 'crudUpdateOrCreateOne',
@@ -1332,7 +1387,7 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
         } },
         summary: 'update or create one {{schemaName}} object',
-        tags: ['{{schemaName}}']
+        tags: ['{{crudApi}}']
     } }
 } };
 // init methodPathCrudDefault

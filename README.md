@@ -208,14 +208,36 @@ width="100%" \
             };
             Object.keys(options.definitions).forEach(function (schemaName) {
                 schema = options.definitions[schemaName];
-                schema._collectionName = 'Swmg' + schemaName + 'Collection';
+                schema._collectionName = 'Swmg' + schemaName;
+                // init id
                 schema.properties.id = { type: 'string' };
                 schema['x-inheritList'] =
                     [{ $ref: '#/definitions/JsonApiResource' }];
             });
+            // init id
+            local.utility2.objectSetOverride(options, { definitions: {
+                Pet: {
+                    _collectionDrop: true
+                },
+                Order: {
+                    _collectionDrop: true,
+                    properties: {
+                        petId: { type: 'string' }
+                    }
+                },
+                User: {
+                    _collectionCreateIndexList: [{
+                        key: { username: 1 },
+                        name: 'username_1',
+                        unique: true
+                    }],
+                    _collectionDrop: true
+                }
+            } }, 4);
             Object.keys(options.paths).forEach(function (path) {
                 Object.keys(options.paths[path]).forEach(function (method) {
                     methodPath = options.paths[path][method];
+                    methodPath._paramExtraDict = {};
                     methodPath._schemaName =
                         path.split('/')[1][0].toUpperCase() +
                         path.split('/')[1].slice(1);
@@ -223,34 +245,59 @@ width="100%" \
                         methodPath._schemaName = 'Order';
                     }
                     methodPath._collectionName =
-                        'Swmg' + methodPath._schemaName + 'Collection';
+                        'Swmg' + methodPath._schemaName;
                     methodPath.produces =
                         methodPath.responses =
                         methodPath.security =
                         undefined;
                     switch (methodPath.operationId) {
                     case 'addPet':
-                    case 'createUser':
                     case 'placeOrder':
                         methodPath._crudApi = true;
                         methodPath.operationId = 'crudCreateOne';
                         break;
+                    case 'createUser':
+                        methodPath.operationId = 'crudCreateOne';
+                        break;
                     case 'deleteOrder':
                     case 'deletePet':
-                    case 'deleteUser':
                         methodPath._crudApi = true;
                         methodPath.operationId = 'crudDeleteByIdOne';
                         break;
+                    case 'deleteUser':
+                        methodPath.operationId = 'crudDeleteByIdOne';
+                        break;
+                    case 'findPetsByStatus':
+                        methodPath._paramExtraDict.fields = '{}';
+                        methodPath._paramExtraDict.hint = '{}';
+                        methodPath._paramExtraDict.limit = 100;
+                        methodPath._paramExtraDict.query = '{"status":{"$in":{{status json}}}}';
+                        methodPath._paramExtraDict.skip = 0;
+                        methodPath._paramExtraDict.sort = '{"_timeModified":-1}';
+                        break;
+                    case 'findPetsByTags':
+                        methodPath._paramExtraDict.fields = '{}';
+                        methodPath._paramExtraDict.hint = '{}';
+                        methodPath._paramExtraDict.limit = 100;
+                        methodPath._paramExtraDict.query =
+                            '{"tags.name":{"$in":{{tags json}}}}';
+                        methodPath._paramExtraDict.skip = 0;
+                        methodPath._paramExtraDict.sort = '{"_timeModified":-1}';
+                        break;
                     case 'getPetById':
                     case 'getOrderById':
-                    case 'getUserByName':
                         methodPath._crudApi = true;
                         methodPath.operationId = 'crudGetByIdOne';
                         break;
+                    case 'getUserByName':
+                        methodPath.operationId = 'crudGetByIdOne';
+                        break;
                     case 'updatePet':
-                    case 'updateUser':
                         methodPath._crudApi = true;
-                        methodPath.operationId = 'crudUpdateOne';
+                        methodPath.operationId = 'crudUpdateOrCreateOne';
+                        break;
+                    case 'updateUser':
+                        methodPath.operationId = 'crudUpdateOrCreateOne';
                         break;
                     }
                     // init id
@@ -258,8 +305,7 @@ width="100%" \
                         switch (param.name) {
                         case 'orderId':
                         case 'petId':
-                        case 'username':
-                            methodPath._paramExtraDict = { id: '{{' + param.name + '}}' };
+                            methodPath._paramExtraDict.id = '{{' + param.name + '}}';
                             param.format = undefined;
                             param.type = 'string';
                             break;
@@ -271,7 +317,7 @@ width="100%" \
         }());
         // init petstore-middleware
         local.middleware.middlewareList.push(function (request, response, nextMiddleware) {
-            var modeNext, onNext;
+            var modeNext, onNext, options;
             modeNext = 0;
             onNext = function (error, data) {
                 local.utility2.testTryCatch(function () {
@@ -280,42 +326,32 @@ width="100%" \
                         : modeNext + 1;
                     switch (modeNext) {
                     case 1:
+                        if (request.swmgMethodPath) {
+                            options = {
+                                collectionName: request.swmgMethodPath._collectionName,
+                                data: request.swmgParameters,
+                                operationId: request.swmgMethodPath.operationId,
+                                parameters: request.swmgMethodPath.parameters,
+                                schemaName: request.swmgMethodPath._schemaName
+                            };
+                        }
                         switch (request.swmgPathname) {
                         case 'GET /pet/findByStatus':
-                            local.swmg._crudApi({
-                                collectionName: request.swmgMethodPath._collectionName,
-                                data: {
-                                    fields: '{}',
-                                    hint: '{}',
-                                    limit: 20,
-                                    query: JSON.stringify({
-                                        status: { $in: request.swmgParameters.status }
-                                    }),
-                                    skip: 0,
-                                    sort: '{"_timeModified":-1}'
-                                },
-                                operationId: 'crudGetByQueryMany',
-                                parameters: [],
-                                schemaName: 'Pet'
-                            }, onNext);
-                            return;
                         case 'GET /pet/findByTags':
-                            local.swmg._crudApi({
-                                collectionName: request.swmgMethodPath._collectionName,
-                                data: {
-                                    fields: '{}',
-                                    hint: '{}',
-                                    limit: 10,
-                                    query: JSON.stringify({
-                                        'tags.name': { $in: request.swmgParameters.tags }
-                                    }),
-                                    skip: 0,
-                                    sort: '{"_timeModified":-1}'
-                                },
-                                operationId: 'crudGetByQueryMany',
-                                parameters: [],
-                                schemaName: 'Pet'
-                            }, onNext);
+                            options.operationId = 'crudGetByQueryMany';
+                            local.swmg._crudApi(options, onNext);
+                            return;
+                        case 'DELETE /user/':
+                        case 'GET /user/':
+                        case 'POST /user':
+                        case 'PUT /user/':
+                            if (options.data.body) {
+                                options.data.username = options.data.username ||
+                                    options.data.body.username;
+                                options.data.body.username = options.data.username;
+                            }
+                            options.optionsId = { username: request.swmgParameters.username};
+                            local.swmg._crudApi(options, onNext);
                             return;
                         }
                         break;
@@ -362,7 +398,7 @@ width="100%" \
     "dependencies": {
         "mongodb-minimal": "^2015.6.1",
         "swagger-ui-lite": "^2015.6.1",
-        "utility2": "~2015.7.1"
+        "utility2": "~2015.7.2"
     },
     "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
@@ -393,30 +429,29 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.7.2"
+    "version": "2015.7.3"
 }
 ```
 
 
 
 # todo
-- add aggregation feature
 - add max / min validation
-- add createIndex feature to apiUpdate
 - add aggregate crud api
 - add user /login /logout paths
-- cap test collections
 - add formData swagger parameter type
 - none
 
 
 
-# change since a90c3c40
-- npm publish 2015.7.2
-- auto-export example.js in test.js
-- replace utility2.streamReadAll with utility2.middlewareBodyGet for parsing http-body
-- add collectionFormat option for csv array
-- revamp petstore-api
+# change since c7f7bccb
+- npm publish 2015.7.3
+- replace schemaName with crudApi for tags
+- add definition._collectionCreate param
+- add definition._collectionCreateIndexList param
+- add definition._collectionDrop param
+- add swmg.collectionCreate
+- integrate petstore-api into tests
 - none
 
 
