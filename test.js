@@ -52,8 +52,6 @@
              * this function will test crudAggregateMany's default handling behavior
              */
             var api, modeNext, onNext;
-            options = options || {};
-            options.id = options.id || local.utility2.uuidTime();
             modeNext = 0;
             onNext = function (error, data) {
                 local.utility2.testTryCatch(function () {
@@ -62,11 +60,13 @@
                         : modeNext + 1;
                     switch (modeNext) {
                     case 1:
+                        // init options
+                        options = options || {};
+                        options.id = options.id || local.utility2.uuidTime();
+                        options.modeErrorData = true;
                         // init api
                         options.api = options.api || '_TestModel';
                         api = local.swmg.api[options.api];
-                        // init options
-                        options.modeErrorData = true;
                         // create object
                         local.testCase_crudCreateXxx_default({
                             api: options.api,
@@ -95,7 +95,7 @@
                     }
                 }, onError);
             };
-            onNext(options.error);
+            onNext(options && options.error);
         };
 
         local.testCase_crudCreateXxx_default = function (options, onError) {
@@ -133,7 +133,7 @@
             onError2 = function (error, data) {
                 if (error) {
                     // update error.message
-                    local.utility2.errorMessagePrepend(error, options.api + ' - ' +
+                    local.utility2.errorMessagePrepend(error, options.api + '.' +
                         options.operationId + ' - ');
                 }
                 onError(error, data);
@@ -146,6 +146,13 @@
                         : modeNext + 1;
                     switch (modeNext) {
                     case 1:
+                        // init options
+                        options.body = local.optionsId({
+                            fieldExtra: 'hello',
+                            fieldRequired: true,
+                            id: options.id
+                        });
+                        options.modeErrorData = true;
                         // init api
                         options.api = options.api || '_TestModel';
                         api = local.swmg.api[options.api];
@@ -154,13 +161,6 @@
                             onError2();
                             return;
                         }
-                        // init options
-                        options.body = local.optionsId({
-                            fieldExtra: 'hello',
-                            fieldRequired: true,
-                            id: options.id
-                        });
-                        options.modeErrorData = true;
                         // get object
                         api.crudGetByIdOne(local.optionsId({
                             id: options.id
@@ -219,7 +219,7 @@
                     }
                 }, onError2);
             };
-            onNext(options.error);
+            onNext(options && options.error);
         };
 
         local.testCase_crudEcho_default = function (options, onError) {
@@ -300,7 +300,7 @@
             onError2 = function (error, data) {
                 if (error) {
                     // update error.message
-                    local.utility2.errorMessagePrepend(error, options.api + ' - ' +
+                    local.utility2.errorMessagePrepend(error, options.api + '.' +
                         options.operationId + ' - ');
                 }
                 onError(error, data);
@@ -313,6 +313,11 @@
                         : modeNext + 1;
                     switch (modeNext) {
                     case 1:
+                        // init options
+                        options.field = 'id';
+                        options.limit = 2;
+                        options.modeErrorData = true;
+                        options.query = JSON.stringify({ id: options.id });
                         // init api
                         options.api = options.api || '_TestModel';
                         api = local.swmg.api[options.api];
@@ -321,11 +326,6 @@
                             onError2();
                             return;
                         }
-                        // init options
-                        options.field = 'id';
-                        options.limit = 2;
-                        options.modeErrorData = true;
-                        options.query = JSON.stringify({ id: options.id });
                         // create object
                         local.testCase_crudCreateXxx_default({
                             api: options.api,
@@ -354,7 +354,7 @@
                     }
                 }, onError2);
             };
-            onNext(options.error);
+            onNext(options && options.error);
         };
 
         local.testCase_crudDeleteById_default = function (options, onError) {
@@ -362,8 +362,6 @@
              * this function will test crudDeleteById's default handling behavior
              */
             var api, modeNext, onNext;
-            options = options || {};
-            options.id = options.id || local.utility2.uuidTime();
             modeNext = 0;
             onNext = function (error, data) {
                 local.utility2.testTryCatch(function () {
@@ -372,11 +370,13 @@
                         : modeNext + 1;
                     switch (modeNext) {
                     case 1:
+                        // init options
+                        options = options || {};
+                        options.id = options.id || local.utility2.uuidTime();
+                        options.modeErrorData = true;
                         // init api
                         options.api = options.api || '_TestModel';
                         api = local.swmg.api[options.api];
-                        // init options
-                        options.modeErrorData = true;
                         // remove object by id
                         api.crudDeleteByIdOne(local.optionsId({
                             id: options.id
@@ -399,7 +399,7 @@
                     }
                 }, onError);
             };
-            onNext(options.error);
+            onNext(options && options.error);
         };
 
         local.testCase_crudUpdateXxx_default = function (options, onError) {
@@ -436,7 +436,7 @@
             onError2 = function (error, data) {
                 if (error) {
                     // update error.message
-                    local.utility2.errorMessagePrepend(error, options.api + ' - ' +
+                    local.utility2.errorMessagePrepend(error, options.api + '.' +
                         options.operationId + ' - ');
                 }
                 onError(error, data);
@@ -449,6 +449,12 @@
                         : modeNext + 1;
                     switch (modeNext) {
                     case 1:
+                        // init options
+                        options.body = local.optionsId({
+                            fieldRequired: false,
+                            id: options.id
+                        });
+                        options.modeErrorData = true;
                         // init api
                         options.api = options.api || '_TestModel';
                         api = local.swmg.api[options.api];
@@ -457,12 +463,6 @@
                             onError2();
                             return;
                         }
-                        // init options
-                        options.body = local.optionsId({
-                            fieldRequired: false,
-                            id: options.id
-                        });
-                        options.modeErrorData = true;
                         // create object
                         local.testCase_crudCreateXxx_default({
                             api: options.api,
@@ -534,7 +534,7 @@
                     }
                 }, onError2);
             };
-            onNext(options.error);
+            onNext(options && options.error);
         };
 
         local.testCase_crudXxx_error = function (options, onError) {
@@ -544,12 +544,12 @@
             var api, onParallel, optionsCopy;
             onParallel = local.utility2.onParallel(onError);
             onParallel.counter += 1;
-            // init api
-            api = local.swmg.api._TestModel;
             // init options
             options = {};
             options.modeErrorData = true;
             options.paramHeader = '1';
+            // init api
+            api = local.swmg.api._TestModel;
             // test undefined api handling behavior
             [
                 'errorUndefinedApi',
@@ -933,7 +933,7 @@
                         fieldUndefined: {}
                     },
                     required: ['fieldRequired'],
-                    'x-inheritList': [{ $ref: '#/definitions/JsonApiResource' }]
+                    'x-inheritList': [{ $ref: '#/definitions/JsonapiResource' }]
                 },
                 TestNullModel: {}
             },

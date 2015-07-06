@@ -15,20 +15,22 @@
 
     // run shared js-env code
     (function () {
-        local.swmg.normalizeErrorJsonApi = function (error) {
+        local.swmg.normalizeErrorJsonapi = function (error) {
             /*
              * this function will normalize the error to jsonapi format,
              * http://jsonapi.org/format/#errors
              */
-            error = local.swmg.normalizeIdSwagger(error);
-            error.status = Number(error.status) || 500;
-            error.errors = error.errors || [{
-                code: String(error.code || error.status),
-                detail: error.detail || error.stack,
-                id: error.id || Math.random().toString(16).slice(2),
-                message: error.message,
-                status: error.status
-            }];
+            if (error) {
+                local.swmg.normalizeIdSwagger(error);
+                error.status = Number(error.status) || 500;
+                error.errors = error.errors || [{
+                    code: String(error.code || error.status),
+                    detail: error.detail || error.stack,
+                    id: error.id || Math.random().toString(16).slice(2),
+                    message: error.message,
+                    status: error.status
+                }];
+            }
             return error;
         };
 
@@ -96,7 +98,7 @@
                 data = options.data;
                 // validate data
                 local.utility2.assert(data && typeof data === 'object', data);
-                options.parameters.forEach(function (param) {
+                (options.parameters || []).forEach(function (param) {
                     key = param.name;
                     local.swmg.validateProperty({
                         data: data[key],
@@ -117,36 +119,34 @@
             /*
              * this function will validate options.data against options.property
              */
-            var assert, data, format, property, tmp, type;
+            var assert, data, property, tmp;
             assert = function (valid) {
                 if (!valid) {
-                    throw new Error('invalid "' + options.key + ':' + format +
-                            '" property - ' + JSON.stringify(data));
+                    throw new Error('invalid "' + options.key + ':' + (property.format ||
+                        property.type) + '" property - ' + JSON.stringify(data));
                 }
             };
             data = options.data;
+            property = options.property;
             // validate undefined data
             if (data === null || data === undefined) {
                 if (options.required) {
-                    throw new Error('required "' + options.key + ':' + format +
-                        '" property cannot be null or undefined');
+                    throw new Error('required "' + options.key + ':' + (property.format ||
+                        property.type) + '" property cannot be null or undefined');
                 }
                 return;
             }
-            property = options.property;
-            // init type
-            type = property.$ref || (property.schema && property.schema.$ref);
-            if (type) {
+            // validate schema
+            tmp = property.$ref || (property.schema && property.schema.$ref);
+            if (tmp) {
                 local.swmg.validateSchema({
                     circularList: options.circularList,
                     data: data,
-                    key: type,
-                    schema: local.swmg.schemaDereference(type)
+                    key: tmp,
+                    schema: local.swmg.schemaDereference(tmp)
                 });
                 return;
             }
-            type = property.type;
-            format = property.format || type;
             // init circularList
             if (data && typeof data === 'object') {
                 options.circularList = options.circularList || [];
@@ -158,7 +158,7 @@
             // validate property.type
             // https://github.com/swagger-api/swagger-spec/blob/master/versions/2.0.md
             // #data-types
-            switch (type) {
+            switch (property.type) {
             case 'array':
                 // ignore csv array
                 if (property.collectionFormat && typeof data === 'string') {
@@ -305,7 +305,16 @@
             /*
              * this function will run the low-level crud-api on the given options.data
              */
-            var modeNext, onNext, tmp;
+            var modeNext, onError2, onNext, tmp;
+            onError2 = function (error) {
+                if (error) {
+                    error._id = error._id || options.data._id;
+                }
+                onError(
+                    local.swmg.normalizeErrorJsonapi(error),
+                    local.swmg.normalizeIdSwagger(options.response)
+                );
+            };
             modeNext = 0;
             onNext = local.utility2.onErrorWithStack(function (error, data) {
                 local.utility2.testTryCatch(function () {
@@ -480,15 +489,10 @@ case 4:
     onNext();
     break;
 default:
-    if (error) {
-        error._id = error._id || options.data._id;
-        error = onError(local.swmg.normalizeErrorJsonApi(error));
-    }
-    // normalize id to swagger format
-    onError(error, local.swmg.normalizeIdSwagger(options.response));
+    onError2(error);
 }
 /* jslint-indent-end */
-                }, onNext);
+                }, onError2);
             });
             onNext();
         };
@@ -503,18 +507,19 @@ default:
             Object.keys(options.definitions).forEach(function (schemaName) {
                 var schema;
                 schema = options.definitions[schemaName];
+                schema._schemaName = schemaName;
                 if (!schema._collectionName) {
                     return;
                 }
-                // init JsonApiResponseData{{schemaName}}
+                // init JsonapiResponseData{{schemaName}}
                 local.utility2.objectSetDefault(options, JSON.parse(JSON.stringify({
                     definitions: {
-                        'JsonApiResponseData{{schemaName}}': {
+                        'JsonapiResponseData{{schemaName}}': {
                             properties: { data: {
                                 items: { $ref: '#/definitions/{{schemaName}}' },
                                 type: 'array'
                             } },
-                            'x-inheritList': [{ $ref: '#/definitions/JsonApiResponseData' }]
+                            'x-inheritList': [{ $ref: '#/definitions/JsonapiResponseData' }]
                         }
                     }
                 })
@@ -560,13 +565,13 @@ default:
                         responses: {
                             200: {
                                 description: 'ok - ' +
-                                    'http://jsonapi.org/format/#document-structure-top-level',
-                                schema: { $ref: '#/definitions/JsonApiResponseData' }
+                                    'http://jsonapi.org/format/#document-top-level',
+                                schema: { $ref: '#/definitions/JsonapiResponseData' }
                             },
                             default: {
                                 description: 'internal server error - ' +
                                     'http://jsonapi.org/format/#errors',
-                                schema: { $ref: '#/definitions/JsonApiResponseError' }
+                                schema: { $ref: '#/definitions/JsonapiResponseError' }
                             }
                         },
                         tags: []
@@ -653,11 +658,11 @@ default:
                         responses: {
                             200: {
                                 description: '',
-                                schema: { $ref: '#/definitions/JsonApiResponseData' }
+                                schema: { $ref: '#/definitions/JsonapiResponseData' }
                             },
                             default: {
                                 description: '',
-                                schema: { $ref: '#/definitions/JsonApiResponseError' }
+                                schema: { $ref: '#/definitions/JsonapiResponseError' }
                             }
                         }
                     } } }
@@ -673,7 +678,7 @@ default:
             /*
              * this function will create a mongodb collection
              */
-            var collection, modeNext, onNext;
+            var collection, modeNext, onNext, onParallel;
             modeNext = 0;
             onNext = function (error) {
                 modeNext = error
@@ -689,7 +694,7 @@ default:
                         onError();
                         return;
                     }
-                    // drop collection
+                    // drop collection on init
                     if (schema._collectionDrop) {
                         console.warn('dropping collection ' + schema._collectionName + ' ...');
                         local.swmg.db.command({ drop: schema._collectionName }, function () {
@@ -733,6 +738,28 @@ default:
                         return;
                     }
                     onNext();
+                    return;
+                case 4:
+                    onParallel = local.utility2.onParallel(onNext);
+                    onParallel.counter += 1;
+                    // replace or create fixtures
+                    local.utility2.jsonCopy(schema._collectionFixtureList || [
+                    ]).forEach(function (element) {
+                        // validate element
+                        local.swmg.validateSchema({
+                            data: element,
+                            key: schema._schemaName,
+                            schema: schema
+                        });
+                        onParallel.counter += 1;
+                        local.swmg._crudApi({
+                            collectionName: schema._collectionName,
+                            data: element,
+                            operationId: 'crudReplaceOrCreateOne',
+                            schemaName: schema._schemaName
+                        }, onParallel);
+                    });
+                    onParallel();
                     return;
                 default:
                     onError(error);
@@ -918,12 +945,13 @@ default:
                 error = new Error('404 Not Found');
                 error.status = 404;
             }
-            error.message = request.method + ' ' + request.url + '\n' + error.message;
-            error.stack = error.message + '\n' + error.stack;
+            local.swmg.normalizeErrorJsonapi(error);
+            local.utility2.serverRespondHeadSet(request, response, error.status, {});
+            // debug statusCode / method / url
+            local.utility2.errorMessagePrepend(error, response.statusCode + ' ' +
+                request.method + ' ' + request.url + '\n');
             // print error.stack to stderr
             local.utility2.onErrorDefault(error);
-            error = local.swmg.normalizeErrorJsonApi(error);
-            local.utility2.serverRespondHeadSet(request, response, error.status, {});
             response.end(JSON.stringify(error));
         };
         break;
@@ -962,7 +990,7 @@ default:
             definitions: {
                 Array: { items: {}, type: 'array' },
                 // http://jsonapi.org/format/#errors
-                JsonApiError: {
+                JsonapiError: {
                     properties: {
                         code: { type: 'string' },
                         detail: { type: 'string' },
@@ -972,11 +1000,11 @@ default:
                     }
                 },
                 // http://jsonapi.org/format/#document-meta
-                JsonApiMeta: {
+                JsonapiMeta: {
                     properties: {}
                 },
                 // http://jsonapi.org/format/#document-structure-resource-objects
-                JsonApiResource: {
+                JsonapiResource: {
                     properties: {
                         _timeCreated: { format: 'date-time', type: 'string' },
                         _timeModified: { format: 'date-time', type: 'string' },
@@ -985,20 +1013,20 @@ default:
                     }
                 },
                 // http://jsonapi.org/format/#document-structure-top-level
-                JsonApiResponseData: {
+                JsonapiResponseData: {
                     properties: {
                         data: {
-                            items: { $ref: '#/definitions/JsonApiResource' },
+                            items: { $ref: '#/definitions/JsonapiResource' },
                             type: 'array'
                         },
-                        meta: { $ref: '#/definitions/JsonApiMeta' }
+                        meta: { $ref: '#/definitions/JsonapiMeta' }
                     }
                 },
                 // http://jsonapi.org/format/#document-structure-top-level
-                JsonApiResponseError: {
+                JsonapiResponseError: {
                     properties: {
                         errors: {
-                            items: { $ref: '#/definitions/JsonApiError' },
+                            items: { $ref: '#/definitions/JsonapiError' },
                             type: 'array'
                         }
                     }
@@ -1227,7 +1255,7 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
         } },
         summary: 'create one {{schemaName}} object',
         tags: ['{{crudApi}}']
@@ -1281,7 +1309,7 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
         } },
         summary: 'check if one {{schemaName}} object exists by id',
         tags: ['{{crudApi}}']
@@ -1299,7 +1327,7 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
         } },
         summary: 'get one {{schemaName}} object by id',
         tags: ['{{crudApi}}']
@@ -1353,7 +1381,7 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
         } },
         summary: 'get many {{schemaName}} objects by query',
         tags: ['{{crudApi}}']
@@ -1371,7 +1399,7 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
         } },
         summary: 'replace one {{schemaName}} object',
         tags: ['{{crudApi}}']
@@ -1389,7 +1417,7 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
         } },
         summary: 'replace or create one {{schemaName}} object',
         tags: ['{{crudApi}}']
@@ -1407,7 +1435,7 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
         } },
         summary: 'update one {{schemaName}} object',
         tags: ['{{crudApi}}']
@@ -1425,7 +1453,7 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
         } },
         summary: 'update or create one {{schemaName}} object',
         tags: ['{{crudApi}}']

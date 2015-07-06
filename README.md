@@ -27,7 +27,7 @@ lightweight swagger-ui crud-api backed by mongodb
 - HEAD should be tagged, npm-published package
 
 #### beta branch
-- stable branch
+- semi-stable branch
 - HEAD should be latest, npm-published package
 
 #### alpha branch
@@ -194,7 +194,7 @@ width="100%" \
             local.utility2.middlewareAssetsCached,
             local.swmg.middleware
         ]);
-        // init middleware error-handler
+        // init error-middleware
         local.middlewareError = local.swmg.middlewareError;
         // init petstore-api
         (function () {
@@ -213,31 +213,67 @@ width="100%" \
                 schema = options.definitions[schemaName];
                 // init id
                 schema.properties.id = { type: 'string' };
-                schema['x-inheritList'] = [{ $ref: '#/definitions/JsonApiResource' }];
+                schema['x-inheritList'] = [{ $ref: '#/definitions/JsonapiResource' }];
             });
             // init mongodb collection
             local.utility2.objectSetOverride(options, { definitions: {
                 Pet: {
+                    // drop collection on init
                     _collectionDrop: true,
+                    // replace or create fixtures
+                    _collectionFixtureList: [{
+                        id: 'pet1',
+                        name: 'doggie',
+                        photoUrls: [],
+                        status: 'available',
+                        tags: [{ name: 'dog'}]
+                    }, {
+                        id: 'pet2',
+                        name: 'kittie',
+                        photoUrls: [],
+                        status: 'pending',
+                        tags: [{ name: 'cat'}]
+                    }, {
+                        id: 'pet3',
+                        name: 'birdie',
+                        photoUrls: [],
+                        status: 'sold',
+                        tags: [{ name: 'bird'}]
+                    }],
                     _collectionName: 'SwmgPet'
                 },
                 Order: {
+                    // create index
                     _collectionCreateIndexList: [{
                         key: { status: 1 },
                         name: 'status_1'
                     }],
+                    // drop collection on init
                     _collectionDrop: true,
+                    // replace or create fixtures
+                    _collectionFixtureList: [{
+                        _id: 'order1',
+                        status: 'available'
+                    }, {
+                        _id: 'order2',
+                        status: 'pending'
+                    }, {
+                        _id: 'order3<D-r>',
+                        status: 'sold'
+                    }],
                     _collectionName: 'SwmgOrder',
                     properties: {
                         petId: { type: 'string' }
                     }
                 },
                 User: {
+                    // create index
                     _collectionCreateIndexList: [{
                         key: { username: 1 },
                         name: 'username_1',
                         unique: true
                     }],
+                    // drop collection on init
                     _collectionDrop: true,
                     _collectionName: 'SwmgUser'
                 }
@@ -265,7 +301,7 @@ width="100%" \
                             200: {
                                 description: '200 ok - http://jsonapi.org/format' +
                                     '/#document-structure-top-level',
-                                schema: { $ref: '#/definitions/JsonApiResponseDataPet' }
+                                schema: { $ref: '#/definitions/JsonapiResponseDataPet' }
                             }
                         } }, 2);
                         break;
@@ -276,7 +312,7 @@ width="100%" \
                             200: {
                                 description: '200 ok - http://jsonapi.org/format' +
                                     '/#document-structure-top-level',
-                                schema: { $ref: '#/definitions/JsonApiResponseDataOrder' }
+                                schema: { $ref: '#/definitions/JsonapiResponseDataOrder' }
                             }
                         } }, 2);
                         break;
@@ -288,26 +324,22 @@ width="100%" \
                             200: {
                                 description: '200 ok - http://jsonapi.org/format' +
                                     '/#document-structure-top-level',
-                                schema: { $ref: '#/definitions/JsonApiResponseDataUser' }
+                                schema: { $ref: '#/definitions/JsonapiResponseDataUser' }
                             }
                         } }, 2);
                         break;
                     }
                     switch (methodPath.operationId) {
                     case 'addPet':
-                    case 'placeOrder':
-                        methodPath._crudApi = true;
-                        methodPath.operationId = 'crudCreateOne';
-                        break;
                     case 'createUser':
+                    case 'placeOrder':
+                        methodPath._crudApi = methodPath.operationId !== 'createUser';
                         methodPath.operationId = 'crudCreateOne';
                         break;
                     case 'deleteOrder':
                     case 'deletePet':
-                        methodPath._crudApi = true;
-                        methodPath.operationId = 'crudDeleteByIdOne';
-                        break;
                     case 'deleteUser':
+                        methodPath._crudApi = methodPath.operationId !== 'deleteUser';
                         methodPath.operationId = 'crudDeleteByIdOne';
                         break;
                     case 'findPetsByStatus':
@@ -326,20 +358,17 @@ width="100%" \
                             '{"tags.name":{"$in":{{tags json}}}}';
                         methodPath._paramExtraDict.skip = 0;
                         methodPath._paramExtraDict.sort = '{"_timeModified":-1}';
+                        methodPath.parameters[0].default = 'bird,cat,dog';
                         break;
                     case 'getOrderById':
                     case 'getPetById':
-                        methodPath._crudApi = true;
-                        methodPath.operationId = 'crudGetByIdOne';
-                        break;
                     case 'getUserByName':
+                        methodPath._crudApi = methodPath.operationId !== 'getUserByName';
                         methodPath.operationId = 'crudGetByIdOne';
                         break;
                     case 'updatePet':
-                        methodPath._crudApi = true;
-                        methodPath.operationId = 'crudReplaceOrCreateOne';
-                        break;
                     case 'updateUser':
+                        methodPath._crudApi = methodPath.operationId !== 'updateUser';
                         methodPath.operationId = 'crudReplaceOrCreateOne';
                         break;
                     }
@@ -397,10 +426,12 @@ width="100%" \
                             local.swmg._crudApi(options, onNext);
                             return;
                         case 'GET /store/inventory':
-                            options._crudApi = function (options, onError) {
-                                options.response.data = [{}];
-                                onError();
-                            };
+                            options.operationId = 'crudAggregateMany';
+                            options.data = { body: [{
+                                $group: { _id: '$status', total: { $sum: 1} }
+                            }, {
+                                $project: { _id: 0, status: '$_id', total: '$total' }
+                            }]};
                             local.swmg._crudApi(options, onNext);
                             return;
                         }
@@ -429,7 +460,7 @@ width="100%" \
 
 
 # npm-dependencies
-- [mongodb](https://www.npmjs.com/package/mongodb)
+- [mongodb-minimal](https://www.npmjs.com/package/mongodb-minimal)
 - [swagger-ui-lite](https://www.npmjs.com/package/swagger-ui-lite)
 - [utility2](https://www.npmjs.com/package/utility2)
 
@@ -446,9 +477,9 @@ width="100%" \
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
-        "mongodb-minimal": "^2015.6.1",
+        "mongodb-minimal": "^2015.6.3",
         "swagger-ui-lite": "^2015.6.1",
-        "utility2": "~2015.7.4"
+        "utility2": "~2015.7.5"
     },
     "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
@@ -479,30 +510,32 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.7.4"
+    "version": "2015.7.5"
 }
 ```
 
 
 
 # todo
-- add auto-upsert fixtures feature
-- add client-side validation
+- add api-endpoint http://localhost:8080/api/v0/pet/
+- add api-endpoint http://localhost:8080/api/v0/pet/sdf/uploadImage
+- add api-endpoint http://localhost:8080/api/v0/user/createWithArray
+- add api-endpoint http://localhost:8080/api/v0/user/createWithList
+- add api-endpoint http://localhost:8080/api/v0/user/login
+- add api-endpoint http://localhost:8080/api/v0/user/logout
+- add client-side param validation
 - add LoginToken model
 - add max / min validation
-- add user /login /logout paths
 - add formData swagger parameter type
 - none
 
 
 
-# change since 2afa4013
-- npm publish 2015.7.4
-- add crudAggregateMany api
-- remove unused #/definitions/JsonApiLinks
-- fix validation warnings
-- update petstore responses
-- deprecate local.onMiddlewareError in favor of local.middlewareError
+# change since 27e4a34b
+- npm publish 2015.7.5
+- add _collectionFixtureList option in swmg.collectionCreate
+- add api-endpoint http://localhost:8080/api/v0/store/inventory
+- rename JsonApi* to Jsonapi*
 - none
 
 
