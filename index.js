@@ -20,15 +20,16 @@
              * this function will normalize the error to jsonapi format,
              * http://jsonapi.org/format/#errors
              */
+            error = local.swmg.normalizeIdSwagger(error);
             error.status = Number(error.status) || 500;
             error.errors = error.errors || [{
-                code: error.code,
+                code: String(error.code || error.status),
+                detail: error.detail || error.stack,
+                id: error.id || Math.random().toString(16).slice(2),
                 message: error.message,
-                title: error.title,
-                detail: error.stack,
                 status: error.status
             }];
-            return local.swmg.normalizeIdSwagger(error);
+            return error;
         };
 
         local.swmg.normalizeIdMongodb = function (data) {
@@ -250,7 +251,7 @@
                     schema && typeof schema === 'object',
                     'invalid schema ' + schema
                 );
-                Object.keys(schema.properties).forEach(function (_) {
+                Object.keys(schema.properties || {}).forEach(function (_) {
                     key = _;
                     local.swmg.validateProperty({
                         circularList: options.circularList,
@@ -308,200 +309,185 @@
             modeNext = 0;
             onNext = local.utility2.onErrorWithStack(function (error, data) {
                 local.utility2.testTryCatch(function () {
-                    modeNext = error
-                        ? Infinity
-                        : modeNext + 1;
-                    switch (modeNext) {
-                    case 1:
-                        // validate parameters
-                        local.swmg.validateParameters({
-                            data: options.data,
-                            key: options.schemaName + '.' + options.operationId,
-                            parameters: options.parameters
-                        });
-                        // normalize id to mongodb format
-                        local.swmg.normalizeIdMongodb(options);
-                        // init body
-                        options.data = options.data.body || options.data;
-                        // init id
-                        options.data._id =
-                            String(options.data._id || local.utility2.uuidTime());
-                        options.optionsId = options.optionsId || { _id: options.data._id };
-                        // init collection
-                        options.collection =
-                            local.swmg.cacheDict.collection[options.collectionName];
-                        // init _timeCreated
-                        switch (options.operationId) {
-                        case 'crudReplaceOne':
-                        case 'crudReplaceOrCreateOne':
-                        case 'crudUpdateOne':
-                        case 'crudUpdateOrCreateOne':
-                            options.collection.findOne(
-                                options.optionsId,
-                                { _timeCreated: 1 },
-                                onNext
-                            );
-                            return;
-                        }
-                        onNext();
-                        break;
-                    case 2:
-                        // init _timeCreated and _timeModified
-                        tmp = data && data._timeCreated;
-                        switch (options.operationId) {
-                        case 'crudCreateOne':
-                            options.data._timeCreated = options.data._timeModified =
-                                new Date().toISOString();
-                            break;
-                        case 'crudReplaceOne':
-                        case 'crudReplaceOrCreateOne':
-                        case 'crudUpdateOne':
-                        case 'crudUpdateOrCreateOne':
-                            options.data._timeCreated = options.data._timeModified =
-                                new Date().toISOString();
-                            if (tmp < options.data._timeCreated && new Date(tmp).getTime()) {
-                                options.data._timeCreated = tmp;
-                            }
-                            break;
-                        }
-                        switch (options.operationId) {
-                        case 'crudCountByQuery':
-                            // count data
-                            options.collection.count(
-                                local.swmg.normalizeIdMongodb(JSON.parse(options.data.query)),
-                                onNext
-                            );
-                            break;
-                        case 'crudCreateOne':
-                            // insert data
-                            options.collection.insert(options.data, onNext);
-                            break;
-                        case 'crudDeleteByIdOne':
-                            // delete data
-                            options.collection.removeOne(options.optionsId, onNext);
-                            break;
-                        case 'crudExistsByIdOne':
-                            // find data
-                            options.collection.findOne(
-                                options.optionsId,
-                                { _id: 1 },
-                                onNext
-                            );
-                            break;
-                        case 'crudGetByIdOne':
-                            // find data
-                            options.collection.findOne(options.optionsId, onNext);
-                            break;
-                        case 'crudGetByQueryMany':
-                            data = local.swmg.normalizeIdMongodb([
-                                JSON.parse(options.data.query),
-                                JSON.parse(options.data.fields),
-                                {
-                                    hint: JSON.parse(options.data.hint),
-                                    limit: options.data.limit,
-                                    skip: options.data.skip,
-                                    sort: JSON.parse(options.data.sort)
-                                }
-                            ]);
-                            // find data
-                            options.cursor = options.collection.find(data[0], data[1], data[2]);
-                            options.cursor.toArray(onNext);
-                            break;
-                        case 'crudGetDistinctValueByFieldMany':
-                            // find data
-                            options.collection.distinct(
-                                options.data.field.replace((/^id$/), '_id'),
-                                local.swmg.normalizeIdMongodb(JSON.parse(options.data.query)),
-                                onNext
-                            );
-                            break;
-                        case 'crudReplaceOne':
-                            // replace data
-                            options.collection.update(
-                                options.optionsId,
-                                options.data,
-                                onNext
-                            );
-                            break;
-                        case 'crudReplaceOrCreateOne':
-                            // upsert data
-                            options.collection.update(
-                                options.optionsId,
-                                options.data,
-                                { upsert: true },
-                                onNext
-                            );
-                            break;
-                        case 'crudUpdateOne':
-                            // update data
-                            options.collection.update(
-                                options.optionsId,
-                                { $set: options.data },
-                                onNext
-                            );
-                            break;
-                        case 'crudUpdateOrCreateOne':
-                            // upsert data
-                            options.collection.update(
-                                options.optionsId,
-                                { $set: options.data },
-                                { upsert: true },
-                                onNext
-                            );
-                            break;
-                        default:
-                            onNext(new Error('undefined crud operation - ' +
-                                options.schemaName + '.' + options.operationId));
-                        }
-                        break;
-                    case 3:
-                        // jsonCopy object to prevent side-effects
-                        data = local.utility2.jsonCopy(data);
-                        options.response = { _id: options.data._id };
-                        switch (options.operationId) {
-                        case 'crudCountByQuery':
-                        case 'crudGetByIdOne':
-                            options.response.data = [data];
-                            break;
-                        case 'crudCreateOne':
-                        case 'crudReplaceOne':
-                        case 'crudReplaceOrCreateOne':
-                        case 'crudUpdateOne':
-                        case 'crudUpdateOrCreateOne':
-                            options.response.meta = data;
-                            if (!options.response.meta.n) {
-                                onNext(new Error('crud operation failed'));
-                                return;
-                            }
-                            options.collection.findOne(options.optionsId, onNext);
-                            return;
-                        case 'crudDeleteByIdOne':
-                            options.response.meta = data;
-                            break;
-                        case 'crudExistsByIdOne':
-                            options.response.data = [!!data];
-                            break;
-                        case 'crudGetDistinctValueByFieldMany':
-                        case 'crudGetByQueryMany':
-                            options.response.data = data;
-                            break;
-                        }
-                        modeNext += 1;
-                        onNext(error);
-                        break;
-                    case 4:
-                        // jsonCopy object to prevent side-effects
-                        options.response.data = [local.utility2.jsonCopy(data)];
-                        onNext();
-                        break;
-                    default:
-                        if (error) {
-                            error._id = options.data._id;
-                            error = onError(local.swmg.normalizeErrorJsonApi(error));
-                        }
-                        // normalize id to swagger format
-                        onError(error, local.swmg.normalizeIdSwagger(options.response));
-                    }
+/* jslint-indent-begin 20 */
+/*jslint maxlen: 116*/
+modeNext = error
+    ? Infinity
+    : modeNext + 1;
+switch (modeNext) {
+case 1:
+    // validate parameters
+    local.swmg.validateParameters({
+        data: options.data,
+        key: options.schemaName + '.' + options.operationId,
+        parameters: options.parameters
+    });
+    // normalize id to mongodb format
+    local.swmg.normalizeIdMongodb(options);
+    // init body
+    options.data = options.data.body || options.data;
+    // init id
+    options.data._id = String(options.data._id || local.utility2.uuidTime());
+    options.optionsId = options.optionsId || { _id: options.data._id };
+    // init collection
+    options.collection = local.swmg.cacheDict.collection[options.collectionName];
+    // init response
+    options.response = { _id: options.data._id };
+    // init _timeCreated
+    switch (options.operationId) {
+    case 'crudReplaceOne':
+    case 'crudReplaceOrCreateOne':
+    case 'crudUpdateOne':
+    case 'crudUpdateOrCreateOne':
+        options.collection.findOne(options.optionsId, { _timeCreated: 1 }, onNext);
+        return;
+    }
+    onNext();
+    break;
+case 2:
+    // init _timeCreated and _timeModified
+    tmp = data && data._timeCreated;
+    switch (options.operationId) {
+    case 'crudCreateOne':
+        options.data._timeCreated = options.data._timeModified = new Date().toISOString();
+        break;
+    case 'crudReplaceOne':
+    case 'crudReplaceOrCreateOne':
+    case 'crudUpdateOne':
+    case 'crudUpdateOrCreateOne':
+        options.data._timeCreated = options.data._timeModified = new Date().toISOString();
+        if (tmp < options.data._timeCreated && new Date(tmp).getTime()) {
+            options.data._timeCreated = tmp;
+        }
+        break;
+    }
+    switch (options.operationId) {
+    case 'crudAggregateMany':
+        // aggregate data
+        options.collection
+            .aggregate(local.swmg.normalizeIdMongodb(options.data), onNext);
+        break;
+    case 'crudCountByQueryOne':
+        // count data
+        options.collection
+            .count(local.swmg.normalizeIdMongodb(JSON.parse(options.data.query)), onNext);
+        break;
+    case 'crudCreateOne':
+        // insert data
+        options.collection.insert(options.data, onNext);
+        break;
+    case 'crudDeleteByIdOne':
+        // delete data
+        options.collection.removeOne(options.optionsId, onNext);
+        break;
+    case 'crudExistsByIdOne':
+        // find data
+        options.collection.findOne(options.optionsId, { _id: 1 }, onNext);
+        break;
+    case 'crudGetByIdOne':
+        // find data
+        options.collection.findOne(options.optionsId, onNext);
+        break;
+    case 'crudGetByQueryMany':
+        data = local.swmg.normalizeIdMongodb([
+            JSON.parse(options.data.query),
+            JSON.parse(options.data.fields),
+            {
+                hint: JSON.parse(options.data.hint),
+                limit: options.data.limit,
+                skip: options.data.skip,
+                sort: JSON.parse(options.data.sort)
+            }
+        ]);
+        // find data
+        options.cursor = options.collection.find(data[0], data[1], data[2]);
+        options.cursor.toArray(onNext);
+        break;
+    case 'crudGetDistinctValueByFieldMany':
+        // find data
+        options.collection.distinct(
+            options.data.field.replace((/^id$/), '_id'),
+            local.swmg.normalizeIdMongodb(JSON.parse(options.data.query)),
+            onNext
+        );
+        break;
+    case 'crudReplaceOne':
+        // replace data
+        options.collection.update(options.optionsId, options.data, onNext);
+        break;
+    case 'crudReplaceOrCreateOne':
+        // upsert data
+        options.collection.update(options.optionsId, options.data, { upsert: true }, onNext);
+        break;
+    case 'crudUpdateOne':
+        // update data
+        options.collection.update(options.optionsId, { $set: options.data }, onNext);
+        break;
+    case 'crudUpdateOrCreateOne':
+        // upsert data
+        options.collection
+            .update(options.optionsId, { $set: options.data }, { upsert: true }, onNext);
+        break;
+    default:
+        // run custom-api
+        if (typeof options._crudApi === 'function') {
+            modeNext = Infinity;
+            options._crudApi(options, onNext);
+            return;
+        }
+        onNext(new Error('undefined crud operation - ' + options.schemaName + '.' +
+            options.operationId));
+    }
+    break;
+case 3:
+    // jsonCopy object to prevent side-effects
+    data = local.utility2.jsonCopy(data);
+    switch (options.operationId) {
+    case 'crudAggregateMany':
+    case 'crudGetDistinctValueByFieldMany':
+    case 'crudGetByQueryMany':
+        options.response.data = data;
+        break;
+    case 'crudCountByQueryOne':
+    case 'crudGetByIdOne':
+        options.response.data = [data];
+        break;
+    case 'crudCreateOne':
+    case 'crudReplaceOne':
+    case 'crudReplaceOrCreateOne':
+    case 'crudUpdateOne':
+    case 'crudUpdateOrCreateOne':
+        options.response.meta = data;
+        if (!options.response.meta.n) {
+            onNext(new Error('crud operation failed'));
+            return;
+        }
+        options.collection.findOne(options.optionsId, onNext);
+        return;
+    case 'crudDeleteByIdOne':
+        options.response.meta = data;
+        break;
+    case 'crudExistsByIdOne':
+        options.response.data = [!!data];
+        break;
+    }
+    modeNext += 1;
+    onNext(error);
+    break;
+case 4:
+    // jsonCopy object to prevent side-effects
+    options.response.data = [local.utility2.jsonCopy(data)];
+    onNext();
+    break;
+default:
+    if (error) {
+        error._id = error._id || options.data._id;
+        error = onError(local.swmg.normalizeErrorJsonApi(error));
+    }
+    // normalize id to swagger format
+    onError(error, local.swmg.normalizeIdSwagger(options.response));
+}
+/* jslint-indent-end */
                 }, onNext);
             });
             onNext();
@@ -545,10 +531,11 @@
                         ), 2);
                 }
                 // update cacheDict.collection
+                local.utility2.onReady.counter += 1;
                 local.utility2.taskRunOrSubscribe({
                     key: 'swagger-mongodb.mongodbConnect'
                 }, function () {
-                    local.swmg.collectionCreate(schema, local.utility2.onErrorDefault);
+                    local.swmg.collectionCreate(schema, local.utility2.onReady);
                 });
             });
             // update paths
@@ -606,7 +593,7 @@
                             Object.keys(element).forEach(function (key) {
                                 // security - remove underscored key
                                 if (key[0] === '_') {
-                                    element[key] = undefined;
+                                    delete element[key];
                                 }
                             });
                         }
@@ -632,10 +619,49 @@
                 });
             });
             // jsonCopy object to prevent side-effects
-            local.swmg.swaggerJson =
-                JSON.parse(local.utility2.jsonStringifyOrdered(local.swmg.swaggerJson));
+            local.swmg.swaggerJson = JSON.parse(local.utility2
+                .jsonStringifyOrdered(local.utility2.jsonCopy(local.swmg.swaggerJson)));
             // validate swaggerJson
-            local.swmg.validateSwaggerJson(local.swmg.swaggerJson);
+            local.swmg.validateSwaggerJson(local.utility2
+                .objectSetDefault(local.utility2.jsonCopy(local.swmg.swaggerJson), {
+                    // hack - dummy definition to pass validation
+                    definitions: {
+                        _dummy: {
+                            properties: {
+                                Array: {
+                                    items: { $ref: '#/definitions/Array' },
+                                    type: 'array'
+                                },
+                                MongodbAggregationPipeline: {
+                                    items: { $ref: '#/definitions/MongodbAggregationPipeline' },
+                                    type: 'array'
+                                },
+                                Object: {
+                                    items: { $ref: '#/definitions/Object' },
+                                    type: 'array'
+                                }
+                            }
+                        }
+                    },
+                    // hack - dummy path to pass validation
+                    paths: { '/_dummy': { get: {
+                        parameters: [{
+                            in: 'body',
+                            name: 'body',
+                            schema: { $ref: '#/definitions/_dummy' }
+                        }],
+                        responses: {
+                            200: {
+                                description: '',
+                                schema: { $ref: '#/definitions/JsonApiResponseData' }
+                            },
+                            default: {
+                                description: '',
+                                schema: { $ref: '#/definitions/JsonApiResponseError' }
+                            }
+                        }
+                    } } }
+                }, 2));
             // init crud-api
             local.swmg.api = new local.swmg.SwaggerClient({
                 url: 'http://localhost:' + local.utility2.serverPortInit()
@@ -723,9 +749,6 @@
             modeNext = 0;
             onNext = function (error, data) {
                 local.utility2.testTryCatch(function () {
-
-
-
 /* jslint-indent-begin 20 */
 /*jslint maxlen: 116*/
 modeNext = error
@@ -767,7 +790,7 @@ case 1:
             request.swmgPathname = request.swmgPathname.replace((/\/[^\/]+?(\/*?)$/), '/$1');
         }
     }
-    // default to next middleware
+    // default to nextMiddleware
     modeNext = Infinity;
     onNext();
     break;
@@ -882,15 +905,12 @@ default:
     nextMiddleware(error);
 }
 /* jslint-indent-end */
-
-
-
                 }, onNext);
             };
             onNext();
         };
 
-        local.swmg.onMiddlewareError = function (error, request, response) {
+        local.swmg.middlewareError = function (error, request, response) {
             /*
              * this function will handle errors according to http://jsonapi.org/format/#errors
              */
@@ -940,29 +960,20 @@ default:
         local.swmg.swaggerJson = {
             basePath: local.utility2.envDict.npm_config_mode_api_prefix || '/api/v0',
             definitions: {
+                Array: { items: {}, type: 'array' },
                 // http://jsonapi.org/format/#errors
                 JsonApiError: {
                     properties: {
                         code: { type: 'string' },
                         detail: { type: 'string' },
-                        href: { type: 'string' },
                         id: { type: 'string' },
-                        links: { items: { type: 'string' }, type: 'array' },
-                        paths: { items: { type: 'string' }, type: 'array' },
-                        status: { type: 'integer' },
-                        title: { type: 'string' }
+                        message: { type: 'string' },
+                        status: { type: 'integer' }
                     }
                 },
-                // http://jsonapi.org/format/#document-structure-meta
+                // http://jsonapi.org/format/#document-meta
                 JsonApiMeta: {
                     properties: {}
-                },
-                // http://jsonapi.org/format/#document-structure-meta
-                JsonApiLinks: {
-                    properties: {
-                        self: { type: 'string' },
-                        related: { type: 'string' }
-                    }
                 },
                 // http://jsonapi.org/format/#document-structure-resource-objects
                 JsonApiResource: {
@@ -980,11 +991,6 @@ default:
                             items: { $ref: '#/definitions/JsonApiResource' },
                             type: 'array'
                         },
-                        included: {
-                            items: { $ref: '#/definitions/JsonApiResource' },
-                            type: 'array'
-                        },
-                        links: { $ref: '#/definitions/JsonApiLinks' },
                         meta: { $ref: '#/definitions/JsonApiMeta' }
                     }
                 },
@@ -996,7 +1002,17 @@ default:
                             type: 'array'
                         }
                     }
-                }
+                },
+                // http://docs.mongodb.org/manual/reference/operator/aggregation/
+                MongodbAggregationPipeline: {
+                    properties: {
+                        $group: {
+                            default: { "_id": "all", "count": { "$sum": 1 } },
+                            type: 'object'
+                        }
+                    }
+                },
+                Object: { type: 'object' }
             },
             info: {
                 description: 'demo of swagger-mongodb crud-api',
@@ -1111,6 +1127,8 @@ default:
             local.swmg.SwaggerClient = local.SwaggerClient;
             local.swmg.SwaggerUi = local.SwaggerUi;
         }());
+        // init api
+        local.swmg.apiUpdate({});
         break;
     }
 }((function () {
@@ -1151,17 +1169,40 @@ default:
             },
             local: local
         };
-
-
-
+        // legacy-hack
+        local.utility2.errorMessagePrepend = function (error, message) {
+            /*
+             * this function will prepend the message to error.message and error.stack
+             */
+            error.message = message + error.message;
+            error.stack = message + error.stack;
+            return error;
+        };
 /* jslint-indent-begin 8 */
 /*jslint maxlen: 104*/
 // init swaggerJsonPathsCrudDefault
 local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
-    '/{{crudApi}}/crudCountByQuery': { get: {
+    '/{{crudApi}}/crudAggregateMany': { post: {
         _collectionName: '{{collectionName}}',
         _crudApi: true,
-        operationId: 'crudCountByQuery',
+        operationId: 'crudAggregateMany',
+        parameters: [{
+            description: 'mongodb aggregation array',
+            in: 'body',
+            name: 'body',
+            required: true,
+            schema: {
+                items: { $ref: '#/definitions/MongodbAggregationPipeline' },
+                type: 'array'
+            }
+        }],
+        summary: 'aggregate many {{schemaName}} objects',
+        tags: ['{{crudApi}}']
+    } },
+    '/{{crudApi}}/crudCountByQueryOne': { get: {
+        _collectionName: '{{collectionName}}',
+        _crudApi: true,
+        operationId: 'crudCountByQueryOne',
         parameters: [{
             description: 'mongodb query param',
             default: '{}',
@@ -1170,7 +1211,7 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             name: 'query',
             type: 'string'
         }],
-        summary: 'count {{schemaName}} objects by query',
+        summary: 'count many {{schemaName}} objects by query',
         tags: ['{{crudApi}}']
     } },
     '/{{crudApi}}/crudCreateOne': { post: {
@@ -1224,7 +1265,7 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             name: 'query',
             type: 'string'
         }],
-        summary: 'get distinct {{schemaName}} values by field',
+        summary: 'get many distinct {{schemaName}} values by field',
         tags: ['{{crudApi}}']
     } },
     '/{{crudApi}}/crudExistsByIdOne/{id}': { get: {
@@ -1242,7 +1283,7 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
             schema: { $ref: '#/definitions/JsonApiResponseData{{schemaName}}' }
         } },
-        summary: 'check if {{schemaName}} object exists by id',
+        summary: 'check if one {{schemaName}} object exists by id',
         tags: ['{{crudApi}}']
     } },
     '/{{crudApi}}/crudGetByIdOne/{id}': { get: {
@@ -1404,9 +1445,6 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
     });
 }());
 /* jslint-indent-end */
-
-
-
     }());
     return local;
 }())));

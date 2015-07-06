@@ -195,7 +195,7 @@ width="100%" \
             local.swmg.middleware
         ]);
         // init middleware error-handler
-        local.onMiddlewareError = local.swmg.onMiddlewareError;
+        local.middlewareError = local.swmg.middlewareError;
         // init petstore-api
         (function () {
             var methodPath, options, schema;
@@ -206,21 +206,28 @@ width="100%" \
                 paths: options.paths,
                 tags: options.tags
             };
+            // remove unused properties
+            delete options.definitions.ApiResponse;
+            // init schema
             Object.keys(options.definitions).forEach(function (schemaName) {
                 schema = options.definitions[schemaName];
-                schema._collectionName = 'Swmg' + schemaName;
                 // init id
                 schema.properties.id = { type: 'string' };
-                schema['x-inheritList'] =
-                    [{ $ref: '#/definitions/JsonApiResource' }];
+                schema['x-inheritList'] = [{ $ref: '#/definitions/JsonApiResource' }];
             });
-            // init id
+            // init mongodb collection
             local.utility2.objectSetOverride(options, { definitions: {
                 Pet: {
-                    _collectionDrop: true
+                    _collectionDrop: true,
+                    _collectionName: 'SwmgPet'
                 },
                 Order: {
+                    _collectionCreateIndexList: [{
+                        key: { status: 1 },
+                        name: 'status_1'
+                    }],
                     _collectionDrop: true,
+                    _collectionName: 'SwmgOrder',
                     properties: {
                         petId: { type: 'string' }
                     }
@@ -231,7 +238,8 @@ width="100%" \
                         name: 'username_1',
                         unique: true
                     }],
-                    _collectionDrop: true
+                    _collectionDrop: true,
+                    _collectionName: 'SwmgUser'
                 }
             } }, 4);
             Object.keys(options.paths).forEach(function (path) {
@@ -244,12 +252,47 @@ width="100%" \
                     if (methodPath._schemaName === 'Store') {
                         methodPath._schemaName = 'Order';
                     }
-                    methodPath._collectionName =
-                        'Swmg' + methodPath._schemaName;
-                    methodPath.produces =
-                        methodPath.responses =
-                        methodPath.security =
-                        undefined;
+                    methodPath._collectionName = 'Swmg' + methodPath._schemaName;
+                    delete methodPath.produces;
+                    delete methodPath.responses;
+                    delete methodPath.security;
+                    switch (methodPath.operationId) {
+                    case 'addPet':
+                    case 'deletePet':
+                    case 'getPetById':
+                    case 'updatePet':
+                        local.utility2.objectSetDefault(methodPath, { responses: {
+                            200: {
+                                description: '200 ok - http://jsonapi.org/format' +
+                                    '/#document-structure-top-level',
+                                schema: { $ref: '#/definitions/JsonApiResponseDataPet' }
+                            }
+                        } }, 2);
+                        break;
+                    case 'deleteOrder':
+                    case 'getOrderById':
+                    case 'placeOrder':
+                        local.utility2.objectSetDefault(methodPath, { responses: {
+                            200: {
+                                description: '200 ok - http://jsonapi.org/format' +
+                                    '/#document-structure-top-level',
+                                schema: { $ref: '#/definitions/JsonApiResponseDataOrder' }
+                            }
+                        } }, 2);
+                        break;
+                    case 'createUser':
+                    case 'deleteUser':
+                    case 'getUserByName':
+                    case 'updateUser':
+                        local.utility2.objectSetDefault(methodPath, { responses: {
+                            200: {
+                                description: '200 ok - http://jsonapi.org/format' +
+                                    '/#document-structure-top-level',
+                                schema: { $ref: '#/definitions/JsonApiResponseDataUser' }
+                            }
+                        } }, 2);
+                        break;
+                    }
                     switch (methodPath.operationId) {
                     case 'addPet':
                     case 'placeOrder':
@@ -284,8 +327,8 @@ width="100%" \
                         methodPath._paramExtraDict.skip = 0;
                         methodPath._paramExtraDict.sort = '{"_timeModified":-1}';
                         break;
-                    case 'getPetById':
                     case 'getOrderById':
+                    case 'getPetById':
                         methodPath._crudApi = true;
                         methodPath.operationId = 'crudGetByIdOne';
                         break;
@@ -294,10 +337,10 @@ width="100%" \
                         break;
                     case 'updatePet':
                         methodPath._crudApi = true;
-                        methodPath.operationId = 'crudUpdateOrCreateOne';
+                        methodPath.operationId = 'crudReplaceOrCreateOne';
                         break;
                     case 'updateUser':
-                        methodPath.operationId = 'crudUpdateOrCreateOne';
+                        methodPath.operationId = 'crudReplaceOrCreateOne';
                         break;
                     }
                     // init id
@@ -306,7 +349,7 @@ width="100%" \
                         case 'orderId':
                         case 'petId':
                             methodPath._paramExtraDict.id = '{{' + param.name + '}}';
-                            param.format = undefined;
+                            delete param.format;
                             param.type = 'string';
                             break;
                         }
@@ -336,11 +379,6 @@ width="100%" \
                             };
                         }
                         switch (request.swmgPathname) {
-                        case 'GET /pet/findByStatus':
-                        case 'GET /pet/findByTags':
-                            options.operationId = 'crudGetByQueryMany';
-                            local.swmg._crudApi(options, onNext);
-                            return;
                         case 'DELETE /user/':
                         case 'GET /user/':
                         case 'POST /user':
@@ -351,6 +389,18 @@ width="100%" \
                                 options.data.body.username = options.data.username;
                             }
                             options.optionsId = { username: request.swmgParameters.username};
+                            local.swmg._crudApi(options, onNext);
+                            return;
+                        case 'GET /pet/findByStatus':
+                        case 'GET /pet/findByTags':
+                            options.operationId = 'crudGetByQueryMany';
+                            local.swmg._crudApi(options, onNext);
+                            return;
+                        case 'GET /store/inventory':
+                            options._crudApi = function (options, onError) {
+                                options.response.data = [{}];
+                                onError();
+                            };
                             local.swmg._crudApi(options, onNext);
                             return;
                         }
@@ -398,7 +448,7 @@ width="100%" \
     "dependencies": {
         "mongodb-minimal": "^2015.6.1",
         "swagger-ui-lite": "^2015.6.1",
-        "utility2": "~2015.7.2"
+        "utility2": "~2015.7.4"
     },
     "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
@@ -429,29 +479,30 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.7.3"
+    "version": "2015.7.4"
 }
 ```
 
 
 
 # todo
+- add auto-upsert fixtures feature
+- add client-side validation
+- add LoginToken model
 - add max / min validation
-- add aggregate crud api
 - add user /login /logout paths
 - add formData swagger parameter type
 - none
 
 
 
-# change since c7f7bccb
-- npm publish 2015.7.3
-- replace schemaName with crudApi for tags
-- add definition._collectionCreate param
-- add definition._collectionCreateIndexList param
-- add definition._collectionDrop param
-- add swmg.collectionCreate
-- integrate petstore-api into tests
+# change since 2afa4013
+- npm publish 2015.7.4
+- add crudAggregateMany api
+- remove unused #/definitions/JsonApiLinks
+- fix validation warnings
+- update petstore responses
+- deprecate local.onMiddlewareError in favor of local.middlewareError
 - none
 
 
