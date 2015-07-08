@@ -47,57 +47,6 @@
             });
         };
 
-        local.testCase_crudAggregateMany_default = function (options, onError) {
-            /*
-             * this function will test crudAggregateMany's default handling behavior
-             */
-            var api, modeNext, onNext;
-            modeNext = 0;
-            onNext = function (error, data) {
-                local.utility2.testTryCatch(function () {
-                    modeNext = error
-                        ? Infinity
-                        : modeNext + 1;
-                    switch (modeNext) {
-                    case 1:
-                        // init options
-                        options = options || {};
-                        options.id = options.id || local.utility2.uuidTime();
-                        options.modeErrorData = true;
-                        // init api
-                        options.api = options.api || '_TestModel';
-                        api = local.swmg.api[options.api];
-                        // create object
-                        local.testCase_crudCreateXxx_default({
-                            api: options.api,
-                            id: options.id,
-                            modeNoDelete: true,
-                            operationId: 'crudCreateOne'
-                        }, onNext);
-                        break;
-                    case 2:
-                        // run aggregation command
-                        api.crudAggregateMany({
-                            body: [{ '$group': { _id: 'all', count: { $sum: 1 } } }]
-                        }, options, onNext);
-                        break;
-                    case 3:
-                        // validate result
-                        data = data.obj.data;
-                        local.utility2.assert(data.length === 1, data.length);
-                        local.utility2.assert(data[0], data[0]);
-                        // remove object by id
-                        local.testCase_crudDeleteById_default(options, onNext);
-                        break;
-                    default:
-                        onError(error);
-                        break;
-                    }
-                }, onError);
-            };
-            onNext(options && options.error);
-        };
-
         local.testCase_crudCreateXxx_default = function (options, onError) {
             /*
              * this function will test crudCreateXxx's default handling behavior
@@ -278,13 +227,15 @@
                     'user'
                 ].forEach(function (api) {
                     [
+                        'crudAggregateMany',
                         'crudCountByQueryOne',
                         'crudGetByIdOne',
                         'crudGetByQueryMany',
                         'crudGetDistinctValueByFieldMany',
                         'crudExistsByIdOne',
                         'findPetsByStatus',
-                        'findPetsByTags'
+                        'findPetsByTags',
+                        'getInventory'
                     ].forEach(function (operationId) {
                         onParallel.counter += 1;
                         local.testCase_crudGetXxx_default({
@@ -337,13 +288,22 @@
                     case 2:
                         // validate object exists
                         data = local.utility2.jsonCopy(options);
+                        data.body = [{ $group: { "_id": "all", "count": { "$sum": 1 } } }];
                         data.tags = options.id;
                         api[options.operationId](local.optionsId(data), options, onNext);
                         break;
                     case 3:
                         // validate object exists
                         data = data.obj.data;
-                        local.utility2.assert(data.length === 1, data.length);
+                        switch (options.operationId) {
+                        case 'crudAggregateMany':
+                        case 'crudGetDistinctValueByFieldMany':
+                        case 'getInventory':
+                            local.utility2.assert(data.length >= 1, data.length);
+                            break;
+                        default:
+                            local.utility2.assert(data.length === 1, data.length);
+                        }
                         local.utility2.assert(data[0], data[0]);
                         // remove object by id
                         local.testCase_crudDeleteById_default(options, onNext);
@@ -605,9 +565,9 @@
             onParallel();
         };
 
-        local.testCase_validateParameter_default = function (options, onError) {
+        local.testCase_validateParamDict_default = function (options, onError) {
             /*
-             * this function will test validateParameter's default handling behavior
+             * this function will test validateParamDict's default handling behavior
              */
             var error;
             // jslint-hack
@@ -621,12 +581,12 @@
                 key: 'crudCountByQueryOne',
                 method: 'get'
             }].forEach(function (options) {
-                options.parameters = local.swmg.swaggerJson
+                options.paramDefList = local.swmg.swaggerJson
                     .paths['/_TestModel/' + options.key][options.method]
                     .parameters;
-                local.swmg.validateParameters(options);
+                local.swmg.validateParamDict(options);
             });
-            // test validateParameters's error handling behavior
+            // test validateParamDict's error handling behavior
             [{
                 data: { body: { fieldRequired: null } },
                 key: 'crudCreateOne',
@@ -638,10 +598,10 @@
             }].forEach(function (options) {
                 try {
                     error = null;
-                    options.parameters = local.swmg.swaggerJson
+                    options.paramDefList = local.swmg.swaggerJson
                         .paths['/_TestModel/' + options.key][options.method]
                         .parameters;
-                    local.swmg.validateParameters(options);
+                    local.swmg.validateParamDict(options);
                 } catch (errorCaught) {
                     error = errorCaught;
                 }
@@ -651,7 +611,7 @@
             // test validateProperty's circular-reference handling behavior
             local.swmg.validateProperty({
                 data: { fieldObject: {} },
-                property: { fieldObject: { type: 'object' } }
+                propertyDef: { fieldObject: { type: 'object' } }
             });
             onError();
         };
@@ -891,7 +851,7 @@
         local.middleware.middlewareList.push(function (request, response, nextMiddleware) {
             switch (request.swmgPathname) {
             case 'GET /_TestModel/echo':
-                response.end(JSON.stringify(request.swmgParameters));
+                response.end(JSON.stringify(request.swmgParamDict));
                 break;
             default:
                 nextMiddleware();
@@ -1016,7 +976,7 @@
             ]
         });
         // run validation test
-        local.testCase_validateParameter_default(null, local.utility2.onErrorDefault);
+        local.testCase_validateParamDict_default(null, local.utility2.onErrorDefault);
         local.testCase_validateSchema_default(null, local.utility2.onErrorDefault);
         local.testCase_validateSwaggerJson_default(null, local.utility2.onErrorDefault);
         // jslint dir

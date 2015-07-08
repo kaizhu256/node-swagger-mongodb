@@ -192,7 +192,9 @@ width="100%" \
         local.middleware = local.utility2.middlewareGroupCreate([
             local.utility2.middlewareInit,
             local.utility2.middlewareAssetsCached,
-            local.swmg.middleware
+            local.swmg.middlewareHeadParse,
+            local.swmg.middlewareBodyParse,
+            local.swmg.middlewareCrudApi
         ]);
         // init error-middleware
         local.middlewareError = local.swmg.middlewareError;
@@ -373,13 +375,13 @@ width="100%" \
                         break;
                     }
                     // init id
-                    methodPath.parameters.forEach(function (param) {
-                        switch (param.name) {
+                    methodPath.parameters.forEach(function (paramDef) {
+                        switch (paramDef.name) {
                         case 'orderId':
                         case 'petId':
-                            methodPath._paramExtraDict.id = '{{' + param.name + '}}';
-                            delete param.format;
-                            param.type = 'string';
+                            methodPath._paramExtraDict.id = '{{' + paramDef.name + '}}';
+                            delete paramDef.format;
+                            paramDef.type = 'string';
                             break;
                         }
                     });
@@ -401,9 +403,9 @@ width="100%" \
                         if (request.swmgMethodPath) {
                             options = {
                                 collectionName: request.swmgMethodPath._collectionName,
-                                data: request.swmgParameters,
+                                data: request.swmgParamDict,
                                 operationId: request.swmgMethodPath.operationId,
-                                parameters: request.swmgMethodPath.parameters,
+                                paramDefList: request.swmgMethodPath.parameters,
                                 schemaName: request.swmgMethodPath._schemaName
                             };
                         }
@@ -417,7 +419,7 @@ width="100%" \
                                     options.data.body.username;
                                 options.data.body.username = options.data.username;
                             }
-                            options.optionsId = { username: request.swmgParameters.username};
+                            options.optionsId = { username: request.swmgParamDict.username};
                             local.swmg._crudApi(options, onNext);
                             return;
                         case 'GET /pet/findByStatus':
@@ -510,32 +512,33 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.7.5"
+    "version": "2015.7.6"
 }
 ```
 
 
 
 # todo
-- add api-endpoint http://localhost:8080/api/v0/pet/
-- add api-endpoint http://localhost:8080/api/v0/pet/sdf/uploadImage
-- add api-endpoint http://localhost:8080/api/v0/user/createWithArray
-- add api-endpoint http://localhost:8080/api/v0/user/createWithList
-- add api-endpoint http://localhost:8080/api/v0/user/login
-- add api-endpoint http://localhost:8080/api/v0/user/logout
-- add client-side param validation
+- add api-endpoint POST http://localhost:8080/api/v0/pet/{petId}
+- add api-endpoint POST http://localhost:8080/api/v0/pet/{petId}/uploadImage
+- add api-endpoint POST http://localhost:8080/api/v0/user/createWithArray
+- add api-endpoint POST http://localhost:8080/api/v0/user/createWithList
+- add api-endpoint GET http://localhost:8080/api/v0/user/login
+- add api-endpoint GET http://localhost:8080/api/v0/user/logout
 - add LoginToken model
 - add max / min validation
-- add formData swagger parameter type
+- add formData param-type
 - none
 
 
 
-# change since 27e4a34b
-- npm publish 2015.7.5
-- add _collectionFixtureList option in swmg.collectionCreate
-- add api-endpoint http://localhost:8080/api/v0/store/inventory
-- rename JsonApi* to Jsonapi*
+# change since 12663df4
+- npm publish 2015.7.6
+- split middleware into middlewareHeadParse, middlewareBodyParse, middlewareCrudApi
+- rename property to propertyDef
+- rename parameter to param
+- disable online validation
+- add client-side param validation
 - none
 
 
@@ -560,7 +563,7 @@ shBuild() {
     . node_modules/.bin/utility2 && shInit || return $?
 
     # run npm-test on published package
-    shNpmTestPublished || return $?
+    shRun shNpmTestPublished || return $?
 
     # test example js script
     export npm_config_timeout_exit=10000 || return $?
@@ -575,7 +578,7 @@ shBuild() {
     [ "$(node --version)" \< "v0.12" ] && return
 
     # deploy app to heroku
-    shHerokuDeploy hrku01-$npm_package_name-$CI_BRANCH || return $?
+    shRun shHerokuDeploy hrku01-$npm_package_name-$CI_BRANCH || return $?
 
     # test deployed app to heroku
     if [ "$CI_BRANCH" = alpha ] ||
