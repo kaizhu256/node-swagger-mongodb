@@ -60,7 +60,7 @@
             return data;
         };
 
-        local.swmg.normalizeParamSwagger = function (data, methodPath) {
+        local.swmg.normalizeParamDictSwagger = function (data, methodPath) {
             /*
              * this function will parse the data according to methodPath.parameters
              */
@@ -145,7 +145,7 @@
             return dict;
         };
 
-        local.swmg.validateParamDict = function (options) {
+        local.swmg.validateByParamDefList = function (options) {
             /*
              * this function will validate options.data against options.paramDefList
              */
@@ -156,7 +156,7 @@
                 local.utility2.assert(data && typeof data === 'object', data);
                 (options.paramDefList || []).forEach(function (paramDef) {
                     key = paramDef.name;
-                    local.swmg.validateProperty({
+                    local.swmg.validateByPropertyDef({
                         data: data[key],
                         key: key,
                         propertyDef: paramDef,
@@ -164,14 +164,12 @@
                     });
                 });
             } catch (errorCaught) {
-                errorCaught.message = '"' + options.key + '.' + key + '" - ' +
-                    errorCaught.message;
-                errorCaught.stack = errorCaught.message + '\n' + errorCaught.stack;
+                local.utility2.errorMessagePrepend('"' + options.key + '.' + key + '" - ');
                 throw errorCaught;
             }
         };
 
-        local.swmg.validateProperty = function (options) {
+        local.swmg.validateByPropertyDef = function (options) {
             /*
              * this function will validate options.data against options.propertyDef
              */
@@ -195,7 +193,7 @@
             // validate schema
             tmp = propertyDef.$ref || (propertyDef.schema && propertyDef.schema.$ref);
             if (tmp) {
-                local.swmg.validateSchema({
+                local.swmg.validateBySchema({
                     circularList: options.circularList,
                     data: data,
                     key: tmp,
@@ -216,14 +214,10 @@
             // #data-types
             switch (propertyDef.type) {
             case 'array':
-                // ignore csv array
-                if (propertyDef.collectionFormat && typeof data === 'string') {
-                    break;
-                }
                 assert(Array.isArray(data));
                 // recurse - validate elements in list
                 data.forEach(function (element) {
-                    local.swmg.validateProperty({
+                    local.swmg.validateByPropertyDef({
                         circularList: options.circularList,
                         data: element,
                         key: options.key,
@@ -284,7 +278,7 @@
             }
         };
 
-        local.swmg.validateSchema = function (options) {
+        local.swmg.validateBySchema = function (options) {
             /*
              * this function will validate options.data against options.schema
              */
@@ -300,6 +294,11 @@
                     options.circularList.push(data);
                 }
                 // validate data
+                switch (options.key) {
+                // ignore undefined schema
+                case '#/definitions/Undefined':
+                    return;
+                }
                 local.utility2.assert(data && typeof data === 'object', 'invalid data ' + data);
                 schema = options.schema;
                 // validate schema
@@ -309,7 +308,7 @@
                 );
                 Object.keys(schema.properties || {}).forEach(function (_) {
                     key = _;
-                    local.swmg.validateProperty({
+                    local.swmg.validateByPropertyDef({
                         circularList: options.circularList,
                         data: data[key],
                         depth: options.depth - 1,
@@ -319,20 +318,18 @@
                     });
                 });
             } catch (errorCaught) {
-                errorCaught.message = '"' + options.key + '.' + key + '" - ' +
-                    errorCaught.message;
-                errorCaught.stack = errorCaught.message + '\n' + errorCaught.stack;
+                local.utility2.errorMessagePrepend('"' + options.key + '.' + key + '" - ');
                 throw errorCaught;
             }
         };
 
-        local.swmg.validateSwaggerJson = function (swaggerJson) {
+        local.swmg.validateBySwagger = function (options) {
             /*
              * this function will validate the entire swagger json object
              */
             local.swagger_tools.v2.validate(
                 // jsonCopy object to prevent side-effects
-                local.utility2.jsonCopy(swaggerJson),
+                local.utility2.jsonCopy(options),
                 function (error, result) {
                     // validate no error occurred
                     local.utility2.assert(!error, error);
@@ -379,8 +376,10 @@
                         : modeNext + 1;
                     switch (modeNext) {
                     case 1:
+                        // jsonCopy object to prevent side-effects
+                        options.data = local.utility2.jsonCopy(options.data);
                         // validate params
-                        local.swmg.validateParamDict({
+                        local.swmg.validateByParamDefList({
                             data: options.data,
                             key: options.schemaName + '.' + options.operationId,
                             paramDefList: options.paramDefList
@@ -502,7 +501,10 @@
                             // run custom-api
                             if (typeof options._crudApi === 'function') {
                                 modeNext = Infinity;
-                                options._crudApi(options, onNext);
+                                options._crudApi(options, function (error, data) {
+                                    options.response.data = data;
+                                    onNext(error);
+                                });
                                 return;
                             }
                             onNext(new Error('undefined crud operation - ' +
@@ -627,11 +629,6 @@
                                 description: 'ok - ' +
                                     'http://jsonapi.org/format/#document-top-level',
                                 schema: { $ref: '#/definitions/JsonapiResponseData' }
-                            },
-                            default: {
-                                description: 'internal server error - ' +
-                                    'http://jsonapi.org/format/#errors',
-                                schema: { $ref: '#/definitions/JsonapiResponseError' }
                             }
                         },
                         tags: []
@@ -640,7 +637,7 @@
                     local.swmg.cacheDict.methodPath[method.toUpperCase() + ' ' + path.replace(
                         (/\{.*/),
                         function (match0) {
-                            return match0.replace((/[^\/]+/), '');
+                            return match0.replace((/[^\/]/g), '');
                         }
                     )] = methodPath;
                 });
@@ -687,9 +684,9 @@
             local.swmg.swaggerJson = JSON.parse(local.utility2
                 .jsonStringifyOrdered(local.utility2.jsonCopy(local.swmg.swaggerJson)));
             // validate swaggerJson
-            local.swmg.validateSwaggerJson(local.utility2
+            local.swmg.validateBySwagger(local.utility2
                 .objectSetDefault(local.utility2.jsonCopy(local.swmg.swaggerJson), {
-                    // hack - dummy definition to pass validation
+                    // hack - dummy schema to pass validation
                     definitions: {
                         _dummy: {
                             properties: {
@@ -701,10 +698,8 @@
                                     items: { $ref: '#/definitions/MongodbAggregationPipeline' },
                                     type: 'array'
                                 },
-                                Object: {
-                                    items: { $ref: '#/definitions/Object' },
-                                    type: 'array'
-                                }
+                                Object: { items: { $ref: '#/definitions/Object' } },
+                                Undefined: { items: { $ref: '#/definitions/Undefined' } }
                             }
                         }
                     },
@@ -806,7 +801,7 @@
                     local.utility2.jsonCopy(schema._collectionFixtureList || [
                     ]).forEach(function (element) {
                         // validate element
-                        local.swmg.validateSchema({
+                        local.swmg.validateBySchema({
                             data: element,
                             key: schema._schemaName,
                             schema: schema
@@ -830,73 +825,40 @@
 
         local.swmg.middlewareBodyParse = function (request, response, nextMiddleware) {
             /*
-             * this function will parse the request's body
+             * this function will parse the request-body
              */
-            // default to nextMiddleware
-            if (!request.swmgMethodPath) {
-                nextMiddleware();
-                return;
-            }
-            if (!request.swmgMethodPath.parameters.some(function (paramDef) {
-                    switch (paramDef.in) {
-                    // parse body param
-                    case 'body':
-                        local.utility2.middlewareBodyGet(request, response, function (error) {
-                            (local.utility2.onErrorJsonParse(
-                                function (error, data) {
-                                    request.swmgParamDict[paramDef.name] =
-                                        request.swmgParamDict[paramDef.name] || data;
-                                    nextMiddleware(error);
-                                }
-                            ))(error, request.bodyRaw);
-                        });
-                        return true;
-                    }
-                })) {
-                nextMiddleware();
-            }
-        };
-
-        local.swmg.middlewareCrudApi = function (request, response, nextMiddleware) {
-            /*
-             * this function will run the crud-api
-             */
-            var onError2;
-            onError2 = function (error, data) {
-                if (!error && data) {
-                    response.end(JSON.stringify(data));
-                    return;
-                }
-                nextMiddleware(error);
-            };
+            // jslint-hack
+            local.utility2.nop(response);
             local.utility2.testTryCatch(function () {
-                // default to nextMiddleware
-                if (!request.swmgMethodPath) {
+                if (request.swmgBodyParsed) {
                     nextMiddleware();
                     return;
                 }
-                // parse param
-                local.swmg.normalizeParamSwagger(request
-                    .swmgParamDict, request.swmgMethodPath);
-                // validate params
-                local.swmg.validateParamDict({
-                    data: request.swmgParamDict,
-                    key: request.swmgPathname,
-                    paramDefList: request.swmgMethodPath.parameters
-                });
-                // run default crud-api
-                if (request.swmgMethodPath._crudApi) {
-                    local.swmg._crudApi({
-                        collectionName: request.swmgMethodPath._collectionName,
-                        data: request.swmgParamDict,
-                        operationId: request.swmgMethodPath.operationId,
-                        paramDefList: request.swmgMethodPath.parameters,
-                        schemaName: request.swmgMethodPath._schemaName
-                    }, onError2);
-                    return;
+                request.swmgBodyParsed = String(request.bodyRaw);
+                switch ((/[^;]*/).exec(request.headers['content-type'] || '')[0]) {
+                case 'application/x-www-form-urlencoded':
+                    request.swmgBodyParsed =
+                        local.url.parse('?' + request.swmgBodyParsed, true).query;
+                    break;
+                //!! case 'multipart/form-data':
+                    //!! tmp = request.swmgBodyParsed;
+                    //!! request.swmgBodyParsed = {};
+                    //!! tmp.split(
+                        //!! '--' + (/boundary=(.*)/).exec(request.headers['content-type'])[1]
+                    //!! ).slice(1, -1).forEach(function (part) {
+                        //!! request.swmgBodyParsed[
+                            //!! (/\bname="([^"]*)/).exec(part)[1]
+                        //!! ] = part.split('\r\n\r\n').slice(1).join('\r\n\r\n').slice(0, -2);
+                    //!! });
+                    //!! break;
+                default:
+                    try {
+                        request.swmgBodyParsed = JSON.parse(request.swmgBodyParsed);
+                    } catch (ignore) {
+                    }
                 }
-                onError2();
-            }, onError2);
+                nextMiddleware();
+            }, nextMiddleware);
         };
 
         local.swmg.middlewareError = function (error, request, response) {
@@ -917,85 +879,135 @@
             response.end(JSON.stringify(error));
         };
 
-        local.swmg.middlewareHeadParse = function (request, response, nextMiddleware) {
+        local.swmg.middlewareSwagger = function (request, response, nextMiddleware) {
             /*
              * this function will parse the request's header / path / query
              */
-            var tmp;
-            local.utility2.testTryCatch(function () {
-                // if request.url is not prefixed with swaggerJson.basePath,
-                // then default to nextMiddleware
-                if (request.urlParsed.pathnameNormalized
-                        .indexOf(local.swmg.swaggerJson.basePath) === 0) {
-                    local.utility2.serverRespondHeadSet(request, response, null, {
-                        'Access-Control-Allow-Methods':
-                            'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT',
-                        // enable cors
-                        // http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
-                        'Access-Control-Allow-Origin': '*',
-                        // init content-type
-                        'Content-Type': 'application/json; charset=UTF-8'
-                    });
-                    // init swmgPathname
-                    request.swmgPathname = request.method + ' ' +
-                        request.urlParsed.pathnameNormalized
-                        .replace(local.swmg.swaggerJson.basePath, '');
-                    switch (request.swmgPathname) {
-                    case 'GET /swagger.json':
-                        response.end(JSON.stringify(local.swmg.swaggerJson));
-                        return;
-                    }
-                    // init swmgMethodPath
-                    while (true) {
-                        request.swmgMethodPath =
-                            local.swmg.cacheDict.methodPath[request.swmgPathname];
-                        // if swmgMethodPath exists, then break and continue
-                        if (request.swmgMethodPath) {
-                            break;
+            var modeNext, onNext, tmp;
+            modeNext = 0;
+            onNext = function (error) {
+                local.utility2.testTryCatch(function () {
+                    modeNext = error
+                        ? Infinity
+                        : modeNext + 1;
+                    switch (modeNext) {
+                    case 1:
+                        // if request.url is not prefixed with swaggerJson.basePath,
+                        // then default to nextMiddleware
+                        if (request.urlParsed.pathnameNormalized
+                                .indexOf(local.swmg.swaggerJson.basePath) !== 0) {
+                            modeNext = Infinity;
+                            onNext();
+                            return;
                         }
-                        // if cannot init swmgMethodPath, then default to nextMiddleware
-                        if (request.swmgPathname === request.swmgPathnameOld) {
-                            break;
+                        // init swmgPathname
+                        request.swmgPathname = request.method + ' ' +
+                            request.urlParsed.pathnameNormalized
+                            .replace(local.swmg.swaggerJson.basePath, '');
+                        switch (request.swmgPathname) {
+                        // serve swagger.json
+                        case 'GET /swagger.json':
+                            response.end(JSON.stringify(local.swmg.swaggerJson));
+                            return;
                         }
-                        request.swmgPathnameOld = request.swmgPathname;
-                        request.swmgPathname =
-                            request.swmgPathname.replace((/\/[^\/]+?(\/*?)$/), '/$1');
-                    }
-                }
-                // if methodPath does not exist, default to nextMiddleware
-                if (!request.swmgMethodPath) {
-                    nextMiddleware();
-                    return;
-                }
-                // init swmgParamDict
-                request.swmgParamDict = {};
-                // parse path param
-                tmp = request.urlParsed.pathname
-                    .replace(local.swmg.swaggerJson.basePath, '').split('/');
-                request.swmgMethodPath._path.split('/').forEach(function (key, ii) {
-                    if ((/^\{\S*?\}$/).test(key)) {
-                        request.swmgParamDict[key.slice(1, -1)] = decodeURIComponent(tmp[ii]);
-                    }
-                });
-                request.swmgMethodPath.parameters.forEach(function (paramDef) {
-                    switch (paramDef.in) {
-                    // parse header param
-                    case 'header':
-                        request.swmgParamDict[paramDef.name] =
-                            request.headers[paramDef.name.toLowerCase()];
+                        // init swmgMethodPath
+                        while (true) {
+                            request.swmgMethodPath =
+                                local.swmg.cacheDict.methodPath[request.swmgPathname];
+                            // if swmgMethodPath exists, then break and continue
+                            if (request.swmgMethodPath) {
+                                onNext();
+                                break;
+                            }
+                            // if cannot init swmgMethodPath, then default to nextMiddleware
+                            if (request.swmgPathname === request.swmgPathnameOld) {
+                                modeNext = Infinity;
+                                onNext();
+                                break;
+                            }
+                            request.swmgPathnameOld = request.swmgPathname;
+                            request.swmgPathname =
+                                request.swmgPathname.replace((/\/[^\/]+?(\/*?)$/), '/$1');
+                        }
                         break;
-                    // parse query param
-                    case 'query':
-                        request.swmgParamDict[paramDef.name] =
-                            request.urlParsed.query[paramDef.name];
+                    case 2:
+                        // init swmgParamDict
+                        request.swmgParamDict = {};
+                        // parse path param
+                        tmp = request.urlParsed.pathname
+                            .replace(local.swmg.swaggerJson.basePath, '').split('/');
+                        request.swmgMethodPath._path.split('/').forEach(function (key, ii) {
+                            if ((/^\{\S*?\}$/).test(key)) {
+                                request.swmgParamDict[key.slice(1, -1)] =
+                                    decodeURIComponent(tmp[ii]);
+                            }
+                        });
+                        request.swmgMethodPath.parameters.forEach(function (paramDef) {
+                            switch (paramDef.in) {
+                            // parse body param
+                            case 'body':
+                                request.swmgParamDict[paramDef.name] =
+                                    request.swmgParamDict[paramDef.name] ||
+                                    request.swmgBodyParsed;
+                                break;
+                            // parse formData param
+                            case 'formData':
+                                request.swmgParamDict[paramDef.name] =
+                                    request.swmgParamDict[paramDef.name] ||
+                                    request.swmgBodyParsed[paramDef.name];
+                                break;
+                            // parse header param
+                            case 'header':
+                                request.swmgParamDict[paramDef.name] =
+                                    request.headers[paramDef.name.toLowerCase()];
+                                break;
+                            // parse query param
+                            case 'query':
+                                request.swmgParamDict[paramDef.name] =
+                                    request.urlParsed.query[paramDef.name];
+                                break;
+                            }
+                            // init default param
+                            request.swmgParamDict[paramDef.name] =
+                                request.swmgParamDict[paramDef.name] || paramDef.default;
+                        });
+                        onNext();
                         break;
+                    case 3:
+                        // normalize params
+                        local.swmg.normalizeParamDictSwagger(request
+                            .swmgParamDict, request.swmgMethodPath);
+                        // validate params
+                        local.swmg.validateByParamDefList({
+                            data: request.swmgParamDict,
+                            key: request.swmgPathname,
+                            paramDefList: request.swmgMethodPath.parameters
+                        });
+                        // run default crud-api
+                        if (request.swmgMethodPath._crudApi) {
+                            local.swmg._crudApi({
+                                collectionName: request.swmgMethodPath._collectionName,
+                                data: request.swmgParamDict,
+                                operationId: request.swmgMethodPath.operationId,
+                                paramDefList: request.swmgMethodPath.parameters,
+                                schemaName: request.swmgMethodPath._schemaName
+                            }, function (error, data) {
+                                if (!error && data) {
+                                    response.end(JSON.stringify(data));
+                                    return;
+                                }
+                                onNext(error);
+                            });
+                            return;
+                        }
+                        onNext();
+                        break;
+                    default:
+                        nextMiddleware(error);
                     }
-                    // init default param
-                    request.swmgParamDict[paramDef.name] =
-                        request.swmgParamDict[paramDef.name] || paramDef.default;
-                });
-                nextMiddleware();
-            }, nextMiddleware);
+                }, nextMiddleware);
+            };
+            onNext();
         };
         break;
     }
@@ -1077,13 +1089,11 @@
                 // http://docs.mongodb.org/manual/reference/operator/aggregation/
                 MongodbAggregationPipeline: {
                     properties: {
-                        $group: {
-                            default: { "_id": "all", "count": { "$sum": 1 } },
-                            type: 'object'
-                        }
+                        $group: { default: { "_id": "all", "count": { "$sum": 1 } } }
                     }
                 },
-                Object: { type: 'object' }
+                Object: { type: 'object' },
+                Undefined: {}
             },
             info: {
                 description: 'demo of swagger-mongodb crud-api',
@@ -1135,7 +1145,7 @@
                 'this.apis = {};',
                 'this.apis = {}; this.swaggerJson = JSON.parse(JSON.stringify(response));'
             )
-            // swagger-hack - disable missingParams valication handling
+            // swagger-hack - disable missingParams validation handling
             .replace(
                 'var missingParams = this.getMissingParams(args);',
                 'var missingParams = [];'
@@ -1149,8 +1159,8 @@
                 '}' +
                 'try {' +
                     'if (window.swmg) {' +
-                        'window.swmg.validateParamDict({' +
-                            'data: window.swmg.normalizeParamSwagger(' +
+                        'window.swmg.validateByParamDefList({' +
+                            'data: window.swmg.normalizeParamDictSwagger(' +
                                 'JSON.parse(JSON.stringify(args)),' +
                                 'this' +
                             '),' +
@@ -1162,6 +1172,7 @@
                     'errorCaught.data =' +
                         'JSON.stringify(window.swmg.normalizeErrorJsonapi(errorCaught));' +
                     'errorCaught.headers = { "Content-Type": "application/json" };' +
+                    'console.error(errorCaught);' +
                     'obj.on.error(errorCaught);' +
                     'return;' +
                 '}' +

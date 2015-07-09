@@ -28,10 +28,11 @@
                 username: options.id
             });
         };
+
         // init tests
         local.testCase_ajax_404 = function (options, onError) {
             /*
-             * this function will test ajax's "404 not found" handling behavior
+             * this function will test ajax's "404 not found" handling-behavior
              */
             // jslint-hack
             local.utility2.nop(options);
@@ -49,7 +50,7 @@
 
         local.testCase_crudCreateXxx_default = function (options, onError) {
             /*
-             * this function will test crudCreateXxx's default handling behavior
+             * this function will test crudCreateXxx's default handling-behavior
              */
             var api, modeNext, onError2, onNext, onParallel;
             if (!options) {
@@ -66,7 +67,8 @@
                         'crudReplaceOne',
                         'crudReplaceOrCreateOne',
                         'crudUpdateOne',
-                        'crudUpdateOrCreateOne'
+                        'crudUpdateOrCreateOne',
+                        'updatePetWithForm'
                     ].forEach(function (operationId) {
                         onParallel.counter += 1;
                         local.testCase_crudCreateXxx_default({
@@ -118,7 +120,7 @@
                     case 2:
                         // validate object does not exist
                         local.utility2.assert(data.obj.data[0] === null, data.obj.data[0]);
-                        // test createXxx's default handling behavior
+                        // test createXxx's default handling-behavior
                         data = local.utility2.jsonCopy(options);
                         api[options.operationId](local.optionsId(data), options, onNext);
                         break;
@@ -127,8 +129,20 @@
                         data = data.obj.data[0];
                         options._timeCreated = data._timeCreated;
                         options._timeModified = data._timeModified;
-                        local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
-                        local.utility2.assert(data.fieldRequired === true, data.fieldRequired);
+                        switch (options.operationId) {
+                        case 'updatePetWithForm':
+                            local.utility2
+                                .assert(data.fieldExtra === undefined, data.fieldExtra);
+                            local.utility2
+                                .assert(data.fieldRequired === undefined, data.fieldRequired);
+                            local.utility2.assert(data.name === options.id, data.name);
+                            local.utility2.assert(data.status === options.id, data.status);
+                            break;
+                        default:
+                            local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                            local.utility2
+                                .assert(data.fieldRequired === true, data.fieldRequired);
+                        }
                         // get object
                         api.crudGetByIdOne(local.optionsId({
                             id: options.id
@@ -145,8 +159,20 @@
                             data._timeModified === options._timeModified,
                             [data._timeModified, options._timeModified]
                         );
-                        local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
-                        local.utility2.assert(data.fieldRequired === true, data.fieldRequired);
+                        switch (options.operationId) {
+                        case 'updatePetWithForm':
+                            local.utility2
+                                .assert(data.fieldExtra === undefined, data.fieldExtra);
+                            local.utility2
+                                .assert(data.fieldRequired === undefined, data.fieldRequired);
+                            local.utility2.assert(data.name === options.id, data.name);
+                            local.utility2.assert(data.status === options.id, data.status);
+                            break;
+                        default:
+                            local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                            local.utility2
+                                .assert(data.fieldRequired === true, data.fieldRequired);
+                        }
                         if (options.modeNoDelete) {
                             onNext();
                             return;
@@ -173,23 +199,25 @@
 
         local.testCase_crudEcho_default = function (options, onError) {
             /*
-             * this function will test crudEcho's default handling behavior
+             * this function will test crudEcho's default handling-behavior
              */
             // jslint-hack
             local.utility2.nop(options);
             local.swmg.api._TestModel.echo({
                 id: 'test_' + local.utility2.uuidTime(),
-                // test array-csv-param handling behavior
+                // test array-csv-param handling-behavior
                 paramArrayCsv: 'aa,bb',
-                // test array-pipes-param handling behavior
+                // test array-pipes-param handling-behavior
                 paramArrayPipes: 'aa|bb',
-                // test array-ssv-param handling behavior
+                // test array-ssv-param handling-behavior
                 paramArraySsv: 'aa bb',
-                // test array-tsv-param handling behavior
+                // test array-tsv-param handling-behavior
                 paramArrayTsv: 'aa\tbb',
-                // test extra-param handling behavior
+                // test body-param handling-behavior
+                paramBody: 'hello!',
+                // test extra-param handling-behavior
                 paramExtra: 'hello',
-                // test header-param handling behavior
+                // test header-param handling-behavior
                 paramHeader: 'hello'
             }, { modeErrorData: true }, function (error, data) {
                 local.utility2.testTryCatch(function () {
@@ -203,6 +231,7 @@
                             paramArrayPipes: ['aa', 'bb'],
                             paramArraySsv: ['aa', 'bb'],
                             paramArrayTsv: ['aa', 'bb'],
+                            paramBody: 'hello!',
                             paramExtra: 'hello',
                             paramExtra2: 'hello',
                             paramHeader: 'hello'
@@ -214,7 +243,7 @@
 
         local.testCase_crudGetXxx_default = function (options, onError) {
             /*
-             * this function will test crudGetXxx's default handling behavior
+             * this function will test crudGetXxx's default handling-behavior
              */
             var api, modeNext, onError2, onNext, onParallel;
             if (!options) {
@@ -227,6 +256,7 @@
                     'user'
                 ].forEach(function (api) {
                     [
+                        'customGetByIdOne',
                         'crudAggregateMany',
                         'crudCountByQueryOne',
                         'crudGetByIdOne',
@@ -319,7 +349,7 @@
 
         local.testCase_crudDeleteById_default = function (options, onError) {
             /*
-             * this function will test crudDeleteById's default handling behavior
+             * this function will test crudDeleteById's default handling-behavior
              */
             var api, modeNext, onNext;
             modeNext = 0;
@@ -364,7 +394,7 @@
 
         local.testCase_crudUpdateXxx_default = function (options, onError) {
             /*
-             * this function will test crudUpdateXxx's default handling behavior
+             * this function will test crudUpdateXxx's default handling-behavior
              */
             var api, modeNext, onError2, onNext, onParallel;
             if (!options) {
@@ -380,7 +410,8 @@
                         'crudReplaceOne',
                         'crudReplaceOrCreateOne',
                         'crudUpdateOne',
-                        'crudUpdateOrCreateOne'
+                        'crudUpdateOrCreateOne',
+                        'updatePetWithForm'
                     ].forEach(function (operationId) {
                         onParallel.counter += 1;
                         local.testCase_crudUpdateXxx_default({
@@ -434,7 +465,7 @@
                     case 2:
                         options._timeCreated = data._timeCreated;
                         options._timeModified = data._timeModified;
-                        // test updateXxx's default handling behavior
+                        // test updateXxx's default handling-behavior
                         data = local.utility2.jsonCopy(options);
                         api[options.operationId](local.optionsId(data), options, onNext);
                         break;
@@ -449,15 +480,25 @@
                             data._timeModified > options._timeModified,
                             [data._timeModified, options._timeModified]
                         );
-                        local.utility2.assert(data.fieldRequired === false, data.fieldRequired);
                         switch (options.operationId) {
                         case 'crudReplaceOne':
                         case 'crudReplaceOrCreateOne':
                             local.utility2
                                 .assert(data.fieldExtra === undefined, data.fieldExtra);
+                            local.utility2
+                                .assert(data.fieldRequired === false, data.fieldRequired);
+                            break;
+                        case 'updatePetWithForm':
+                            local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                            local.utility2
+                                .assert(data.fieldRequired === true, data.fieldRequired);
+                            local.utility2.assert(data.name === options.id, data.name);
+                            local.utility2.assert(data.status === options.id, data.status);
                             break;
                         default:
                             local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                            local.utility2
+                                .assert(data.fieldRequired === false, data.fieldRequired);
                         }
                         // get object
                         api.crudGetByIdOne(local.optionsId({
@@ -475,15 +516,25 @@
                             data._timeModified > options._timeModified,
                             [data._timeModified, options._timeModified]
                         );
-                        local.utility2.assert(data.fieldRequired === false, data.fieldRequired);
                         switch (options.operationId) {
                         case 'crudReplaceOne':
                         case 'crudReplaceOrCreateOne':
                             local.utility2
                                 .assert(data.fieldExtra === undefined, data.fieldExtra);
+                            local.utility2
+                                .assert(data.fieldRequired === false, data.fieldRequired);
+                            break;
+                        case 'updatePetWithForm':
+                            local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                            local.utility2
+                                .assert(data.fieldRequired === true, data.fieldRequired);
+                            local.utility2.assert(data.name === options.id, data.name);
+                            local.utility2.assert(data.status === options.id, data.status);
                             break;
                         default:
                             local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                            local.utility2
+                                .assert(data.fieldRequired === false, data.fieldRequired);
                         }
                         // remove object by id
                         local.testCase_crudDeleteById_default(options, onNext);
@@ -499,7 +550,7 @@
 
         local.testCase_crudXxx_error = function (options, onError) {
             /*
-             * this function will test crudXxx's error handling behavior
+             * this function will test crudXxx's error handling-behavior
              */
             var api, onParallel, optionsCopy;
             onParallel = local.utility2.onParallel(onError);
@@ -510,8 +561,9 @@
             options.paramHeader = '1';
             // init api
             api = local.swmg.api._TestModel;
-            // test undefined api handling behavior
+            // test api-error handling-behavior
             [
+                'errorMiddleware',
                 'errorUndefinedApi',
                 'errorUndefinedCrud'
             ].forEach(function (operationId) {
@@ -527,7 +579,7 @@
                     }, onParallel);
                 });
             });
-            // test low-level ajax handling behavior
+            // test low-level ajax-error handling-behavior
             [{
                 url: '/api/v0/_TestModel/errorUndefined'
             }].forEach(function (options) {
@@ -540,7 +592,7 @@
                     }, onParallel);
                 });
             });
-            // test testCase handling behavior
+            // test testCase-error handling-behavior
             [
                 'testCase_collectionCreate_misc',
                 'testCase_crudAggregateMany_default',
@@ -565,9 +617,9 @@
             onParallel();
         };
 
-        local.testCase_validateParamDict_default = function (options, onError) {
+        local.testCase_validateByParamDefList_default = function (options, onError) {
             /*
-             * this function will test validateParamDict's default handling behavior
+             * this function will test validateByParamDefList's default handling-behavior
              */
             var error;
             // jslint-hack
@@ -584,9 +636,9 @@
                 options.paramDefList = local.swmg.swaggerJson
                     .paths['/_TestModel/' + options.key][options.method]
                     .parameters;
-                local.swmg.validateParamDict(options);
+                local.swmg.validateByParamDefList(options);
             });
-            // test validateParamDict's error handling behavior
+            // test validateByParamDefList's error handling-behavior
             [{
                 data: { body: { fieldRequired: null } },
                 key: 'crudCreateOne',
@@ -601,24 +653,24 @@
                     options.paramDefList = local.swmg.swaggerJson
                         .paths['/_TestModel/' + options.key][options.method]
                         .parameters;
-                    local.swmg.validateParamDict(options);
+                    local.swmg.validateByParamDefList(options);
                 } catch (errorCaught) {
                     error = errorCaught;
                 }
                 // validate error occurred
                 local.utility2.assert(error, error);
             });
-            // test validateProperty's circular-reference handling behavior
-            local.swmg.validateProperty({
+            // test validateByPropertyDef's circular-reference handling-behavior
+            local.swmg.validateByPropertyDef({
                 data: { fieldObject: {} },
                 propertyDef: { fieldObject: { type: 'object' } }
             });
             onError();
         };
 
-        local.testCase_validateSchema_default = function (options, onError) {
+        local.testCase_validateBySchema_default = function (options, onError) {
             /*
-             * this function will test validateSchema's default handling behavior
+             * this function will test validateBySchema's default handling-behavior
              */
             var optionsCopy;
             options = {
@@ -650,18 +702,18 @@
             ].forEach(function (element) {
                 optionsCopy = local.utility2.jsonCopy(options.data);
                 optionsCopy[element.key] = element.value;
-                // test circular-reference handling behavior
+                // test circular-reference handling-behavior
                 optionsCopy.fieldArraySubdoc = optionsCopy.fieldArraySubdoc || [optionsCopy];
                 optionsCopy.fieldObject = optionsCopy.fieldObject || optionsCopy;
                 optionsCopy.fieldObjectSubdoc = optionsCopy.fieldObjectSubdoc || optionsCopy;
-                local.swmg.validateSchema({ data: optionsCopy, schema: options.schema });
+                local.swmg.validateBySchema({ data: optionsCopy, schema: options.schema });
             });
             onError();
         };
 
-        local.testCase_validateSchema_error = function (options, onError) {
+        local.testCase_validateBySchema_error = function (options, onError) {
             /*
-             * this function will test validateSchema's error handling behavior
+             * this function will test validateBySchema's error handling-behavior
              */
             var error, optionsCopy;
             options = {
@@ -698,7 +750,7 @@
                     error = null;
                     optionsCopy = local.utility2.jsonCopy(options.data);
                     optionsCopy[element.key] = element.value;
-                    local.swmg.validateSchema({
+                    local.swmg.validateBySchema({
                         data: element.data === null
                             ? null
                             : optionsCopy,
@@ -713,9 +765,9 @@
             onError();
         };
 
-        local.testCase_validateSwaggerJson_default = function (options, onError) {
+        local.testCase_validateBySwagger_default = function (options, onError) {
             /*
-             * this function will test validateSwaggerJson's default handling behavior
+             * this function will test validateBySwagger's default handling-behavior
              */
             var error;
             // jslint-hack
@@ -726,7 +778,7 @@
             ], function (onError) {
                 [null, {}].forEach(function (element) {
                     try {
-                        local.swmg.validateSwaggerJson(element);
+                        local.swmg.validateBySwagger(element);
                     } catch (errorCaught) {
                         error = errorCaught;
                     }
@@ -746,7 +798,7 @@
         // init tests
         local.testCase_collectionCreate_misc = function (options, onError) {
             /*
-             * this function will test the collectionCreate's misc handling behavior
+             * this function will test the collectionCreate's misc handling-behavior
              */
             var modeNext, onNext;
             modeNext = 0;
@@ -756,27 +808,27 @@
                     : modeNext + 1;
                 switch (modeNext) {
                 case 1:
-                    // test null definition handling behavior
+                    // test null schema handling-behavior
                     local.swmg.collectionCreate({
                         _collectionName: 'SwmgTestMisc',
-                        // test _collectionReadonly handling behavior
+                        // test _collectionReadonly handling-behavior
                         _collectionReadonly: true
                     }, onNext);
                     break;
                 case 2:
                     local.swmg.collectionCreate({
-                        // test _collectionCreate handling behavior
+                        // test _collectionCreate handling-behavior
                         _collectionCreate: {},
-                        // test _collectionDrop handling behavior
+                        // test _collectionDrop handling-behavior
                         _collectionDrop: true,
                         _collectionName: 'SwmgTestMisc'
                     }, onNext);
                     break;
                 case 3:
                     local.swmg.collectionCreate({
-                        // test capped-collection handling behavior
+                        // test capped-collection handling-behavior
                         _collectionCreate: { capped: true, size: 1 },
-                        // test _collectionCreateIndexList handling behavior
+                        // test _collectionCreateIndexList handling-behavior
                         _collectionCreateIndexList: [{
                             key: { fieldIndexed: 1 },
                             name: 'fieldIndexed_1'
@@ -786,7 +838,7 @@
                     break;
                 case 4:
                     local.swmg.collectionCreate({
-                        // test error handling behavior
+                        // test error handling-behavior
                         _collectionCreateIndexList: [],
                         _collectionName: 'SwmgTestMisc'
                     }, function (error) {
@@ -803,9 +855,28 @@
             };
             onNext(options && options.error);
         };
+
+        local.testCase_middlewareBodyParse_misc = function (options, onError) {
+            /*
+             * this function will test middlewareBodyParse's misc handling-behavior
+             */
+            var onParallel;
+            // jslint-hack
+            local.utility2.nop(options);
+            onParallel = local.utility2.onParallel(onError);
+            onParallel.counter += 1;
+            // test swmgBodyParsed exists handling-behavior
+            onParallel.counter += 1;
+            local.swmg.middlewareBodyParse({
+                swmgBodyParsed: {},
+                swmgMethodPath: { parameters: [] }
+            }, {}, onParallel);
+            onParallel();
+        };
+
         local.testCase_testPage_default = function (options, onError) {
             /*
-             * this function will test the test-page's default handling behavior
+             * this function will test the test-page's default handling-behavior
              */
             // jslint-hack
             local.utility2.nop(options);
@@ -823,8 +894,6 @@
 
     // run browser js-env code
     case 'browser':
-        // init modePhantom
-        local.modePhantom = (/\bPhantomJS\b/).test(navigator.userAgent);
         // init swaggerUi
         local.utility2.onReady.counter += 1;
         window.swaggerUi = new window.SwaggerUi({
@@ -847,17 +916,7 @@
 
     // run node js-env code
     case 'node':
-        // init test-middleware
-        local.middleware.middlewareList.push(function (request, response, nextMiddleware) {
-            switch (request.swmgPathname) {
-            case 'GET /_TestModel/echo':
-                response.end(JSON.stringify(request.swmgParamDict));
-                break;
-            default:
-                nextMiddleware();
-            }
-        });
-        // test null apiUpdate handling behavior
+        // test null apiUpdate handling-behavior
         local.swmg.apiUpdate({});
         // init crud-api
         local.swmg.apiUpdate({
@@ -898,20 +957,14 @@
                 TestNullModel: {}
             },
             paths: {
-                // test custom api handling behavior
-                '/_TestModel/echo': { get: {
+                // test custom api handling-behavior
+                '/_TestModel/echo': { post: {
                     _collectionName: 'SwmgTestCrud',
-                    // test extra-param handling behavior
+                    // test extra-param handling-behavior
                     _paramExtraDict: { paramExtra2: '{{paramExtra}}' },
                     operationId: 'echo',
                     parameters: [{
-                        description: 'extra param',
-                        in: 'query',
-                        // test extra-param handling behavior
-                        name: 'paramExtra',
-                        type: 'string'
-                    }, {
-                        // test array-csv-param handling behavior
+                        // test array-csv-param handling-behavior
                         collectionFormat: 'csv',
                         description: 'csv-array param',
                         in: 'query',
@@ -919,7 +972,7 @@
                         name: 'paramArrayCsv',
                         type: 'array'
                     }, {
-                        // test array-pipes-param handling behavior
+                        // test array-pipes-param handling-behavior
                         collectionFormat: 'pipes',
                         description: 'pipes-array param',
                         in: 'query',
@@ -927,7 +980,7 @@
                         name: 'paramArrayPipes',
                         type: 'array'
                     }, {
-                        // test array-ssv-param handling behavior
+                        // test array-ssv-param handling-behavior
                         collectionFormat: 'ssv',
                         description: 'ssv-array param',
                         in: 'query',
@@ -935,7 +988,7 @@
                         name: 'paramArraySsv',
                         type: 'array'
                     }, {
-                        // test array-tsv-param handling behavior
+                        // test array-tsv-param handling-behavior
                         collectionFormat: 'tsv',
                         description: 'tsv-array param',
                         in: 'query',
@@ -943,27 +996,57 @@
                         name: 'paramArrayTsv',
                         type: 'array'
                     }, {
+                        description: 'body',
+                        // test body-param handling-behavior
+                        in: 'body',
+                        name: 'paramBody',
+                        schema: { $ref: '#/definitions/Undefined' }
+                    }, {
+                        description: 'extra param',
+                        in: 'query',
+                        // test extra-param handling-behavior
+                        name: 'paramExtra',
+                        type: 'string'
+                    }, {
                         description: 'header param',
-                        // test header-param handling behavior
+                        // test header-param handling-behavior
                         in: 'header',
                         name: 'paramHeader',
                         type: 'string'
                     }, {
                         description: 'optional param',
                         in: 'query',
-                        // test optional-param handling behavior
+                        // test optional-param handling-behavior
                         name: 'paramOptional',
                         type: 'string'
                     }],
                     summary: 'echo request params back to client',
                     tags: ['_TestModel']
                 } },
-                // test undefined api handling behavior
+                // test custom-api handling-behavior
+                '/_TestModel/customGetByIdOne/{id}': { get: {
+                    _collectionName: 'SwmgTestCrud',
+                    operationId: 'customGetByIdOne',
+                    parameters: [{
+                        description: 'SwmgTestCrud id',
+                        in: 'path',
+                        name: 'id',
+                        required: true,
+                        type: 'string'
+                    }],
+                    tags: ['_TestModel']
+                } },
+                // test midddleware-error handling-behavior
+                '/_TestModel/errorMiddleware': { get: {
+                    operationId: 'errorMiddleware',
+                    tags: ['_TestModel']
+                } },
+                // test undefined api handling-behavior
                 '/_TestModel/errorUndefinedApi': { get: {
                     operationId: 'errorUndefinedApi',
                     tags: ['_TestModel']
                 } },
-                // test undefined crud-api handling behavior
+                // test undefined crud-api handling-behavior
                 '/_TestModel/errorUndefinedCrud': { get: {
                     _collectionName: 'SwmgTestCrud',
                     _crudApi: true,
@@ -976,9 +1059,9 @@
             ]
         });
         // run validation test
-        local.testCase_validateParamDict_default(null, local.utility2.onErrorDefault);
-        local.testCase_validateSchema_default(null, local.utility2.onErrorDefault);
-        local.testCase_validateSwaggerJson_default(null, local.utility2.onErrorDefault);
+        local.testCase_validateByParamDefList_default(null, local.utility2.onErrorDefault);
+        local.testCase_validateBySchema_default(null, local.utility2.onErrorDefault);
+        local.testCase_validateBySwagger_default(null, local.utility2.onErrorDefault);
         // jslint dir
         [
             __dirname

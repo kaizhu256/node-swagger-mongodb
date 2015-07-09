@@ -52,7 +52,7 @@ lightweight swagger-ui crud-api backed by mongodb
 instruction
     1. save this script as example.js
     2. run the shell command:
-          $ npm install swagger-mongodb && \
+          $ npm install swagger-mongodb@2015.7.7-a && \
               npm_config_server_port=1337 node example.js
     3. open a browser to http://localhost:1337
     4. interact with the swagger-ui crud-api
@@ -190,11 +190,29 @@ width="100%" \
         });
         // init middleware
         local.middleware = local.utility2.middlewareGroupCreate([
+            // init pre-middleware
             local.utility2.middlewareInit,
+            // init cached-assets middleware
             local.utility2.middlewareAssetsCached,
-            local.swmg.middlewareHeadParse,
+            // init http-body-get middleware
+            local.utility2.middlewareBodyGet,
+            // init http-body-parse middleware
             local.swmg.middlewareBodyParse,
-            local.swmg.middlewareCrudApi
+            // init swagger pre-middleware
+            function (request, response, nextMiddleware) {
+                local.utility2.serverRespondHeadSet(request, response, null, {
+                    'Access-Control-Allow-Methods':
+                        'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT',
+                    // enable cors
+                    // http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
+                    'Access-Control-Allow-Origin': '*',
+                    // init content-type
+                    'Content-Type': 'application/json; charset=UTF-8'
+                });
+                nextMiddleware();
+            },
+            // init swagger middleware
+            local.swmg.middlewareSwagger
         ]);
         // init error-middleware
         local.middlewareError = local.swmg.middlewareError;
@@ -260,7 +278,7 @@ width="100%" \
                         _id: 'order2',
                         status: 'pending'
                     }, {
-                        _id: 'order3<D-r>',
+                        _id: 'order3',
                         status: 'sold'
                     }],
                     _collectionName: 'SwmgOrder',
@@ -299,6 +317,7 @@ width="100%" \
                     case 'deletePet':
                     case 'getPetById':
                     case 'updatePet':
+                    case 'updatePetWithForm':
                         local.utility2.objectSetDefault(methodPath, { responses: {
                             200: {
                                 description: '200 ok - http://jsonapi.org/format' +
@@ -410,6 +429,49 @@ width="100%" \
                             };
                         }
                         switch (request.swmgPathname) {
+                        // handle _TestModel requests
+                        case 'GET /_TestModel/customGetByIdOne/':
+                            options._crudApi = function (options, onError) {
+                                options.collection.findOne({
+                                    _id: request.swmgParamDict.id
+                                }, function (error, data) {
+                                    onError(error, [data]);
+                                });
+                            };
+                            local.swmg._crudApi(options, onNext);
+                            return;
+                        case 'POST /_TestModel/echo':
+                            response.end(JSON.stringify(request.swmgParamDict));
+                            return;
+                        case 'GET /_TestModel/errorMiddleware':
+                            onNext(new Error('dummy error'));
+                            return;
+                        // handle pet requests
+                        case 'GET /pet/findByStatus':
+                        case 'GET /pet/findByTags':
+                            options.operationId = 'crudGetByQueryMany';
+                            local.swmg._crudApi(options, onNext);
+                            return;
+                        case 'POST /pet/':
+                            options.operationId = 'crudUpdateOrCreateOne';
+                            local.swmg._crudApi(options, onNext);
+                            return;
+                        //!! case 'POST /pet//':
+                            //!! options.data.file = local.utility2.uuidTime();
+                            //!! options.operationId = 'crudUpdateOrCreateOne';
+                            //!! local.swmg._crudApi(options, onNext);
+                            //!! return;
+                        // handle store requests
+                        case 'GET /store/inventory':
+                            options.data = { body: [{
+                                $group: { _id: '$status', total: { $sum: 1} }
+                            }, {
+                                $project: { _id: 0, status: '$_id', total: '$total' }
+                            }]};
+                            options.operationId = 'crudAggregateMany';
+                            local.swmg._crudApi(options, onNext);
+                            return;
+                        // handle user requests
                         case 'DELETE /user/':
                         case 'GET /user/':
                         case 'POST /user':
@@ -422,24 +484,12 @@ width="100%" \
                             options.optionsId = { username: request.swmgParamDict.username};
                             local.swmg._crudApi(options, onNext);
                             return;
-                        case 'GET /pet/findByStatus':
-                        case 'GET /pet/findByTags':
-                            options.operationId = 'crudGetByQueryMany';
-                            local.swmg._crudApi(options, onNext);
-                            return;
-                        case 'GET /store/inventory':
-                            options.operationId = 'crudAggregateMany';
-                            options.data = { body: [{
-                                $group: { _id: '$status', total: { $sum: 1} }
-                            }, {
-                                $project: { _id: 0, status: '$_id', total: '$total' }
-                            }]};
-                            local.swmg._crudApi(options, onNext);
-                            return;
                         }
                         break;
                     default:
-                        response.end(JSON.stringify(error || data));
+                        // validate no error occurred
+                        local.utility2.assert(!error, error);
+                        response.end(JSON.stringify(data));
                         return;
                     }
                     nextMiddleware();
@@ -512,14 +562,13 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.7.6"
+    "version": "2015.7.7-a"
 }
 ```
 
 
 
 # todo
-- add api-endpoint POST http://localhost:8080/api/v0/pet/{petId}
 - add api-endpoint POST http://localhost:8080/api/v0/pet/{petId}/uploadImage
 - add api-endpoint POST http://localhost:8080/api/v0/user/createWithArray
 - add api-endpoint POST http://localhost:8080/api/v0/user/createWithList
@@ -532,13 +581,12 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 12663df4
-- npm publish 2015.7.6
-- split middleware into middlewareHeadParse, middlewareBodyParse, middlewareCrudApi
-- rename property to propertyDef
-- rename parameter to param
-- disable online validation
-- add client-side param validation
+# change since 3ab1eec2
+- npm publish 2015.7.7-a
+- revamp middleware sequence to [swmg.middlewareBodyParse, swmg.middlewareSwagger, swmg.middlewareError]
+- add api-endpoint POST http://localhost:8080/api/v0/pet/{petId}
+- rename normalizeParamSwagger to normalizeParamDictSwagger
+- rename validate* to validateBy*
 - none
 
 
@@ -565,11 +613,11 @@ shBuild() {
     # run npm-test on published package
     shRun shNpmTestPublished || return $?
 
-    # test example js script
-    export npm_config_timeout_exit=10000 || return $?
-    MODE_BUILD=testExampleJs \
-        shRunScreenCapture shReadmeTestJs example.js || return $?
-    unset npm_config_timeout_exit || return $?
+    #!! # test example js script
+    #!! export npm_config_timeout_exit=10000 || return $?
+    #!! MODE_BUILD=testExampleJs \
+        #!! shRunScreenCapture shReadmeTestJs example.js || return $?
+    #!! unset npm_config_timeout_exit || return $?
 
     # run npm-test
     MODE_BUILD=npmTest shRunScreenCapture npm test || return $?
