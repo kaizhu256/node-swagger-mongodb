@@ -164,7 +164,8 @@
                     });
                 });
             } catch (errorCaught) {
-                local.utility2.errorMessagePrepend('"' + options.key + '.' + key + '" - ');
+                local.utility2.errorMessagePrepend(errorCaught, '"' + options.key + '.' + key +
+                    '" - ');
                 throw errorCaught;
             }
         };
@@ -209,12 +210,16 @@
                 }
                 options.circularList.push(data);
             }
+            // validate embedded in propertyDef.schema.type
+            if (!propertyDef.type && propertyDef.schema && propertyDef.schema.type) {
+                propertyDef = propertyDef.schema;
+            }
             // validate propertyDef.type
             // https://github.com/swagger-api/swagger-spec/blob/master/versions/2.0.md
             // #data-types
             switch (propertyDef.type) {
             case 'array':
-                assert(Array.isArray(data));
+                assert(Array.isArray(data) && propertyDef.items);
                 // recurse - validate elements in list
                 data.forEach(function (element) {
                     local.swmg.validateByPropertyDef({
@@ -318,7 +323,8 @@
                     });
                 });
             } catch (errorCaught) {
-                local.utility2.errorMessagePrepend('"' + options.key + '.' + key + '" - ');
+                local.utility2.errorMessagePrepend(errorCaught, '"' + options.key + '.' + key +
+                    '" - ');
                 throw errorCaught;
             }
         };
@@ -840,17 +846,6 @@
                     request.swmgBodyParsed =
                         local.url.parse('?' + request.swmgBodyParsed, true).query;
                     break;
-                //!! case 'multipart/form-data':
-                    //!! tmp = request.swmgBodyParsed;
-                    //!! request.swmgBodyParsed = {};
-                    //!! tmp.split(
-                        //!! '--' + (/boundary=(.*)/).exec(request.headers['content-type'])[1]
-                    //!! ).slice(1, -1).forEach(function (part) {
-                        //!! request.swmgBodyParsed[
-                            //!! (/\bname="([^"]*)/).exec(part)[1]
-                        //!! ] = part.split('\r\n\r\n').slice(1).join('\r\n\r\n').slice(0, -2);
-                    //!! });
-                    //!! break;
                 default:
                     try {
                         request.swmgBodyParsed = JSON.parse(request.swmgBodyParsed);

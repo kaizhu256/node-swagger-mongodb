@@ -36,8 +36,8 @@
              */
             // jslint-hack
             local.utility2.nop(options);
-            // test '/_TestModel/undefined'
-            local.utility2.ajax({ url: '/_TestModel/undefined' }, function (error) {
+            // test '/_test/undefined'
+            local.utility2.ajax({ url: '/_test/undefined' }, function (error) {
                 local.utility2.testTryCatch(function () {
                     // validate error occurred
                     local.utility2.assert(error, error);
@@ -46,6 +46,92 @@
                     onError();
                 }, onError);
             });
+        };
+
+        local.testCase_crudCreateManyXxx_default = function (options, onError) {
+            /*
+             * this function will test crudCreateManyXxx's default handling-behavior
+             */
+            var api, modeNext, onError2, onNext, onParallel;
+            if (!options) {
+                onParallel = local.utility2.onParallel(onError);
+                onParallel.counter += 1;
+                [
+                    '',
+                    'user'
+                ].forEach(function (api) {
+                    [
+                        'createUsersWithArrayInput',
+                        'createUsersWithListInput'
+                    ].forEach(function (operationId) {
+                        onParallel.counter += 1;
+                        local.testCase_crudCreateManyXxx_default({
+                            api: api,
+                            id: 'test_' + local.utility2.uuidTime(),
+                            operationId: operationId
+                        }, onParallel);
+                    });
+                });
+                onParallel();
+                return;
+            }
+            onError2 = function (error, data) {
+                if (error) {
+                    // update error.message
+                    local.utility2.errorMessagePrepend(error, options.api + '.' +
+                        options.operationId + ' - ');
+                }
+                onError(error, data);
+            };
+            modeNext = 0;
+            onNext = function (error, data) {
+                local.utility2.testTryCatch(function () {
+                    modeNext = error
+                        ? Infinity
+                        : modeNext + 1;
+                    switch (modeNext) {
+                    case 1:
+                        // init options
+                        options.body = [
+                            local.optionsId({ id: options.id + '0' }),
+                            local.optionsId({ id: options.id + '1' })
+                        ];
+                        options.modeErrorData = true;
+                        // init api
+                        options.api = options.api || '_test';
+                        api = local.swmg.api[options.api];
+                        // if api does not have the operation, then skip testCase
+                        if (!api[options.operationId]) {
+                            onError2();
+                            return;
+                        }
+                        // test crudCreateManyXxx's default handling-behavior
+                        data = local.utility2.jsonCopy(options);
+                        api[options.operationId](local.optionsId(data), options, onNext);
+                        break;
+                    case 2:
+                        onParallel = local.utility2.onParallel(onError);
+                        onParallel.counter += 1;
+                        // validate object
+                        local.utility2.assert(data.obj.data.length === 2, data.obj.data.length);
+                        data.obj.data.forEach(function (data) {
+                            local.utility2.assert(
+                                data.id === options.id + '0' || data.id === options.id + '1',
+                                [data.id, options.id]
+                            );
+                            // remove object by id
+                            onParallel.counter += 1;
+                            local.testCase_crudDeleteById_default(options, onParallel);
+                        });
+                        onParallel();
+                        break;
+                    default:
+                        onError2(error);
+                        break;
+                    }
+                }, onError2);
+            };
+            onNext(options && options.error);
         };
 
         local.testCase_crudCreateXxx_default = function (options, onError) {
@@ -105,7 +191,7 @@
                         });
                         options.modeErrorData = true;
                         // init api
-                        options.api = options.api || '_TestModel';
+                        options.api = options.api || '_test';
                         api = local.swmg.api[options.api];
                         // if api does not have the operation, then skip testCase
                         if (!api[options.operationId]) {
@@ -203,7 +289,7 @@
              */
             // jslint-hack
             local.utility2.nop(options);
-            local.swmg.api._TestModel.echo({
+            local.swmg.api._test.echo({
                 id: 'test_' + local.utility2.uuidTime(),
                 // test array-csv-param handling-behavior
                 paramArrayCsv: 'aa,bb',
@@ -223,7 +309,7 @@
                 local.utility2.testTryCatch(function () {
                     // validate no error occurred
                     local.utility2.assert(!error, error);
-                    // validate data
+                    // validate object
                     data = data.obj;
                     local.utility2.assert(local.utility2
                         .jsonStringifyOrdered(data) === JSON.stringify({
@@ -300,7 +386,7 @@
                         options.modeErrorData = true;
                         options.query = JSON.stringify({ id: options.id });
                         // init api
-                        options.api = options.api || '_TestModel';
+                        options.api = options.api || '_test';
                         api = local.swmg.api[options.api];
                         // if api does not have the operation, then skip testCase
                         if (!api[options.operationId]) {
@@ -365,7 +451,7 @@
                         options.id = options.id || local.utility2.uuidTime();
                         options.modeErrorData = true;
                         // init api
-                        options.api = options.api || '_TestModel';
+                        options.api = options.api || '_test';
                         api = local.swmg.api[options.api];
                         // remove object by id
                         api.crudDeleteByIdOne(local.optionsId({
@@ -447,7 +533,7 @@
                         });
                         options.modeErrorData = true;
                         // init api
-                        options.api = options.api || '_TestModel';
+                        options.api = options.api || '_test';
                         api = local.swmg.api[options.api];
                         // if api does not have the operation, then skip testCase
                         if (!api[options.operationId]) {
@@ -548,6 +634,99 @@
             onNext(options && options.error);
         };
 
+        local.testCase_crudUploadFile_default = function (options, onError) {
+            /*
+             * this function will test crudUploadFile's default handling-behavior
+             */
+            var api, modeNext, onNext;
+            modeNext = 0;
+            onNext = function (error, data) {
+                local.utility2.testTryCatch(function () {
+                    modeNext = error
+                        ? Infinity
+                        : modeNext + 1;
+                    switch (modeNext) {
+                    case 1:
+                        // init options
+                        options = options || {};
+                        options.id = options.id || local.utility2.uuidTime();
+                        options.modeErrorData = true;
+                        // init api
+                        options.api = 'pet';
+                        api = local.swmg.api[options.api];
+                        // create object
+                        local.testCase_crudCreateXxx_default({
+                            api: options.api,
+                            id: options.id,
+                            modeNoDelete: true,
+                            operationId: 'crudCreateOne'
+                        }, onNext);
+                        break;
+                    case 2:
+                        options._timeCreated = data._timeCreated;
+                        options._timeModified = data._timeModified;
+                        // test file-upload handling-behavior
+                        local.utility2.ajax({
+/* jslint-ignore-begin */
+                            data: '------FormBoundaryXxx\r\nContent-Disposition: form-data; name="additionalMetadata"\r\n\r\nhello\r\n------FormBoundaryXxx\r\nContent-Disposition: form-data; name="file"; filename="hello.png"\r\nContent-Type: image/png\r\n\r\ndata\r\n------FormBoundaryXxx--\r\n',
+/* jslint-ignore-end */
+                            headers: {
+                                'Content-Type':
+                                    'multipart/form-data; boundary=----FormBoundaryXxx'
+                            },
+                            method: 'POST',
+                            url: '/api/v0/pet/' + options.id + '/uploadImage'
+                        }, onNext);
+                        break;
+                    case 3:
+                        // validate object
+                        data = JSON.parse(data.responseText).data[0];
+                        local.utility2.assert(
+                            data._timeCreated === options._timeCreated,
+                            [data._timeCreated, options._timeCreated]
+                        );
+                        local.utility2.assert(
+                            data._timeModified > options._timeModified,
+                            [data._timeModified, options._timeModified]
+                        );
+                        local.utility2.assert(
+                            data.additionalMetadata === 'hello',
+                            data.additionalMetadata
+                        );
+                        local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                        local.utility2.assert(data.file === 'ZGF0YQ==', data.fieldExtra);
+                        local.utility2
+                            .assert(data.fieldRequired === true, data.fieldRequired);
+                        local.utility2.assert(data.filename === 'hello.png', data.filename);
+                        local.utility2.assert(data.petId === options.id, data.petId);
+                        // get object
+                        api.crudGetByIdOne(local.optionsId({
+                            id: options.id
+                        }), options, onNext);
+                        break;
+                    case 4:
+                        // validate object
+                        data = data.obj.data[0];
+                        local.utility2.assert(
+                            data._timeCreated === options._timeCreated,
+                            [data._timeCreated, options._timeCreated]
+                        );
+                        local.utility2.assert(
+                            data._timeModified > options._timeModified,
+                            [data._timeModified, options._timeModified]
+                        );
+                        // remove object by id
+                        local.testCase_crudDeleteById_default(options, onNext);
+                        break;
+                    default:
+                        onError(error);
+                        break;
+                    }
+                }, onError);
+            };
+            onNext(options && options.error);
+        };
+
         local.testCase_crudXxx_error = function (options, onError) {
             /*
              * this function will test crudXxx's error handling-behavior
@@ -560,7 +739,7 @@
             options.modeErrorData = true;
             options.paramHeader = '1';
             // init api
-            api = local.swmg.api._TestModel;
+            api = local.swmg.api._test;
             // test api-error handling-behavior
             [
                 'errorMiddleware',
@@ -581,7 +760,7 @@
             });
             // test low-level ajax-error handling-behavior
             [{
-                url: '/api/v0/_TestModel/errorUndefined'
+                url: '/api/v0/_test/errorUndefined'
             }].forEach(function (options) {
                 onParallel.counter += 1;
                 local.utility2.ajax(options, function (error) {
@@ -596,10 +775,12 @@
             [
                 'testCase_collectionCreate_misc',
                 'testCase_crudAggregateMany_default',
+                'testCase_crudCreateManyXxx_default',
                 'testCase_crudCreateXxx_default',
                 'testCase_crudGetXxx_default',
                 'testCase_crudDeleteById_default',
-                'testCase_crudUpdateXxx_default'
+                'testCase_crudUpdateXxx_default',
+                'testCase_crudUploadFile_default'
             ].forEach(function (testCase) {
                 if (local[testCase]) {
                     onParallel.counter += 1;
@@ -634,7 +815,7 @@
                 method: 'get'
             }].forEach(function (options) {
                 options.paramDefList = local.swmg.swaggerJson
-                    .paths['/_TestModel/' + options.key][options.method]
+                    .paths['/_test/' + options.key][options.method]
                     .parameters;
                 local.swmg.validateByParamDefList(options);
             });
@@ -651,7 +832,7 @@
                 try {
                     error = null;
                     options.paramDefList = local.swmg.swaggerJson
-                        .paths['/_TestModel/' + options.key][options.method]
+                        .paths['/_test/' + options.key][options.method]
                         .parameters;
                     local.swmg.validateByParamDefList(options);
                 } catch (errorCaught) {
@@ -918,146 +1099,6 @@
     case 'node':
         // test null apiUpdate handling-behavior
         local.swmg.apiUpdate({});
-        // init crud-api
-        local.swmg.apiUpdate({
-            definitions: {
-                TestCrudModel: {
-                    _collectionDrop: true,
-                    _collectionName: 'SwmgTestCrud',
-                    _crudApi: '_TestModel',
-                    properties: {
-                        fieldArray: { items: {}, type: 'array' },
-                        fieldArraySubdoc: {
-                            default: [{ fieldRequired: true }],
-                            items: { $ref: '#/definitions/TestCrudModel' },
-                            type: 'array'
-                        },
-                        fieldBoolean: { type: 'boolean' },
-                        fieldInteger: { type: 'integer' },
-                        fieldIntegerInt32: { format: 'int32', type: 'integer' },
-                        fieldIntegerInt64: { format: 'int64', type: 'integer' },
-                        fieldNumber: { type: 'number' },
-                        fieldNumberDouble: { format: 'double', type: 'number' },
-                        fieldNumberFloat: { format: 'float', type: 'number' },
-                        fieldObject: { type: 'object' },
-                        fieldObjectSubdoc: { $ref: '#/definitions/TestNullModel' },
-                        fieldRequired: { default: true },
-                        fieldString: { type: 'string' },
-                        fieldStringByte: { format: 'byte', type: 'string' },
-                        fieldStringDate: { format: 'date', type: 'string' },
-                        fieldStringDatetime: { format: 'date-time', type: 'string' },
-                        fieldStringEmail:
-                            { default: 'a@a.com', format: 'email', type: 'string' },
-                        fieldStringJson: { default: 'null', format: 'json', type: 'string' },
-                        fieldUndefined: {}
-                    },
-                    required: ['fieldRequired'],
-                    'x-inheritList': [{ $ref: '#/definitions/JsonapiResource' }]
-                },
-                TestNullModel: {}
-            },
-            paths: {
-                // test custom api handling-behavior
-                '/_TestModel/echo': { post: {
-                    _collectionName: 'SwmgTestCrud',
-                    // test extra-param handling-behavior
-                    _paramExtraDict: { paramExtra2: '{{paramExtra}}' },
-                    operationId: 'echo',
-                    parameters: [{
-                        // test array-csv-param handling-behavior
-                        collectionFormat: 'csv',
-                        description: 'csv-array param',
-                        in: 'query',
-                        items: { type: 'string' },
-                        name: 'paramArrayCsv',
-                        type: 'array'
-                    }, {
-                        // test array-pipes-param handling-behavior
-                        collectionFormat: 'pipes',
-                        description: 'pipes-array param',
-                        in: 'query',
-                        items: { type: 'string' },
-                        name: 'paramArrayPipes',
-                        type: 'array'
-                    }, {
-                        // test array-ssv-param handling-behavior
-                        collectionFormat: 'ssv',
-                        description: 'ssv-array param',
-                        in: 'query',
-                        items: { type: 'string' },
-                        name: 'paramArraySsv',
-                        type: 'array'
-                    }, {
-                        // test array-tsv-param handling-behavior
-                        collectionFormat: 'tsv',
-                        description: 'tsv-array param',
-                        in: 'query',
-                        items: { type: 'string' },
-                        name: 'paramArrayTsv',
-                        type: 'array'
-                    }, {
-                        description: 'body',
-                        // test body-param handling-behavior
-                        in: 'body',
-                        name: 'paramBody',
-                        schema: { $ref: '#/definitions/Undefined' }
-                    }, {
-                        description: 'extra param',
-                        in: 'query',
-                        // test extra-param handling-behavior
-                        name: 'paramExtra',
-                        type: 'string'
-                    }, {
-                        description: 'header param',
-                        // test header-param handling-behavior
-                        in: 'header',
-                        name: 'paramHeader',
-                        type: 'string'
-                    }, {
-                        description: 'optional param',
-                        in: 'query',
-                        // test optional-param handling-behavior
-                        name: 'paramOptional',
-                        type: 'string'
-                    }],
-                    summary: 'echo request params back to client',
-                    tags: ['_TestModel']
-                } },
-                // test custom-api handling-behavior
-                '/_TestModel/customGetByIdOne/{id}': { get: {
-                    _collectionName: 'SwmgTestCrud',
-                    operationId: 'customGetByIdOne',
-                    parameters: [{
-                        description: 'SwmgTestCrud id',
-                        in: 'path',
-                        name: 'id',
-                        required: true,
-                        type: 'string'
-                    }],
-                    tags: ['_TestModel']
-                } },
-                // test midddleware-error handling-behavior
-                '/_TestModel/errorMiddleware': { get: {
-                    operationId: 'errorMiddleware',
-                    tags: ['_TestModel']
-                } },
-                // test undefined api handling-behavior
-                '/_TestModel/errorUndefinedApi': { get: {
-                    operationId: 'errorUndefinedApi',
-                    tags: ['_TestModel']
-                } },
-                // test undefined crud-api handling-behavior
-                '/_TestModel/errorUndefinedCrud': { get: {
-                    _collectionName: 'SwmgTestCrud',
-                    _crudApi: true,
-                    operationId: 'errorUndefinedCrud',
-                    tags: ['_TestModel']
-                } }
-            },
-            tags: [
-                { description: 'internal test model', name: '_TestModel' }
-            ]
-        });
         // run validation test
         local.testCase_validateByParamDefList_default(null, local.utility2.onErrorDefault);
         local.testCase_validateBySchema_default(null, local.utility2.onErrorDefault);

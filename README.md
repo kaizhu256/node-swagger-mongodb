@@ -52,7 +52,7 @@ lightweight swagger-ui crud-api backed by mongodb
 instruction
     1. save this script as example.js
     2. run the shell command:
-          $ npm install swagger-mongodb@2015.7.7-a && \
+          $ npm install swagger-mongodb && \
               npm_config_server_port=1337 node example.js
     3. open a browser to http://localhost:1337
     4. interact with the swagger-ui crud-api
@@ -64,6 +64,7 @@ instruction
     maxlen: 96,
     node: true,
     nomen: true,
+    regexp: true,
     stupid: true
 */
 
@@ -196,6 +197,45 @@ width="100%" \
             local.utility2.middlewareAssetsCached,
             // init http-body-get middleware
             local.utility2.middlewareBodyGet,
+            // init http-body-parse-upload middleware
+            function (request, response, nextMiddleware) {
+                var boundary, bodyText;
+                // jslint-hack
+                local.utility2.nop(response);
+                local.utility2.testTryCatch(function () {
+                    if ((request.headers['content-type'] || '')
+                            .indexOf('multipart/form-data') !== 0) {
+                        nextMiddleware();
+                        return;
+                    }
+                    boundary =
+                        '--' + (/boundary=(.*)/).exec(request.headers['content-type'])[1];
+                    request.swmgBodyParsed = {};
+                    bodyText = String(request.bodyRaw);
+                    bodyText.split(boundary).slice(1, -1).forEach(function (part) {
+                        request.swmgBodyParsed[
+                            (/\bname="([^"]*)/).exec(part)[1]
+                        ] = part.split('\r\n\r\n').slice(1).join('\r\n\r\n').slice(0, -2);
+                    });
+                    // set file
+                    bodyText.replace('\r\n\r\n', function (match0, ii) {
+                        // jslint-hack
+                        local.utility2.nop(match0);
+                        request.swmgBodyParsed.file = request.bodyRaw
+                            .slice(ii + 4, -(boundary.length + 6))
+                            .toString('base64');
+                    });
+                    request.swmgBodyParsed.file = request.bodyRaw
+                        .slice(bodyText.lastIndexOf('\r\n\r\n') + 4, -(boundary.length + 6))
+                        .toString('base64');
+                    // set filename
+                    request.swmgBodyParsed.filename = (/\bfilename="([^"]+)/).exec(bodyText);
+                    request.swmgBodyParsed.filename =
+                        request.swmgBodyParsed.filename &&
+                        request.swmgBodyParsed.filename[1];
+                    nextMiddleware();
+                }, nextMiddleware);
+            },
             // init http-body-parse middleware
             local.swmg.middlewareBodyParse,
             // init swagger pre-middleware
@@ -235,78 +275,251 @@ width="100%" \
                 schema.properties.id = { type: 'string' };
                 schema['x-inheritList'] = [{ $ref: '#/definitions/JsonapiResource' }];
             });
-            // init mongodb collection
-            local.utility2.objectSetOverride(options, { definitions: {
-                Pet: {
-                    // drop collection on init
-                    _collectionDrop: true,
-                    // replace or create fixtures
-                    _collectionFixtureList: [{
-                        id: 'pet1',
-                        name: 'doggie',
-                        photoUrls: [],
-                        status: 'available',
-                        tags: [{ name: 'dog'}]
-                    }, {
-                        id: 'pet2',
-                        name: 'kittie',
-                        photoUrls: [],
-                        status: 'pending',
-                        tags: [{ name: 'cat'}]
-                    }, {
-                        id: 'pet3',
-                        name: 'birdie',
-                        photoUrls: [],
-                        status: 'sold',
-                        tags: [{ name: 'bird'}]
-                    }],
-                    _collectionName: 'SwmgPet'
-                },
-                Order: {
-                    // create index
-                    _collectionCreateIndexList: [{
-                        key: { status: 1 },
-                        name: 'status_1'
-                    }],
-                    // drop collection on init
-                    _collectionDrop: true,
-                    // replace or create fixtures
-                    _collectionFixtureList: [{
-                        _id: 'order1',
-                        status: 'available'
-                    }, {
-                        _id: 'order2',
-                        status: 'pending'
-                    }, {
-                        _id: 'order3',
-                        status: 'sold'
-                    }],
-                    _collectionName: 'SwmgOrder',
-                    properties: {
-                        petId: { type: 'string' }
+            local.utility2.objectSetOverride(options, {
+                definitions: {
+                    // update Pet schema
+                    Pet: {
+                        // drop collection on init
+                        _collectionDrop: true,
+                        // replace or create fixtures
+                        _collectionFixtureList: [{
+                            id: 'pet1',
+                            name: 'doggie',
+                            photoUrls: [],
+                            status: 'available',
+                            tags: [{ name: 'dog'}]
+                        }, {
+                            id: 'pet2',
+                            name: 'kittie',
+                            photoUrls: [],
+                            status: 'pending',
+                            tags: [{ name: 'cat'}]
+                        }, {
+                            id: 'pet3',
+                            name: 'birdie',
+                            photoUrls: [],
+                            status: 'sold',
+                            tags: [{ name: 'bird'}]
+                        }],
+                        _collectionName: 'SwmgPet'
+                    },
+                    // update Order schema
+                    Order: {
+                        // create index
+                        _collectionCreateIndexList: [{
+                            key: { status: 1 },
+                            name: 'status_1'
+                        }],
+                        // drop collection on init
+                        _collectionDrop: true,
+                        // replace or create fixtures
+                        _collectionFixtureList: [{
+                            _id: 'order1',
+                            status: 'available'
+                        }, {
+                            _id: 'order2',
+                            status: 'pending'
+                        }, {
+                            _id: 'order3',
+                            status: 'sold'
+                        }],
+                        _collectionName: 'SwmgOrder',
+                        properties: {
+                            petId: { type: 'string' }
+                        }
+                    },
+                    // init TestCrudModel schema
+                    TestCrudModel: {
+                        _collectionDrop: true,
+                        _collectionName: 'SwmgTestCrud',
+                        _crudApi: '_test',
+                        properties: {
+                            fieldArray: { items: {}, type: 'array' },
+                            fieldArraySubdoc: {
+                                default: [{ fieldRequired: true }],
+                                items: { $ref: '#/definitions/TestCrudModel' },
+                                type: 'array'
+                            },
+                            fieldBoolean: { type: 'boolean' },
+                            fieldInteger: { type: 'integer' },
+                            fieldIntegerInt32: { format: 'int32', type: 'integer' },
+                            fieldIntegerInt64: { format: 'int64', type: 'integer' },
+                            fieldNumber: { type: 'number' },
+                            fieldNumberDouble: { format: 'double', type: 'number' },
+                            fieldNumberFloat: { format: 'float', type: 'number' },
+                            fieldObject: { type: 'object' },
+                            fieldObjectSubdoc: { $ref: '#/definitions/TestNullModel' },
+                            fieldRequired: { default: true },
+                            fieldString: { type: 'string' },
+                            fieldStringByte: { format: 'byte', type: 'string' },
+                            fieldStringDate: { format: 'date', type: 'string' },
+                            fieldStringDatetime: { format: 'date-time', type: 'string' },
+                            fieldStringEmail:
+                                { default: 'a@a.com', format: 'email', type: 'string' },
+                            fieldStringJson:
+                                { default: 'null', format: 'json', type: 'string' },
+                            fieldUndefined: {}
+                        },
+                        required: ['fieldRequired'],
+                        'x-inheritList': [{ $ref: '#/definitions/JsonapiResource' }]
+                    },
+                    // init TestNullModel schema
+                    TestNullModel: {},
+                    // update User schema
+                    User: {
+                        // create index
+                        _collectionCreateIndexList: [{
+                            key: { username: 1 },
+                            name: 'username_1',
+                            unique: true
+                        }],
+                        // drop collection on init
+                        _collectionDrop: true,
+                        _collectionName: 'SwmgUser'
                     }
                 },
-                User: {
-                    // create index
-                    _collectionCreateIndexList: [{
-                        key: { username: 1 },
-                        name: 'username_1',
-                        unique: true
-                    }],
-                    // drop collection on init
-                    _collectionDrop: true,
-                    _collectionName: 'SwmgUser'
-                }
-            } }, 4);
+                // init default crud-api
+                paths: {
+                    '/pet/crudGetByQueryMany': { get: {
+                        _collectionName: 'SwmgPet',
+                        _crudApi: 'pet',
+                        _schemaName: 'Pet',
+                        operationId: 'crudGetByQueryMany',
+                        tags: ['pet']
+                    } },
+                    '/store/crudGetByQueryMany': { get: {
+                        _collectionName: 'SwmgOrder',
+                        _crudApi: 'store',
+                        _schemaName: 'Order',
+                        operationId: 'crudGetByQueryMany',
+                        tags: ['store']
+                    } },
+                    '/user/crudGetByQueryMany': { get: {
+                        _collectionName: 'SwmgUser',
+                        _crudApi: 'user',
+                        _schemaName: 'User',
+                        operationId: 'crudGetByQueryMany',
+                        tags: ['user']
+                    } },
+                    // test custom-api handling-behavior
+                    '/_test/customGetByIdOne/{id}': { get: {
+                        _collectionName: 'SwmgTestCrud',
+                        operationId: 'customGetByIdOne',
+                        parameters: [{
+                            description: 'SwmgTestCrud id',
+                            in: 'path',
+                            name: 'id',
+                            required: true,
+                            type: 'string'
+                        }],
+                        tags: ['_test']
+                    } },
+                    // test custom api handling-behavior
+                    '/_test/echo': { post: {
+                        _collectionName: 'SwmgTestCrud',
+                        // test extra-param handling-behavior
+                        _paramExtraDict: { paramExtra2: '{{paramExtra}}' },
+                        operationId: 'echo',
+                        parameters: [{
+                            // test array-csv-param handling-behavior
+                            collectionFormat: 'csv',
+                            description: 'csv-array param',
+                            in: 'query',
+                            items: { type: 'string' },
+                            name: 'paramArrayCsv',
+                            type: 'array'
+                        }, {
+                            // test array-pipes-param handling-behavior
+                            collectionFormat: 'pipes',
+                            description: 'pipes-array param',
+                            in: 'query',
+                            items: { type: 'string' },
+                            name: 'paramArrayPipes',
+                            type: 'array'
+                        }, {
+                            // test array-ssv-param handling-behavior
+                            collectionFormat: 'ssv',
+                            description: 'ssv-array param',
+                            in: 'query',
+                            items: { type: 'string' },
+                            name: 'paramArraySsv',
+                            type: 'array'
+                        }, {
+                            // test array-tsv-param handling-behavior
+                            collectionFormat: 'tsv',
+                            description: 'tsv-array param',
+                            in: 'query',
+                            items: { type: 'string' },
+                            name: 'paramArrayTsv',
+                            type: 'array'
+                        }, {
+                            description: 'body',
+                            // test body-param handling-behavior
+                            in: 'body',
+                            name: 'paramBody',
+                            schema: { $ref: '#/definitions/Undefined' }
+                        }, {
+                            description: 'extra param',
+                            in: 'query',
+                            // test extra-param handling-behavior
+                            name: 'paramExtra',
+                            type: 'string'
+                        }, {
+                            description: 'header param',
+                            // test header-param handling-behavior
+                            in: 'header',
+                            name: 'paramHeader',
+                            type: 'string'
+                        }, {
+                            description: 'optional param',
+                            in: 'query',
+                            // test optional-param handling-behavior
+                            name: 'paramOptional',
+                            type: 'string'
+                        }],
+                        summary: 'echo request params back to client',
+                        tags: ['_test']
+                    } },
+                    // test midddleware-error handling-behavior
+                    '/_test/errorMiddleware': { get: {
+                        operationId: 'errorMiddleware',
+                        tags: ['_test']
+                    } },
+                    // test undefined api handling-behavior
+                    '/_test/errorUndefinedApi': { get: {
+                        operationId: 'errorUndefinedApi',
+                        tags: ['_test']
+                    } },
+                    // test undefined crud-api handling-behavior
+                    '/_test/errorUndefinedCrud': { get: {
+                        _collectionName: 'SwmgTestCrud',
+                        _crudApi: true,
+                        operationId: 'errorUndefinedCrud',
+                        tags: ['_test']
+                    } }
+                },
+                tags: [
+                    { description: 'internal test api', name: '_test' }
+                ]
+            }, 4);
+            // transform petstore-api
             Object.keys(options.paths).forEach(function (path) {
                 Object.keys(options.paths[path]).forEach(function (method) {
                     methodPath = options.paths[path][method];
-                    methodPath._paramExtraDict = {};
-                    methodPath._schemaName =
-                        path.split('/')[1][0].toUpperCase() +
-                        path.split('/')[1].slice(1);
-                    if (methodPath._schemaName === 'Store') {
+                    methodPath._paramExtraDict = methodPath._paramExtraDict || {};
+                    switch (path.split('/')[1]) {
+                    case '_test':
+                        methodPath._schemaName = 'TestCrud';
+                        break;
+                    case 'pet':
+                        methodPath._schemaName = 'Pet';
+                        break;
+                    case 'store':
                         methodPath._schemaName = 'Order';
+                        break;
+                    case 'user':
+                        methodPath._schemaName = 'User';
+                        break;
                     }
                     methodPath._collectionName = 'Swmg' + methodPath._schemaName;
                     delete methodPath.produces;
@@ -394,7 +607,7 @@ width="100%" \
                         break;
                     }
                     // init id
-                    methodPath.parameters.forEach(function (paramDef) {
+                    (methodPath.parameters || []).forEach(function (paramDef) {
                         switch (paramDef.name) {
                         case 'orderId':
                         case 'petId':
@@ -410,7 +623,7 @@ width="100%" \
         }());
         // init petstore-middleware
         local.middleware.middlewareList.push(function (request, response, nextMiddleware) {
-            var modeNext, onNext, options;
+            var modeNext, onNext, onParallel, options, result;
             modeNext = 0;
             onNext = function (error, data) {
                 local.utility2.testTryCatch(function () {
@@ -429,8 +642,8 @@ width="100%" \
                             };
                         }
                         switch (request.swmgPathname) {
-                        // handle _TestModel requests
-                        case 'GET /_TestModel/customGetByIdOne/':
+                        // handle _test requests
+                        case 'GET /_test/customGetByIdOne/':
                             options._crudApi = function (options, onError) {
                                 options.collection.findOne({
                                     _id: request.swmgParamDict.id
@@ -440,10 +653,10 @@ width="100%" \
                             };
                             local.swmg._crudApi(options, onNext);
                             return;
-                        case 'POST /_TestModel/echo':
+                        case 'POST /_test/echo':
                             response.end(JSON.stringify(request.swmgParamDict));
                             return;
-                        case 'GET /_TestModel/errorMiddleware':
+                        case 'GET /_test/errorMiddleware':
                             onNext(new Error('dummy error'));
                             return;
                         // handle pet requests
@@ -456,11 +669,12 @@ width="100%" \
                             options.operationId = 'crudUpdateOrCreateOne';
                             local.swmg._crudApi(options, onNext);
                             return;
-                        //!! case 'POST /pet//':
-                            //!! options.data.file = local.utility2.uuidTime();
-                            //!! options.operationId = 'crudUpdateOrCreateOne';
-                            //!! local.swmg._crudApi(options, onNext);
-                            //!! return;
+                        case 'POST /pet//':
+                            options.data.filename =
+                                request.swmgBodyParsed && request.swmgBodyParsed.filename;
+                            options.operationId = 'crudUpdateOrCreateOne';
+                            local.swmg._crudApi(options, onNext);
+                            return;
                         // handle store requests
                         case 'GET /store/inventory':
                             options.data = { body: [{
@@ -483,6 +697,27 @@ width="100%" \
                             }
                             options.optionsId = { username: request.swmgParamDict.username};
                             local.swmg._crudApi(options, onNext);
+                            return;
+                        case 'POST /user/createWithArray':
+                        case 'POST /user/createWithList':
+                            onParallel = local.utility2.onParallel(function (error) {
+                                onNext(error, result);
+                            });
+                            onParallel.counter += 1;
+                            result = { data: [] };
+                            options.data.body.forEach(function (element) {
+                                onParallel.counter += 1;
+                                local.swmg._crudApi({
+                                    collectionName: request.swmgMethodPath._collectionName,
+                                    data: element,
+                                    operationId: 'crudReplaceOrCreateOne',
+                                    schemaName: request.swmgMethodPath._schemaName
+                                }, function (error, data) {
+                                    result.data.push(data && data.data && data.data[0]);
+                                    onParallel(error);
+                                });
+                            });
+                            onParallel();
                             return;
                         }
                         break;
@@ -562,16 +797,13 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.7.7-a"
+    "version": "2015.7.7"
 }
 ```
 
 
 
 # todo
-- add api-endpoint POST http://localhost:8080/api/v0/pet/{petId}/uploadImage
-- add api-endpoint POST http://localhost:8080/api/v0/user/createWithArray
-- add api-endpoint POST http://localhost:8080/api/v0/user/createWithList
 - add api-endpoint GET http://localhost:8080/api/v0/user/login
 - add api-endpoint GET http://localhost:8080/api/v0/user/logout
 - add LoginToken model
@@ -581,12 +813,13 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 3ab1eec2
-- npm publish 2015.7.7-a
-- revamp middleware sequence to [swmg.middlewareBodyParse, swmg.middlewareSwagger, swmg.middlewareError]
-- add api-endpoint POST http://localhost:8080/api/v0/pet/{petId}
-- rename normalizeParamSwagger to normalizeParamDictSwagger
-- rename validate* to validateBy*
+# change since 735d7115
+- npm publish 2015.7.7
+- add api-endpoint POST http://localhost:8080/api/v0/user/createWithArray
+- add api-endpoint POST http://localhost:8080/api/v0/user/createWithList
+- add api-endpoint POST http://localhost:8080/api/v0/pet/{petId}/uploadImage
+- rename api /_TestCrudModel/* to /_test/* and expose it in example.js
+- add array check in body
 - none
 
 
@@ -613,11 +846,11 @@ shBuild() {
     # run npm-test on published package
     shRun shNpmTestPublished || return $?
 
-    #!! # test example js script
-    #!! export npm_config_timeout_exit=10000 || return $?
-    #!! MODE_BUILD=testExampleJs \
-        #!! shRunScreenCapture shReadmeTestJs example.js || return $?
-    #!! unset npm_config_timeout_exit || return $?
+    # test example js script
+    export npm_config_timeout_exit=10000 || return $?
+    MODE_BUILD=testExampleJs \
+        shRunScreenCapture shReadmeTestJs example.js || return $?
+    unset npm_config_timeout_exit || return $?
 
     # run npm-test
     MODE_BUILD=npmTest shRunScreenCapture npm test || return $?
