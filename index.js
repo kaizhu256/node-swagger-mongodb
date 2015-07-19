@@ -127,24 +127,6 @@
             }
         };
 
-        local.swmg.swaggerJsonTagsMerge = function (options) {
-            /*
-             * this function will merge options.tags into swaggerJson
-             */
-            var dict;
-            dict = {};
-            [local.swmg.swaggerJson.tags, options.tags].forEach(function (tags) {
-                (tags || []).forEach(function (element) {
-                    dict[element.name] = element;
-                });
-            });
-            dict = Object.keys(dict).sort().map(function (key) {
-                return dict[key];
-            });
-            local.swmg.swaggerJson.tags = dict;
-            return dict;
-        };
-
         local.swmg.validateByParamDefList = function (options) {
             /*
              * this function will validate options.data against options.paramDefList
@@ -649,8 +631,22 @@
                 });
             });
             // merge tags
-            tmp = local.utility2.jsonCopy(local.swmg.swaggerJsonTagsMerge(options));
-            // update swaggerJson with options, with underscored keys removed
+            tmp = {};
+            // update tags from options._tagDict
+            Object.keys(options._tagDict || {}).forEach(function (key) {
+                tmp[key] = options._tagDict[key];
+                tmp[key].name = key;
+            });
+            // update tags from options.tags
+            [local.swmg.swaggerJson.tags, options.tags].forEach(function (tags) {
+                (tags || []).forEach(function (element) {
+                    tmp[element.name] = element;
+                });
+            });
+            tmp = local.swmg.swaggerJson.tags = Object.keys(tmp).sort().map(function (key) {
+                return tmp[key];
+            });
+            // update swaggerJson with options, with underscore keys removed
             local.utility2.objectSetOverride(
                 local.swmg.swaggerJson,
                 local.utility2.objectTraverse(
@@ -659,7 +655,7 @@
                     function (element) {
                         if (element && typeof element === 'object') {
                             Object.keys(element).forEach(function (key) {
-                                // security - remove underscored key
+                                // security - remove underscore key
                                 if (key[0] === '_') {
                                     delete element[key];
                                 }
@@ -1058,8 +1054,7 @@
                     properties: {
                         _timeCreated: { format: 'date-time', type: 'string' },
                         _timeModified: { format: 'date-time', type: 'string' },
-                        id: { type: 'string' },
-                        type: { type: 'string' }
+                        id: { type: 'string' }
                     }
                 },
                 // http://jsonapi.org/format/#document-structure-top-level

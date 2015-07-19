@@ -240,15 +240,17 @@ width="100%" \
             local.swmg.middlewareBodyParse,
             // init swagger pre-middleware
             function (request, response, nextMiddleware) {
-                local.utility2.serverRespondHeadSet(request, response, null, {
-                    'Access-Control-Allow-Methods':
-                        'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT',
-                    // enable cors
-                    // http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
-                    'Access-Control-Allow-Origin': '*',
-                    // init content-type
-                    'Content-Type': 'application/json; charset=UTF-8'
-                });
+                // jslint-hack
+                local.utility2.nop(request);
+                // enable cors
+                // http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
+                response.setHeader(
+                    'Access-Control-Allow-Methods',
+                    'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'
+                );
+                response.setHeader('Access-Control-Allow-Origin', '*');
+                // init content-type
+                response.setHeader('Content-Type', 'application/json; charset=UTF-8');
                 nextMiddleware();
             },
             // init swagger middleware
@@ -277,33 +279,33 @@ width="100%" \
             });
             local.utility2.objectSetOverride(options, {
                 definitions: {
-                    // update Pet schema
+                    // init Pet schema
                     Pet: {
                         // drop collection on init
                         _collectionDrop: true,
                         // replace or create fixtures
                         _collectionFixtureList: [{
                             id: 'pet1',
-                            name: 'doggie',
+                            name: 'birdie',
                             photoUrls: [],
                             status: 'available',
-                            tags: [{ name: 'dog'}]
+                            tags: [{ name: 'bird'}]
                         }, {
                             id: 'pet2',
                             name: 'kittie',
-                            photoUrls: [],
                             status: 'pending',
+                            photoUrls: [],
                             tags: [{ name: 'cat'}]
                         }, {
                             id: 'pet3',
-                            name: 'birdie',
+                            name: 'doggie',
                             photoUrls: [],
                             status: 'sold',
-                            tags: [{ name: 'bird'}]
+                            tags: [{ name: 'dog'}]
                         }],
                         _collectionName: 'SwmgPet'
                     },
-                    // update Order schema
+                    // init Order schema
                     Order: {
                         // create index
                         _collectionCreateIndexList: [{
@@ -314,13 +316,13 @@ width="100%" \
                         _collectionDrop: true,
                         // replace or create fixtures
                         _collectionFixtureList: [{
-                            _id: 'order1',
+                            id: 'order1',
                             status: 'available'
                         }, {
-                            _id: 'order2',
+                            id: 'order2',
                             status: 'pending'
                         }, {
-                            _id: 'order3',
+                            id: 'order3',
                             status: 'sold'
                         }],
                         _collectionName: 'SwmgOrder',
@@ -330,8 +332,10 @@ width="100%" \
                     },
                     // init TestCrudModel schema
                     TestCrudModel: {
+                        // drop collection on init
                         _collectionDrop: true,
                         _collectionName: 'SwmgTestCrud',
+                        // init default crud-api
                         _crudApi: '_test',
                         properties: {
                             fieldArray: { items: {}, type: 'array' },
@@ -365,7 +369,7 @@ width="100%" \
                     },
                     // init TestNullModel schema
                     TestNullModel: {},
-                    // update User schema
+                    // init User schema
                     User: {
                         // create index
                         _collectionCreateIndexList: [{
@@ -375,32 +379,39 @@ width="100%" \
                         }],
                         // drop collection on init
                         _collectionDrop: true,
+                        // replace or create fixtures
+                        _collectionFixtureList: [{
+                            email: 'john@doe.com',
+                            firstName: 'john',
+                            id: 'user1',
+                            lastName: 'doe',
+                            password: 'hello',
+                            phone: '1234-5678',
+                            username: 'john.doe'
+                        }, {
+                            email: 'jane@doe.com',
+                            firstName: 'jane',
+                            id: 'user2',
+                            lastName: 'doe',
+                            password: 'bye',
+                            phone: '8765-4321',
+                            username: 'jane.doe'
+                        }],
                         _collectionName: 'SwmgUser'
+                    },
+                    // init UserLoginToken schema
+                    UserLoginToken: {
+                        // drop collection on init
+                        _collectionDrop: true,
+                        _collectionName: 'SwmgUserLoginToken',
+                        // init default crud-api
+                        _crudApi: 'userLoginToken',
+                        properties: { username: { type: 'string' } },
+                        'x-inheritList': [{ $ref: '#/definitions/JsonapiResource' }]
                     }
                 },
                 // init default crud-api
                 paths: {
-                    '/pet/crudGetByQueryMany': { get: {
-                        _collectionName: 'SwmgPet',
-                        _crudApi: 'pet',
-                        _schemaName: 'Pet',
-                        operationId: 'crudGetByQueryMany',
-                        tags: ['pet']
-                    } },
-                    '/store/crudGetByQueryMany': { get: {
-                        _collectionName: 'SwmgOrder',
-                        _crudApi: 'store',
-                        _schemaName: 'Order',
-                        operationId: 'crudGetByQueryMany',
-                        tags: ['store']
-                    } },
-                    '/user/crudGetByQueryMany': { get: {
-                        _collectionName: 'SwmgUser',
-                        _crudApi: 'user',
-                        _schemaName: 'User',
-                        operationId: 'crudGetByQueryMany',
-                        tags: ['user']
-                    } },
                     // test custom-api handling-behavior
                     '/_test/customGetByIdOne/{id}': { get: {
                         _collectionName: 'SwmgTestCrud',
@@ -496,13 +507,32 @@ width="100%" \
                         _crudApi: true,
                         operationId: 'errorUndefinedCrud',
                         tags: ['_test']
+                    } },
+                    '/pet/crudGetByQueryMany': { get: {
+                        _collectionName: 'SwmgPet',
+                        _crudApi: 'pet',
+                        _schemaName: 'Pet',
+                        operationId: 'crudGetByQueryMany',
+                        tags: ['pet']
+                    } },
+                    '/store/crudGetByQueryMany': { get: {
+                        _collectionName: 'SwmgOrder',
+                        _crudApi: 'store',
+                        _schemaName: 'Order',
+                        operationId: 'crudGetByQueryMany',
+                        tags: ['store']
+                    } },
+                    '/user/crudGetByQueryMany': { get: {
+                        _collectionName: 'SwmgUser',
+                        _crudApi: 'user',
+                        _schemaName: 'User',
+                        operationId: 'crudGetByQueryMany',
+                        tags: ['user']
                     } }
                 },
-                tags: [
-                    { description: 'internal test api', name: '_test' }
-                ]
+                _tagDict: { _test: { description: 'internal test-api' } }
             }, 4);
-            // transform petstore-api
+            // transform petstore-api to swagger-mongodb's crud-api
             Object.keys(options.paths).forEach(function (path) {
                 Object.keys(options.paths[path]).forEach(function (method) {
                     methodPath = options.paths[path][method];
@@ -527,10 +557,12 @@ width="100%" \
                     delete methodPath.security;
                     switch (methodPath.operationId) {
                     case 'addPet':
-                    case 'deletePet':
+                    case 'findPetsByStatus':
+                    case 'findPetsByTags':
                     case 'getPetById':
                     case 'updatePet':
                     case 'updatePetWithForm':
+                    case 'uploadFile':
                         local.utility2.objectSetDefault(methodPath, { responses: {
                             200: {
                                 description: '200 ok - http://jsonapi.org/format' +
@@ -539,7 +571,7 @@ width="100%" \
                             }
                         } }, 2);
                         break;
-                    case 'deleteOrder':
+                    case 'getInventory':
                     case 'getOrderById':
                     case 'placeOrder':
                         local.utility2.objectSetDefault(methodPath, { responses: {
@@ -551,7 +583,8 @@ width="100%" \
                         } }, 2);
                         break;
                     case 'createUser':
-                    case 'deleteUser':
+                    case 'createUsersWithArrayInput':
+                    case 'createUsersWithListInput':
                     case 'getUserByName':
                     case 'updateUser':
                         local.utility2.objectSetDefault(methodPath, { responses: {
@@ -652,29 +685,29 @@ width="100%" \
                                 });
                             };
                             local.swmg._crudApi(options, onNext);
-                            return;
+                            break;
                         case 'POST /_test/echo':
                             response.end(JSON.stringify(request.swmgParamDict));
-                            return;
+                            break;
                         case 'GET /_test/errorMiddleware':
                             onNext(new Error('dummy error'));
-                            return;
+                            break;
                         // handle pet requests
                         case 'GET /pet/findByStatus':
                         case 'GET /pet/findByTags':
                             options.operationId = 'crudGetByQueryMany';
                             local.swmg._crudApi(options, onNext);
-                            return;
+                            break;
                         case 'POST /pet/':
                             options.operationId = 'crudUpdateOrCreateOne';
                             local.swmg._crudApi(options, onNext);
-                            return;
+                            break;
                         case 'POST /pet//':
                             options.data.filename =
                                 request.swmgBodyParsed && request.swmgBodyParsed.filename;
                             options.operationId = 'crudUpdateOrCreateOne';
                             local.swmg._crudApi(options, onNext);
-                            return;
+                            break;
                         // handle store requests
                         case 'GET /store/inventory':
                             options.data = { body: [{
@@ -684,7 +717,7 @@ width="100%" \
                             }]};
                             options.operationId = 'crudAggregateMany';
                             local.swmg._crudApi(options, onNext);
-                            return;
+                            break;
                         // handle user requests
                         case 'DELETE /user/':
                         case 'GET /user/':
@@ -697,7 +730,7 @@ width="100%" \
                             }
                             options.optionsId = { username: request.swmgParamDict.username};
                             local.swmg._crudApi(options, onNext);
-                            return;
+                            break;
                         case 'POST /user/createWithArray':
                         case 'POST /user/createWithList':
                             onParallel = local.utility2.onParallel(function (error) {
@@ -705,7 +738,8 @@ width="100%" \
                             });
                             onParallel.counter += 1;
                             result = { data: [] };
-                            options.data.body.forEach(function (element) {
+                            // replace or create list of objects in parallel
+                            options.data.body.forEach(function (element, ii) {
                                 onParallel.counter += 1;
                                 local.swmg._crudApi({
                                     collectionName: request.swmgMethodPath._collectionName,
@@ -713,21 +747,80 @@ width="100%" \
                                     operationId: 'crudReplaceOrCreateOne',
                                     schemaName: request.swmgMethodPath._schemaName
                                 }, function (error, data) {
-                                    result.data.push(data && data.data && data.data[0]);
+                                    result.data[ii] = data && data.data && data.data[0];
                                     onParallel(error);
                                 });
                             });
                             onParallel();
-                            return;
+                            break;
+                        case 'GET /user/login':
+                            local.swmg.cacheDict.collection.SwmgUser.findOne({
+                                password: request.swmgParamDict.password,
+                                username: request.swmgParamDict.username
+                            }, onNext);
+                            break;
+                        case 'GET /user/logout':
+                            result = (/\bswmgUserLoginTokenId=([^;]+)/)
+                                .exec(request.headers.cookie);
+                            result = result
+                                ? result[1]
+                                : 'undefined';
+                            local.swmg._crudApi({
+                                _crudApi: true,
+                                collectionName: 'SwmgUserLoginToken',
+                                data: { _id: result },
+                                operationId: 'crudDeleteByIdOne',
+                                schemaName: 'UserLoginToken'
+                            }, onNext);
+                            break;
+                        default:
+                            nextMiddleware();
+                        }
+                        break;
+                    case 2:
+                        switch (request.swmgPathname) {
+                        case 'GET /user/login':
+                            // login failed
+                            if (!(data && data.username)) {
+                                error = new Error('Unauthorized');
+                                error.status = 401;
+                                onNext(error);
+                                return;
+                            }
+                            // create login-token
+                            result = {
+                                _id: local.utility2.uuidTime(),
+                                username: data.username
+                            };
+                            local.swmg.cacheDict.collection.SwmgUserLoginToken
+                                .insert(result, onNext);
+                            break;
+                        default:
+                            onNext(error, data);
+                        }
+                        break;
+                    case 3:
+                        switch (request.swmgPathname) {
+                        case 'GET /user/login':
+                            // set login-token cookie
+                            response.setHeader(
+                                'Set-Cookie',
+                                'swmgUserLoginTokenId=' + result._id
+                            );
+                            onNext(error, local.swmg.normalizeIdSwagger({ response: { data: [{
+                                swmgUserLoginTokenId: result._id
+                            }] } }));
+                            break;
+                        default:
+                            onNext(error, data);
                         }
                         break;
                     default:
                         // validate no error occurred
                         local.utility2.assert(!error, error);
+                        // respond with json-object
                         response.end(JSON.stringify(data));
-                        return;
                     }
-                    nextMiddleware();
                 }, nextMiddleware);
             };
             onNext();
@@ -797,29 +890,28 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.7.7"
+    "version": "2015.7.8"
 }
 ```
 
 
 
 # todo
-- add api-endpoint GET http://localhost:8080/api/v0/user/login
-- add api-endpoint GET http://localhost:8080/api/v0/user/logout
-- add LoginToken model
+- fix /echo responseSchema
+- test /user/login and /user/logout
 - add max / min validation
 - add formData param-type
 - none
 
 
 
-# change since 735d7115
-- npm publish 2015.7.7
-- add api-endpoint POST http://localhost:8080/api/v0/user/createWithArray
-- add api-endpoint POST http://localhost:8080/api/v0/user/createWithList
-- add api-endpoint POST http://localhost:8080/api/v0/pet/{petId}/uploadImage
-- rename api /_TestCrudModel/* to /_test/* and expose it in example.js
-- add array check in body
+# change since 39d8b749
+- npm publish 2015.7.8
+- add api-endpoint GET http://localhost:8080/api/v0/user/login
+- add api-endpoint GET http://localhost:8080/api/v0/user/logout
+- add UserLoginToken model
+- merge swmg.swaggerJsonTagsMerge into swmg.apiUpdate
+- fix petstore tag-descriptions being overwritten
 - none
 
 

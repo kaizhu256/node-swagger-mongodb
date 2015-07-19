@@ -114,14 +114,17 @@
                         onParallel.counter += 1;
                         // validate object
                         local.utility2.assert(data.obj.data.length === 2, data.obj.data.length);
-                        data.obj.data.forEach(function (data) {
+                        data.obj.data.forEach(function (data, ii) {
                             local.utility2.assert(
-                                data.id === options.id + '0' || data.id === options.id + '1',
+                                data.id === options.id + ii,
                                 [data.id, options.id]
                             );
                             // remove object by id
                             onParallel.counter += 1;
-                            local.testCase_crudDeleteById_default(options, onParallel);
+                            local.testCase_crudDeleteById_default({
+                                api: options.api,
+                                id: options.id + ii
+                            }, onParallel);
                         });
                         onParallel();
                         break;
