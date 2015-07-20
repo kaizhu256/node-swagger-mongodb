@@ -359,19 +359,9 @@ width="100%" \
                             username: 'jane.doe'
                         }],
                         _collectionName: 'SwmgUser'
-                    //!! },
-                    //!! // init UserLoginToken schema
-                    //!! UserLoginToken: {
-                        //!! // drop collection on init
-                        //!! _collectionDrop: true,
-                        //!! _collectionName: 'SwmgUserLoginToken',
-                        //!! // init default crud-api
-                        //!! _crudApi: 'userLoginToken',
-                        //!! properties: { username: { type: 'string' } },
-                        //!! 'x-inheritList': [{ $ref: '#/definitions/JsonapiResource' }]
                     }
                 },
-                // init default crud-api
+                // init crud-api
                 paths: {
                     '/pet/crudGetByQueryMany': { get: {
                         _collectionName: 'SwmgPet',
@@ -400,7 +390,6 @@ width="100%" \
             Object.keys(options.paths).forEach(function (path) {
                 Object.keys(options.paths[path]).forEach(function (method) {
                     methodPath = options.paths[path][method];
-                    methodPath._paramExtraDict = methodPath._paramExtraDict || {};
                     // init methodPath._schemaName
                     switch (path.split('/')[1]) {
                     case 'pet':
@@ -417,7 +406,7 @@ width="100%" \
                     delete methodPath.produces;
                     delete methodPath.responses;
                     delete methodPath.security;
-                    // init default jsonapi response
+                    // init jsonapi response
                     local.utility2.objectSetDefault(methodPath, { responses: {
                         200: {
                             description: '200 ok - http://jsonapi.org/format' +
@@ -425,47 +414,22 @@ width="100%" \
                             schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
                         }
                     } }, 2);
+                    // init crudCreateOne / crudDeleteByIdOne / crudGetByIdOne
                     switch (methodPath.operationId) {
                     case 'addPet':
                     case 'createUser':
                     case 'placeOrder':
-                        methodPath._crudApi = methodPath.operationId !== 'createUser';
                         methodPath.operationId = 'crudCreateOne';
                         break;
                     case 'deleteOrder':
                     case 'deletePet':
                     case 'deleteUser':
-                        methodPath._crudApi = methodPath.operationId !== 'deleteUser';
                         methodPath.operationId = 'crudDeleteByIdOne';
-                        break;
-                    case 'findPetsByStatus':
-                        methodPath._paramExtraDict.fields = '{}';
-                        methodPath._paramExtraDict.hint = '{}';
-                        methodPath._paramExtraDict.limit = 100;
-                        methodPath._paramExtraDict.query = '{"status":{"$in":{{status json}}}}';
-                        methodPath._paramExtraDict.skip = 0;
-                        methodPath._paramExtraDict.sort = '{"_timeModified":-1}';
-                        break;
-                    case 'findPetsByTags':
-                        methodPath._paramExtraDict.fields = '{}';
-                        methodPath._paramExtraDict.hint = '{}';
-                        methodPath._paramExtraDict.limit = 100;
-                        methodPath._paramExtraDict.query =
-                            '{"tags.name":{"$in":{{tags json}}}}';
-                        methodPath._paramExtraDict.skip = 0;
-                        methodPath._paramExtraDict.sort = '{"_timeModified":-1}';
-                        methodPath.parameters[0].default = 'bird,cat,dog';
                         break;
                     case 'getOrderById':
                     case 'getPetById':
                     case 'getUserByName':
-                        methodPath._crudApi = methodPath.operationId !== 'getUserByName';
                         methodPath.operationId = 'crudGetByIdOne';
-                        break;
-                    case 'updatePet':
-                    case 'updateUser':
-                        methodPath._crudApi = methodPath.operationId !== 'updateUser';
-                        methodPath.operationId = 'crudReplaceOrCreateOne';
                         break;
                     }
                     // init id
@@ -473,6 +437,7 @@ width="100%" \
                         switch (paramDef.name) {
                         case 'orderId':
                         case 'petId':
+                            methodPath._paramExtraDict = methodPath._paramExtraDict || {};
                             methodPath._paramExtraDict.id = '{{' + paramDef.name + '}}';
                             delete paramDef.format;
                             paramDef.type = 'string';
@@ -494,6 +459,7 @@ width="100%" \
                         : modeNext + 1;
                     switch (modeNext) {
                     case 1:
+                        // init options
                         if (request.swmgMethodPath) {
                             options = {
                                 collectionName: request.swmgMethodPath._collectionName,
@@ -505,22 +471,67 @@ width="100%" \
                         }
                         switch (request.swmgPathname) {
                         // handle pet request
+                        case 'DELETE /pet/':
+                        case 'GET /pet/':
+                        case 'POST /pet':
+                            local.swmg._crudApi(options, onNext);
+                            break;
                         case 'GET /pet/findByStatus':
+                            options.operationId = 'crudGetByQueryMany';
+                            options.data.fields = '{}';
+                            options.data.hint = '{}';
+                            options.data.limit = 100;
+                            options.data.query = '{"status":{"$in":' +
+                                JSON.stringify(options.data.status) + '}}';
+                            options.data.skip = 0;
+                            options.data.sort = '{"_timeModified":-1}';
+                            local.swmg._crudApi(options, onNext);
+                            break;
                         case 'GET /pet/findByTags':
                             options.operationId = 'crudGetByQueryMany';
+                            options.data.fields = '{}';
+                            options.data.hint = '{}';
+                            options.data.limit = 100;
+                            options.data.query = '{"status":{"$in":' +
+                                JSON.stringify(options.data.tags) + '}}';
+                            options.data.skip = 0;
+                            options.data.sort = '{"_timeModified":-1}';
+                            options.paramDefList[0].default = 'bird,cat,dog';
                             local.swmg._crudApi(options, onNext);
                             break;
                         case 'POST /pet/':
-                            options.operationId = 'crudUpdateOrCreateOne';
+                            options.data.upsert = true;
+                            options.data.body = {
+                                id: options.data.id,
+                                name: options.data.name,
+                                status: options.data.status
+                            };
+                            options.operationId = 'crudUpdateOne';
                             local.swmg._crudApi(options, onNext);
                             break;
                         case 'POST /pet//':
-                            options.data.filename =
-                                request.swmgBodyParsed && request.swmgBodyParsed.filename;
-                            options.operationId = 'crudUpdateOrCreateOne';
+                            options.data.body = {
+                                additionalMetadata: options.data.additionalMetadata,
+                                file: options.data.file,
+                                filename:
+                                    request.swmgBodyParsed && request.swmgBodyParsed.filename,
+                                id: options.id
+                            };
+                            options.data.upsert = true;
+                            options.operationId = 'crudUpdateOne';
+                            local.swmg._crudApi(options, onNext);
+                            break;
+                        case 'PUT /pet':
+                            options.data.upsert = true;
+                            options.operationId = 'crudReplaceOne';
                             local.swmg._crudApi(options, onNext);
                             break;
                         // handle store request
+                        case 'DELETE /store/order/':
+                        case 'GET /store/order/':
+                        case 'POST /store/order':
+                            local.swmg._crudApi(options, onNext);
+                            break;
                         case 'GET /store/inventory':
                             options.data = { body: [{
                                 $group: { _id: '$status', total: { $sum: 1} }
@@ -533,13 +544,11 @@ width="100%" \
                         // handle user request
                         case 'DELETE /user/':
                         case 'GET /user/':
+                            options.optionsId = { username: request.swmgParamDict.username};
+                            local.swmg._crudApi(options, onNext);
+                            break;
                         case 'POST /user':
-                        case 'PUT /user/':
-                            if (options.data.body) {
-                                options.data.username = options.data.username ||
-                                    options.data.body.username;
-                                options.data.body.username = options.data.username;
-                            }
+                            options.data.username = options.data.body.username;
                             options.optionsId = { username: request.swmgParamDict.username};
                             local.swmg._crudApi(options, onNext);
                             break;
@@ -555,8 +564,8 @@ width="100%" \
                                 onParallel.counter += 1;
                                 local.swmg._crudApi({
                                     collectionName: request.swmgMethodPath._collectionName,
-                                    data: element,
-                                    operationId: 'crudReplaceOrCreateOne',
+                                    data: { body: element, upsert: true },
+                                    operationId: 'crudReplaceOne',
                                     schemaName: request.swmgMethodPath._schemaName
                                 }, function (error, data) {
                                     result.data[ii] = data && data.data && data.data[0];
@@ -565,69 +574,17 @@ width="100%" \
                             });
                             onParallel();
                             break;
-                        //!! case 'GET /user/login':
-                            //!! local.swmg.cacheDict.collection.SwmgUser.findOne({
-                                //!! password: request.swmgParamDict.password,
-                                //!! username: request.swmgParamDict.username
-                            //!! }, onNext);
-                            //!! break;
-                        //!! case 'GET /user/logout':
-                            //!! result = (/\bswmgUserLoginTokenId=([^;]+)/)
-                                //!! .exec(request.headers.cookie);
-                            //!! result = result
-                                //!! ? result[1]
-                                //!! : 'undefined';
-                            //!! local.swmg._crudApi({
-                                //!! _crudApi: true,
-                                //!! collectionName: 'SwmgUserLoginToken',
-                                //!! data: { _id: result },
-                                //!! operationId: 'crudDeleteByIdOne',
-                                //!! schemaName: 'UserLoginToken'
-                            //!! }, onNext);
-                            //!! break;
+                        case 'PUT /user/':
+                            options.data.body.username = options.data.username;
+                            options.data.upsert = true;
+                            options.operationId = 'crudReplaceOne';
+                            options.optionsId = { username: request.swmgParamDict.username};
+                            local.swmg._crudApi(options, onNext);
+                            break;
                         default:
                             nextMiddleware();
                         }
                         break;
-                    //!! case 2:
-                        //!! switch (request.swmgPathname) {
-                        //!! case 'GET /user/login':
-                            //!! // login failed
-                            //!! if (!(data && data.username)) {
-                                //!! error = new Error('Unauthorized');
-                                //!! error.statusCode = 401;
-                                //!! onNext(error);
-                                //!! return;
-                            //!! }
-                            //!! // create login-token
-                            //!! result = {
-                                //!! _id: local.utility2.uuidTime(),
-                                //!! username: data.username
-                            //!! };
-                            //!! local.swmg.cacheDict.collection.SwmgUserLoginToken
-                                //!! .insert(result, onNext);
-                            //!! break;
-                        //!! default:
-                            //!! onNext(error, data);
-                        //!! }
-                        //!! break;
-                    //!! case 3:
-                        //!! switch (request.swmgPathname) {
-                        //!! case 'GET /user/login':
-                            //!! // set login-token cookie
-                            //!! response.setHeader(
-                                //!! 'Set-Cookie',
-                                //!! 'swmgUserLoginTokenId=' + result._id
-                            //!! );
-                            //!! onNext(error, local.swmg.normalizeIdSwagger({
-                                //!! response: { data: [{
-                                //!! swmgUserLoginTokenId: result._id
-                            //!! }] } }));
-                            //!! break;
-                        //!! default:
-                            //!! onNext(error, data);
-                        //!! }
-                        //!! break;
                     default:
                         // validate no error occurred
                         local.utility2.assert(!error, error);
@@ -703,13 +660,15 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.7.9"
+    "version": "2015.7.10"
 }
 ```
 
 
 
 # todo
+- add SwmgLoginTokenCapped
+- add crudCreateMany / crudReplaceMany / crudUpdateMany
 - re-enable user login/logout
 - fix /echo responseSchema
 - test /user/login and /user/logout
@@ -719,17 +678,9 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since c6babaad
-- npm publish 2015.7.9
-- disable user login/logout for coverage analysis
-- revert test-code from README.md to test.js
-- replace swmg.normalizeErrorJsonapi with swmg.onErrorJsonapi
-- change api crudReplaceOrCreateOne's _timeCreated property to behave like crudCreateOne
-- rename property to field
-- add swmg.swaggerJson$$Dummy to pass validation warnings for auto-created schemas
-- add definition JsonapiRequest
-- hide _timeCreated and _timeModified from definitions
-- create JsonapiResponse with JsonapiResponseError and JsonapiResponseData merged together
+# change since 3f906622
+- npm publish 2015.7.10
+- merge crudReplaceOrCreateOne into crudReplaceOne and crudUpdateOrCreateOne into crudUpdateOne with optional upsert param
 - none
 
 

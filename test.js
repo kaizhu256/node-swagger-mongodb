@@ -151,19 +151,33 @@
                     'store',
                     'user'
                 ].forEach(function (api) {
+                    // test create handling-behavior
                     [
                         'crudCreateOne',
                         'crudReplaceOne',
-                        'crudReplaceOrCreateOne',
                         'crudUpdateOne',
-                        'crudUpdateOrCreateOne',
-                        'updatePetWithForm'
+                        'updatePet',
+                        'updatePetWithForm',
+                        'updateUser'
                     ].forEach(function (operationId) {
                         onParallel.counter += 1;
                         local.testCase_crudCreateXxx_default({
                             api: api,
                             id: 'test_' + local.utility2.uuidTime(),
                             operationId: operationId
+                        }, onParallel);
+                    });
+                    // test upsert handling-behavior
+                    [
+                        'crudReplaceOne',
+                        'crudUpdateOne'
+                    ].forEach(function (operationId) {
+                        onParallel.counter += 1;
+                        local.testCase_crudCreateXxx_default({
+                            api: api,
+                            id: 'test_' + local.utility2.uuidTime(),
+                            operationId: operationId,
+                            upsert: true
                         }, onParallel);
                     });
                 });
@@ -273,9 +287,11 @@
                         switch (options.operationId) {
                         case 'crudReplaceOne':
                         case 'crudUpdateOne':
-                            // validate error occurred
-                            local.utility2.assert(error, error);
-                            error = null;
+                            if (!options.upsert) {
+                                // validate error occurred
+                                local.utility2.assert(error, error);
+                                error = null;
+                            }
                             break;
                         }
                         onError2(error, options);
@@ -304,8 +320,6 @@
                 paramArrayTsv: 'aa\tbb',
                 // test body-param handling-behavior
                 paramBody: 'hello!',
-                // test extra-param handling-behavior
-                paramExtra: 'hello',
                 // test header-param handling-behavior
                 paramHeader: 'hello'
             }, { modeErrorData: true }, function (error, data) {
@@ -313,18 +327,16 @@
                     // validate no error occurred
                     local.utility2.assert(!error, error);
                     // validate object
-                    data = data.obj;
-                    local.utility2.assert(local.utility2
-                        .jsonStringifyOrdered(data) === JSON.stringify({
-                            paramArrayCsv: ['aa', 'bb'],
-                            paramArrayPipes: ['aa', 'bb'],
-                            paramArraySsv: ['aa', 'bb'],
-                            paramArrayTsv: ['aa', 'bb'],
-                            paramBody: 'hello!',
-                            paramExtra: 'hello',
-                            paramExtra2: 'hello',
-                            paramHeader: 'hello'
-                        }), data);
+                    data = local.utility2.jsonStringifyOrdered(data.obj);
+                    local.utility2.assert(data === JSON.stringify({
+                        paramArrayCsv: ['aa', 'bb'],
+                        paramArrayPipes: ['aa', 'bb'],
+                        paramArraySsv: ['aa', 'bb'],
+                        paramArrayTsv: ['aa', 'bb'],
+                        paramBody: 'hello!',
+                        paramExtra: true,
+                        paramHeader: 'hello'
+                    }), data);
                     onError();
                 }, onError);
             });
@@ -494,11 +506,10 @@
                     'store',
                     'user'
                 ].forEach(function (api) {
+                    // test update handling behavior
                     [
                         'crudReplaceOne',
-                        'crudReplaceOrCreateOne',
                         'crudUpdateOne',
-                        'crudUpdateOrCreateOne',
                         'updatePetWithForm'
                     ].forEach(function (operationId) {
                         onParallel.counter += 1;
@@ -506,6 +517,19 @@
                             api: api,
                             id: 'test_' + local.utility2.uuidTime(),
                             operationId: operationId
+                        }, onParallel);
+                    });
+                    // test upsert handling behavior
+                    [
+                        'crudReplaceOne',
+                        'crudUpdateOne'
+                    ].forEach(function (operationId) {
+                        onParallel.counter += 1;
+                        local.testCase_crudUpdateXxx_default({
+                            api: api,
+                            id: 'test_' + local.utility2.uuidTime(),
+                            operationId: operationId,
+                            upsert: true
                         }, onParallel);
                     });
                 });
@@ -568,7 +592,6 @@
                         local.utility2.assert(data.status === options.id, data.status);
                         switch (options.operationId) {
                         case 'crudReplaceOne':
-                        case 'crudReplaceOrCreateOne':
                             local.utility2.assert(
                                 data._timeCreated > options._timeCreated,
                                 [data._timeCreated, options._timeCreated]
@@ -612,7 +635,6 @@
                         local.utility2.assert(data.status === options.id, data.status);
                         switch (options.operationId) {
                         case 'crudReplaceOne':
-                        case 'crudReplaceOrCreateOne':
                             local.utility2.assert(
                                 data._timeCreated > options._timeCreated,
                                 [data._timeCreated, options._timeCreated]
@@ -1165,7 +1187,7 @@
                 '/_test/echo': { post: {
                     _collectionName: 'SwmgTestCrud',
                     // test extra-param handling-behavior
-                    _paramExtraDict: { paramExtra2: '{{paramExtra}}' },
+                    _paramExtraDict: { paramExtra: true },
                     operationId: 'echo',
                     parameters: [{
                         // test array-csv-param handling-behavior
@@ -1205,12 +1227,6 @@
                         in: 'body',
                         name: 'paramBody',
                         schema: { $ref: '#/definitions/Undefined' }
-                    }, {
-                        description: 'extra param',
-                        in: 'query',
-                        // test extra-param handling-behavior
-                        name: 'paramExtra',
-                        type: 'string'
                     }, {
                         description: 'header param',
                         // test header-param handling-behavior

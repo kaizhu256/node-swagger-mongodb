@@ -102,8 +102,10 @@
              */
             options = options || {};
             return function (error, data) {
+                // handle error
                 if (error) {
                     local.swmg.normalizeIdSwagger(error);
+                    local.utility2.objectSetDefault(error, options);
                     error.statusCode = Number(error.statusCode) || 500;
                     error.errors = error.errors || {
                         code: String(error.code || error.statusCode),
@@ -117,12 +119,13 @@
                     onError(error);
                     return;
                 }
+                // handle data
                 options.data = data;
                 local.swmg.normalizeIdSwagger(options);
                 if (!Array.isArray(options.data)) {
                     options.data = [options.data];
                 }
-                onError(error, options);
+                onError(null, options);
             };
         };
 
@@ -380,10 +383,12 @@
                         // convert id to mongodb format
                         local.swmg.normalizeIdMongodb(options);
                         // init body
-                        options.data = options.data.body || options.data;
+                        options.data.body = options.data.body || {};
                         // init id
-                        options.data._id =
-                            String(options.data._id || local.utility2.uuidTime());
+                        options.data._id = options.data.body._id =
+                            String(options.data.body._id ||
+                                options.data._id ||
+                                local.utility2.uuidTime());
                         options.optionsId = options.optionsId || { _id: options.data._id };
                         // init collection
                         options.collection =
@@ -393,7 +398,6 @@
                         // init _timeCreated
                         switch (options.operationId) {
                         case 'crudUpdateOne':
-                        case 'crudUpdateOrCreateOne':
                             options.collection
                                 .findOne(options.optionsId, { _timeCreated: 1 }, onNext);
                             return;
@@ -406,17 +410,15 @@
                         switch (options.operationId) {
                         case 'crudCreateOne':
                         case 'crudReplaceOne':
-                        case 'crudReplaceOrCreateOne':
-                            options.data._timeCreated =
-                                options.data._timeModified = new Date().toISOString();
+                            options.data.body._timeCreated =
+                                options.data.body._timeModified = new Date().toISOString();
                             break;
                         case 'crudUpdateOne':
-                        case 'crudUpdateOrCreateOne':
-                            options.data._timeCreated =
-                                options.data._timeModified = new Date().toISOString();
-                            if (options.tmp < options.data._timeCreated &&
+                            options.data.body._timeCreated =
+                                options.data.body._timeModified = new Date().toISOString();
+                            if (options.tmp < options.data.body._timeCreated &&
                                     new Date(options.tmp).getTime()) {
-                                options.data._timeCreated = options.tmp;
+                                options.data.body._timeCreated = options.tmp;
                             }
                             break;
                         }
@@ -424,7 +426,7 @@
                         case 'crudAggregateMany':
                             // aggregate data
                             options.collection.aggregate(local.swmg
-                                .normalizeIdMongodb(options.data), onNext);
+                                .normalizeIdMongodb(options.data.body), onNext);
                             break;
                         case 'crudCountByQueryOne':
                             // count data
@@ -433,7 +435,7 @@
                             break;
                         case 'crudCreateOne':
                             // insert data
-                            options.collection.insert(options.data, onNext);
+                            options.collection.insert(options.data.body, onNext);
                             break;
                         case 'crudDeleteByIdOne':
                             // delete data
@@ -472,22 +474,16 @@
                             break;
                         case 'crudReplaceOne':
                             // replace data
-                            options.collection.update(options.optionsId, options.data, onNext);
-                            break;
-                        case 'crudReplaceOrCreateOne':
-                            // upsert data
-                            options.collection.update(options
-                                .optionsId, options.data, { upsert: true }, onNext);
+                            options.collection.update(options.optionsId, options.data.body, {
+                                upsert: options.data.upsert
+                            }, onNext);
                             break;
                         case 'crudUpdateOne':
                             // update data
                             options.collection.update(options
-                                .optionsId, { $set: options.data }, onNext);
-                            break;
-                        case 'crudUpdateOrCreateOne':
-                            // upsert data
-                            options.collection.update(options
-                                .optionsId, { $set: options.data }, { upsert: true }, onNext);
+                                .optionsId, { $set: options.data.body }, {
+                                    upsert: options.data.upsert
+                                }, onNext);
                             break;
                         default:
                             onNext(new Error('undefined crud operation - ' +
@@ -507,9 +503,7 @@
                             break;
                         case 'crudCreateOne':
                         case 'crudReplaceOne':
-                        case 'crudReplaceOrCreateOne':
                         case 'crudUpdateOne':
-                        case 'crudUpdateOrCreateOne':
                             options.response.meta = data;
                             if (!options.response.meta.n) {
                                 onNext(new Error('crud operation failed'));
@@ -620,7 +614,7 @@
                             2
                         );
                     }
-                    // init defaults
+                    // init methodPath
                     local.utility2.objectSetDefault(methodPath, {
                         parameters: [],
                         responses: {
@@ -796,8 +790,8 @@
                         onParallel.counter += 1;
                         local.swmg._crudApi({
                             collectionName: schema._collectionName,
-                            data: element,
-                            operationId: 'crudReplaceOrCreateOne',
+                            data: { body: element, upsert: true },
+                            operationId: 'crudReplaceOne',
                             schemaName: schema._schemaName
                         }, onParallel);
                     });
@@ -1460,6 +1454,13 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         _crudApi: true,
         operationId: 'crudReplaceOne',
         parameters: [{
+            description: 'upsert {{_schemaName}} object if it does not exist',
+            default: false,
+            format: 'json',
+            in: 'query',
+            name: 'upsert',
+            type: 'boolean'
+        }, {
             description: '{{_schemaName}} object',
             in: 'body',
             name: 'body',
@@ -1473,29 +1474,18 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         summary: 'replace one {{_schemaName}} object',
         tags: ['{{_crudApi}}']
     } },
-    '/{{_crudApi}}/crudReplaceOrCreateOne': { put: {
-        _collectionName: '{{_collectionName}}',
-        _crudApi: true,
-        operationId: 'crudReplaceOrCreateOne',
-        parameters: [{
-            description: '{{_schemaName}} object',
-            in: 'body',
-            name: 'body',
-            required: true,
-            schema: { $ref: '#/definitions/{{_schemaName}}' }
-        }],
-        responses: { 200: {
-            description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
-        } },
-        summary: 'replace or create one {{_schemaName}} object',
-        tags: ['{{_crudApi}}']
-    } },
     '/{{_crudApi}}/crudUpdateOne': { put: {
         _collectionName: '{{_collectionName}}',
         _crudApi: true,
         operationId: 'crudUpdateOne',
         parameters: [{
+            description: 'upsert {{_schemaName}} object if it does not exist',
+            default: false,
+            format: 'json',
+            in: 'query',
+            name: 'upsert',
+            type: 'boolean'
+        }, {
             description: '{{_schemaName}} object',
             in: 'body',
             name: 'body',
@@ -1507,24 +1497,6 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
         } },
         summary: 'update one {{_schemaName}} object',
-        tags: ['{{_crudApi}}']
-    } },
-    '/{{_crudApi}}/crudUpdateOrCreateOne': { put: {
-        _collectionName: '{{_collectionName}}',
-        _crudApi: true,
-        operationId: 'crudUpdateOrCreateOne',
-        parameters: [{
-            description: '{{_schemaName}} object',
-            in: 'body',
-            name: 'body',
-            required: true,
-            schema: { $ref: '#/definitions/{{_schemaName}}' }
-        }],
-        responses: { 200: {
-            description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
-        } },
-        summary: 'update or create one {{_schemaName}} object',
         tags: ['{{_crudApi}}']
     } }
 } };
