@@ -330,45 +330,6 @@ width="100%" \
                             petId: { type: 'string' }
                         }
                     },
-                    // init TestCrudModel schema
-                    TestCrudModel: {
-                        // drop collection on init
-                        _collectionDrop: true,
-                        _collectionName: 'SwmgTestCrud',
-                        // init default crud-api
-                        _crudApi: '_test',
-                        properties: {
-                            fieldArray: { items: {}, type: 'array' },
-                            fieldArraySubdoc: {
-                                default: [{ fieldRequired: true }],
-                                items: { $ref: '#/definitions/TestCrudModel' },
-                                type: 'array'
-                            },
-                            fieldBoolean: { type: 'boolean' },
-                            fieldInteger: { type: 'integer' },
-                            fieldIntegerInt32: { format: 'int32', type: 'integer' },
-                            fieldIntegerInt64: { format: 'int64', type: 'integer' },
-                            fieldNumber: { type: 'number' },
-                            fieldNumberDouble: { format: 'double', type: 'number' },
-                            fieldNumberFloat: { format: 'float', type: 'number' },
-                            fieldObject: { type: 'object' },
-                            fieldObjectSubdoc: { $ref: '#/definitions/TestNullModel' },
-                            fieldRequired: { default: true },
-                            fieldString: { type: 'string' },
-                            fieldStringByte: { format: 'byte', type: 'string' },
-                            fieldStringDate: { format: 'date', type: 'string' },
-                            fieldStringDatetime: { format: 'date-time', type: 'string' },
-                            fieldStringEmail:
-                                { default: 'a@a.com', format: 'email', type: 'string' },
-                            fieldStringJson:
-                                { default: 'null', format: 'json', type: 'string' },
-                            fieldUndefined: {}
-                        },
-                        required: ['fieldRequired'],
-                        'x-inheritList': [{ $ref: '#/definitions/JsonapiResource' }]
-                    },
-                    // init TestNullModel schema
-                    TestNullModel: {},
                     // init User schema
                     User: {
                         // create index
@@ -398,116 +359,20 @@ width="100%" \
                             username: 'jane.doe'
                         }],
                         _collectionName: 'SwmgUser'
-                    },
-                    // init UserLoginToken schema
-                    UserLoginToken: {
-                        // drop collection on init
-                        _collectionDrop: true,
-                        _collectionName: 'SwmgUserLoginToken',
-                        // init default crud-api
-                        _crudApi: 'userLoginToken',
-                        properties: { username: { type: 'string' } },
-                        'x-inheritList': [{ $ref: '#/definitions/JsonapiResource' }]
+                    //!! },
+                    //!! // init UserLoginToken schema
+                    //!! UserLoginToken: {
+                        //!! // drop collection on init
+                        //!! _collectionDrop: true,
+                        //!! _collectionName: 'SwmgUserLoginToken',
+                        //!! // init default crud-api
+                        //!! _crudApi: 'userLoginToken',
+                        //!! properties: { username: { type: 'string' } },
+                        //!! 'x-inheritList': [{ $ref: '#/definitions/JsonapiResource' }]
                     }
                 },
                 // init default crud-api
                 paths: {
-                    // test custom-api handling-behavior
-                    '/_test/customGetByIdOne/{id}': { get: {
-                        _collectionName: 'SwmgTestCrud',
-                        operationId: 'customGetByIdOne',
-                        parameters: [{
-                            description: 'SwmgTestCrud id',
-                            in: 'path',
-                            name: 'id',
-                            required: true,
-                            type: 'string'
-                        }],
-                        tags: ['_test']
-                    } },
-                    // test custom api handling-behavior
-                    '/_test/echo': { post: {
-                        _collectionName: 'SwmgTestCrud',
-                        // test extra-param handling-behavior
-                        _paramExtraDict: { paramExtra2: '{{paramExtra}}' },
-                        operationId: 'echo',
-                        parameters: [{
-                            // test array-csv-param handling-behavior
-                            collectionFormat: 'csv',
-                            description: 'csv-array param',
-                            in: 'query',
-                            items: { type: 'string' },
-                            name: 'paramArrayCsv',
-                            type: 'array'
-                        }, {
-                            // test array-pipes-param handling-behavior
-                            collectionFormat: 'pipes',
-                            description: 'pipes-array param',
-                            in: 'query',
-                            items: { type: 'string' },
-                            name: 'paramArrayPipes',
-                            type: 'array'
-                        }, {
-                            // test array-ssv-param handling-behavior
-                            collectionFormat: 'ssv',
-                            description: 'ssv-array param',
-                            in: 'query',
-                            items: { type: 'string' },
-                            name: 'paramArraySsv',
-                            type: 'array'
-                        }, {
-                            // test array-tsv-param handling-behavior
-                            collectionFormat: 'tsv',
-                            description: 'tsv-array param',
-                            in: 'query',
-                            items: { type: 'string' },
-                            name: 'paramArrayTsv',
-                            type: 'array'
-                        }, {
-                            description: 'body',
-                            // test body-param handling-behavior
-                            in: 'body',
-                            name: 'paramBody',
-                            schema: { $ref: '#/definitions/Undefined' }
-                        }, {
-                            description: 'extra param',
-                            in: 'query',
-                            // test extra-param handling-behavior
-                            name: 'paramExtra',
-                            type: 'string'
-                        }, {
-                            description: 'header param',
-                            // test header-param handling-behavior
-                            in: 'header',
-                            name: 'paramHeader',
-                            type: 'string'
-                        }, {
-                            description: 'optional param',
-                            in: 'query',
-                            // test optional-param handling-behavior
-                            name: 'paramOptional',
-                            type: 'string'
-                        }],
-                        summary: 'echo request params back to client',
-                        tags: ['_test']
-                    } },
-                    // test midddleware-error handling-behavior
-                    '/_test/errorMiddleware': { get: {
-                        operationId: 'errorMiddleware',
-                        tags: ['_test']
-                    } },
-                    // test undefined api handling-behavior
-                    '/_test/errorUndefinedApi': { get: {
-                        operationId: 'errorUndefinedApi',
-                        tags: ['_test']
-                    } },
-                    // test undefined crud-api handling-behavior
-                    '/_test/errorUndefinedCrud': { get: {
-                        _collectionName: 'SwmgTestCrud',
-                        _crudApi: true,
-                        operationId: 'errorUndefinedCrud',
-                        tags: ['_test']
-                    } },
                     '/pet/crudGetByQueryMany': { get: {
                         _collectionName: 'SwmgPet',
                         _crudApi: 'pet',
@@ -529,18 +394,15 @@ width="100%" \
                         operationId: 'crudGetByQueryMany',
                         tags: ['user']
                     } }
-                },
-                _tagDict: { _test: { description: 'internal test-api' } }
+                }
             }, 4);
             // transform petstore-api to swagger-mongodb's crud-api
             Object.keys(options.paths).forEach(function (path) {
                 Object.keys(options.paths[path]).forEach(function (method) {
                     methodPath = options.paths[path][method];
                     methodPath._paramExtraDict = methodPath._paramExtraDict || {};
+                    // init methodPath._schemaName
                     switch (path.split('/')[1]) {
-                    case '_test':
-                        methodPath._schemaName = 'TestCrud';
-                        break;
                     case 'pet':
                         methodPath._schemaName = 'Pet';
                         break;
@@ -555,47 +417,14 @@ width="100%" \
                     delete methodPath.produces;
                     delete methodPath.responses;
                     delete methodPath.security;
-                    switch (methodPath.operationId) {
-                    case 'addPet':
-                    case 'findPetsByStatus':
-                    case 'findPetsByTags':
-                    case 'getPetById':
-                    case 'updatePet':
-                    case 'updatePetWithForm':
-                    case 'uploadFile':
-                        local.utility2.objectSetDefault(methodPath, { responses: {
-                            200: {
-                                description: '200 ok - http://jsonapi.org/format' +
-                                    '/#document-structure-top-level',
-                                schema: { $ref: '#/definitions/JsonapiResponseDataPet' }
-                            }
-                        } }, 2);
-                        break;
-                    case 'getInventory':
-                    case 'getOrderById':
-                    case 'placeOrder':
-                        local.utility2.objectSetDefault(methodPath, { responses: {
-                            200: {
-                                description: '200 ok - http://jsonapi.org/format' +
-                                    '/#document-structure-top-level',
-                                schema: { $ref: '#/definitions/JsonapiResponseDataOrder' }
-                            }
-                        } }, 2);
-                        break;
-                    case 'createUser':
-                    case 'createUsersWithArrayInput':
-                    case 'createUsersWithListInput':
-                    case 'getUserByName':
-                    case 'updateUser':
-                        local.utility2.objectSetDefault(methodPath, { responses: {
-                            200: {
-                                description: '200 ok - http://jsonapi.org/format' +
-                                    '/#document-structure-top-level',
-                                schema: { $ref: '#/definitions/JsonapiResponseDataUser' }
-                            }
-                        } }, 2);
-                        break;
-                    }
+                    // init default jsonapi response
+                    local.utility2.objectSetDefault(methodPath, { responses: {
+                        200: {
+                            description: '200 ok - http://jsonapi.org/format' +
+                                '/#document-structure-top-level',
+                            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
+                        }
+                    } }, 2);
                     switch (methodPath.operationId) {
                     case 'addPet':
                     case 'createUser':
@@ -675,24 +504,7 @@ width="100%" \
                             };
                         }
                         switch (request.swmgPathname) {
-                        // handle _test requests
-                        case 'GET /_test/customGetByIdOne/':
-                            options._crudApi = function (options, onError) {
-                                options.collection.findOne({
-                                    _id: request.swmgParamDict.id
-                                }, function (error, data) {
-                                    onError(error, [data]);
-                                });
-                            };
-                            local.swmg._crudApi(options, onNext);
-                            break;
-                        case 'POST /_test/echo':
-                            response.end(JSON.stringify(request.swmgParamDict));
-                            break;
-                        case 'GET /_test/errorMiddleware':
-                            onNext(new Error('dummy error'));
-                            break;
-                        // handle pet requests
+                        // handle pet request
                         case 'GET /pet/findByStatus':
                         case 'GET /pet/findByTags':
                             options.operationId = 'crudGetByQueryMany';
@@ -708,7 +520,7 @@ width="100%" \
                             options.operationId = 'crudUpdateOrCreateOne';
                             local.swmg._crudApi(options, onNext);
                             break;
-                        // handle store requests
+                        // handle store request
                         case 'GET /store/inventory':
                             options.data = { body: [{
                                 $group: { _id: '$status', total: { $sum: 1} }
@@ -718,7 +530,7 @@ width="100%" \
                             options.operationId = 'crudAggregateMany';
                             local.swmg._crudApi(options, onNext);
                             break;
-                        // handle user requests
+                        // handle user request
                         case 'DELETE /user/':
                         case 'GET /user/':
                         case 'POST /user':
@@ -753,68 +565,69 @@ width="100%" \
                             });
                             onParallel();
                             break;
-                        case 'GET /user/login':
-                            local.swmg.cacheDict.collection.SwmgUser.findOne({
-                                password: request.swmgParamDict.password,
-                                username: request.swmgParamDict.username
-                            }, onNext);
-                            break;
-                        case 'GET /user/logout':
-                            result = (/\bswmgUserLoginTokenId=([^;]+)/)
-                                .exec(request.headers.cookie);
-                            result = result
-                                ? result[1]
-                                : 'undefined';
-                            local.swmg._crudApi({
-                                _crudApi: true,
-                                collectionName: 'SwmgUserLoginToken',
-                                data: { _id: result },
-                                operationId: 'crudDeleteByIdOne',
-                                schemaName: 'UserLoginToken'
-                            }, onNext);
-                            break;
+                        //!! case 'GET /user/login':
+                            //!! local.swmg.cacheDict.collection.SwmgUser.findOne({
+                                //!! password: request.swmgParamDict.password,
+                                //!! username: request.swmgParamDict.username
+                            //!! }, onNext);
+                            //!! break;
+                        //!! case 'GET /user/logout':
+                            //!! result = (/\bswmgUserLoginTokenId=([^;]+)/)
+                                //!! .exec(request.headers.cookie);
+                            //!! result = result
+                                //!! ? result[1]
+                                //!! : 'undefined';
+                            //!! local.swmg._crudApi({
+                                //!! _crudApi: true,
+                                //!! collectionName: 'SwmgUserLoginToken',
+                                //!! data: { _id: result },
+                                //!! operationId: 'crudDeleteByIdOne',
+                                //!! schemaName: 'UserLoginToken'
+                            //!! }, onNext);
+                            //!! break;
                         default:
                             nextMiddleware();
                         }
                         break;
-                    case 2:
-                        switch (request.swmgPathname) {
-                        case 'GET /user/login':
-                            // login failed
-                            if (!(data && data.username)) {
-                                error = new Error('Unauthorized');
-                                error.status = 401;
-                                onNext(error);
-                                return;
-                            }
-                            // create login-token
-                            result = {
-                                _id: local.utility2.uuidTime(),
-                                username: data.username
-                            };
-                            local.swmg.cacheDict.collection.SwmgUserLoginToken
-                                .insert(result, onNext);
-                            break;
-                        default:
-                            onNext(error, data);
-                        }
-                        break;
-                    case 3:
-                        switch (request.swmgPathname) {
-                        case 'GET /user/login':
-                            // set login-token cookie
-                            response.setHeader(
-                                'Set-Cookie',
-                                'swmgUserLoginTokenId=' + result._id
-                            );
-                            onNext(error, local.swmg.normalizeIdSwagger({ response: { data: [{
-                                swmgUserLoginTokenId: result._id
-                            }] } }));
-                            break;
-                        default:
-                            onNext(error, data);
-                        }
-                        break;
+                    //!! case 2:
+                        //!! switch (request.swmgPathname) {
+                        //!! case 'GET /user/login':
+                            //!! // login failed
+                            //!! if (!(data && data.username)) {
+                                //!! error = new Error('Unauthorized');
+                                //!! error.statusCode = 401;
+                                //!! onNext(error);
+                                //!! return;
+                            //!! }
+                            //!! // create login-token
+                            //!! result = {
+                                //!! _id: local.utility2.uuidTime(),
+                                //!! username: data.username
+                            //!! };
+                            //!! local.swmg.cacheDict.collection.SwmgUserLoginToken
+                                //!! .insert(result, onNext);
+                            //!! break;
+                        //!! default:
+                            //!! onNext(error, data);
+                        //!! }
+                        //!! break;
+                    //!! case 3:
+                        //!! switch (request.swmgPathname) {
+                        //!! case 'GET /user/login':
+                            //!! // set login-token cookie
+                            //!! response.setHeader(
+                                //!! 'Set-Cookie',
+                                //!! 'swmgUserLoginTokenId=' + result._id
+                            //!! );
+                            //!! onNext(error, local.swmg.normalizeIdSwagger({
+                                //!! response: { data: [{
+                                //!! swmgUserLoginTokenId: result._id
+                            //!! }] } }));
+                            //!! break;
+                        //!! default:
+                            //!! onNext(error, data);
+                        //!! }
+                        //!! break;
                     default:
                         // validate no error occurred
                         local.utility2.assert(!error, error);
@@ -890,13 +703,14 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.7.8"
+    "version": "2015.7.9"
 }
 ```
 
 
 
 # todo
+- re-enable user login/logout
 - fix /echo responseSchema
 - test /user/login and /user/logout
 - add max / min validation
@@ -905,13 +719,17 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 39d8b749
-- npm publish 2015.7.8
-- add api-endpoint GET http://localhost:8080/api/v0/user/login
-- add api-endpoint GET http://localhost:8080/api/v0/user/logout
-- add UserLoginToken model
-- merge swmg.swaggerJsonTagsMerge into swmg.apiUpdate
-- fix petstore tag-descriptions being overwritten
+# change since c6babaad
+- npm publish 2015.7.9
+- disable user login/logout for coverage analysis
+- revert test-code from README.md to test.js
+- replace swmg.normalizeErrorJsonapi with swmg.onErrorJsonapi
+- change api crudReplaceOrCreateOne's _timeCreated property to behave like crudCreateOne
+- rename property to field
+- add swmg.swaggerJson$$Dummy to pass validation warnings for auto-created schemas
+- add definition JsonapiRequest
+- hide _timeCreated and _timeModified from definitions
+- create JsonapiResponse with JsonapiResponseError and JsonapiResponseData merged together
 - none
 
 

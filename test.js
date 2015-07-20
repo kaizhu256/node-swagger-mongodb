@@ -188,9 +188,9 @@
                     case 1:
                         // init options
                         options.body = local.optionsId({
-                            fieldExtra: 'hello',
-                            fieldRequired: true,
-                            id: options.id
+                            id: options.id,
+                            propExtra: 'hello',
+                            propRequired: true
                         });
                         options.modeErrorData = true;
                         // init api
@@ -218,19 +218,19 @@
                         data = data.obj.data[0];
                         options._timeCreated = data._timeCreated;
                         options._timeModified = data._timeModified;
+                        local.utility2.assert(data.name === options.id, data.name);
+                        local.utility2.assert(data.status === options.id, data.status);
                         switch (options.operationId) {
                         case 'updatePetWithForm':
                             local.utility2
-                                .assert(data.fieldExtra === undefined, data.fieldExtra);
+                                .assert(data.propExtra === undefined, data.propExtra);
                             local.utility2
-                                .assert(data.fieldRequired === undefined, data.fieldRequired);
-                            local.utility2.assert(data.name === options.id, data.name);
-                            local.utility2.assert(data.status === options.id, data.status);
+                                .assert(data.propRequired === undefined, data.propRequired);
                             break;
                         default:
-                            local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                            local.utility2.assert(data.propExtra === 'hello', data.propExtra);
                             local.utility2
-                                .assert(data.fieldRequired === true, data.fieldRequired);
+                                .assert(data.propRequired === true, data.propRequired);
                         }
                         // get object
                         api.crudGetByIdOne(local.optionsId({
@@ -248,19 +248,19 @@
                             data._timeModified === options._timeModified,
                             [data._timeModified, options._timeModified]
                         );
+                        local.utility2.assert(data.name === options.id, data.name);
+                        local.utility2.assert(data.status === options.id, data.status);
                         switch (options.operationId) {
                         case 'updatePetWithForm':
                             local.utility2
-                                .assert(data.fieldExtra === undefined, data.fieldExtra);
+                                .assert(data.propExtra === undefined, data.propExtra);
                             local.utility2
-                                .assert(data.fieldRequired === undefined, data.fieldRequired);
-                            local.utility2.assert(data.name === options.id, data.name);
-                            local.utility2.assert(data.status === options.id, data.status);
+                                .assert(data.propRequired === undefined, data.propRequired);
                             break;
                         default:
-                            local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                            local.utility2.assert(data.propExtra === 'hello', data.propExtra);
                             local.utility2
-                                .assert(data.fieldRequired === true, data.fieldRequired);
+                                .assert(data.propRequired === true, data.propRequired);
                         }
                         if (options.modeNoDelete) {
                             onNext();
@@ -345,12 +345,11 @@
                     'user'
                 ].forEach(function (api) {
                     [
-                        'customGetByIdOne',
                         'crudAggregateMany',
                         'crudCountByQueryOne',
                         'crudGetByIdOne',
                         'crudGetByQueryMany',
-                        'crudGetDistinctValueByFieldMany',
+                        'crudGetDistinctValueByPropertyMany',
                         'crudExistsByIdOne',
                         'findPetsByStatus',
                         'findPetsByTags',
@@ -416,7 +415,7 @@
                         data = data.obj.data;
                         switch (options.operationId) {
                         case 'crudAggregateMany':
-                        case 'crudGetDistinctValueByFieldMany':
+                        case 'crudGetDistinctValueByPropertyMany':
                         case 'getInventory':
                             local.utility2.assert(data.length >= 1, data.length);
                             break;
@@ -531,8 +530,8 @@
                     case 1:
                         // init options
                         options.body = local.optionsId({
-                            fieldRequired: false,
-                            id: options.id
+                            id: options.id,
+                            propRequired: false
                         });
                         options.modeErrorData = true;
                         // init api
@@ -562,32 +561,40 @@
                         // validate object
                         data = data.obj.data[0];
                         local.utility2.assert(
-                            data._timeCreated === options._timeCreated,
-                            [data._timeCreated, options._timeCreated]
-                        );
-                        local.utility2.assert(
                             data._timeModified > options._timeModified,
                             [data._timeModified, options._timeModified]
                         );
+                        local.utility2.assert(data.name === options.id, data.name);
+                        local.utility2.assert(data.status === options.id, data.status);
                         switch (options.operationId) {
                         case 'crudReplaceOne':
                         case 'crudReplaceOrCreateOne':
+                            local.utility2.assert(
+                                data._timeCreated > options._timeCreated,
+                                [data._timeCreated, options._timeCreated]
+                            );
                             local.utility2
-                                .assert(data.fieldExtra === undefined, data.fieldExtra);
+                                .assert(data.propExtra === undefined, data.propExtra);
                             local.utility2
-                                .assert(data.fieldRequired === false, data.fieldRequired);
+                                .assert(data.propRequired === false, data.propRequired);
                             break;
                         case 'updatePetWithForm':
-                            local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                            local.utility2.assert(
+                                data._timeCreated === options._timeCreated,
+                                [data._timeCreated, options._timeCreated]
+                            );
+                            local.utility2.assert(data.propExtra === 'hello', data.propExtra);
                             local.utility2
-                                .assert(data.fieldRequired === true, data.fieldRequired);
-                            local.utility2.assert(data.name === options.id, data.name);
-                            local.utility2.assert(data.status === options.id, data.status);
+                                .assert(data.propRequired === true, data.propRequired);
                             break;
                         default:
-                            local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                            local.utility2.assert(
+                                data._timeCreated === options._timeCreated,
+                                [data._timeCreated, options._timeCreated]
+                            );
+                            local.utility2.assert(data.propExtra === 'hello', data.propExtra);
                             local.utility2
-                                .assert(data.fieldRequired === false, data.fieldRequired);
+                                .assert(data.propRequired === false, data.propRequired);
                         }
                         // get object
                         api.crudGetByIdOne(local.optionsId({
@@ -598,32 +605,40 @@
                         // validate object
                         data = data.obj.data[0];
                         local.utility2.assert(
-                            data._timeCreated === options._timeCreated,
-                            [data._timeCreated, options._timeCreated]
-                        );
-                        local.utility2.assert(
                             data._timeModified > options._timeModified,
                             [data._timeModified, options._timeModified]
                         );
+                        local.utility2.assert(data.name === options.id, data.name);
+                        local.utility2.assert(data.status === options.id, data.status);
                         switch (options.operationId) {
                         case 'crudReplaceOne':
                         case 'crudReplaceOrCreateOne':
+                            local.utility2.assert(
+                                data._timeCreated > options._timeCreated,
+                                [data._timeCreated, options._timeCreated]
+                            );
                             local.utility2
-                                .assert(data.fieldExtra === undefined, data.fieldExtra);
+                                .assert(data.propExtra === undefined, data.propExtra);
                             local.utility2
-                                .assert(data.fieldRequired === false, data.fieldRequired);
+                                .assert(data.propRequired === false, data.propRequired);
                             break;
                         case 'updatePetWithForm':
-                            local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                            local.utility2.assert(
+                                data._timeCreated === options._timeCreated,
+                                [data._timeCreated, options._timeCreated]
+                            );
+                            local.utility2.assert(data.propExtra === 'hello', data.propExtra);
                             local.utility2
-                                .assert(data.fieldRequired === true, data.fieldRequired);
-                            local.utility2.assert(data.name === options.id, data.name);
-                            local.utility2.assert(data.status === options.id, data.status);
+                                .assert(data.propRequired === true, data.propRequired);
                             break;
                         default:
-                            local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
+                            local.utility2.assert(
+                                data._timeCreated === options._timeCreated,
+                                [data._timeCreated, options._timeCreated]
+                            );
+                            local.utility2.assert(data.propExtra === 'hello', data.propExtra);
                             local.utility2
-                                .assert(data.fieldRequired === false, data.fieldRequired);
+                                .assert(data.propRequired === false, data.propRequired);
                         }
                         // remove object by id
                         local.testCase_crudDeleteById_default(options, onNext);
@@ -696,12 +711,12 @@
                             data.additionalMetadata === 'hello',
                             data.additionalMetadata
                         );
-                        local.utility2.assert(data.fieldExtra === 'hello', data.fieldExtra);
-                        local.utility2.assert(data.file === 'ZGF0YQ==', data.fieldExtra);
-                        local.utility2
-                            .assert(data.fieldRequired === true, data.fieldRequired);
+                        local.utility2.assert(data.file === 'ZGF0YQ==', data.file);
                         local.utility2.assert(data.filename === 'hello.png', data.filename);
                         local.utility2.assert(data.petId === options.id, data.petId);
+                        local.utility2.assert(data.propExtra === 'hello', data.propExtra);
+                        local.utility2
+                            .assert(data.propRequired === true, data.propRequired);
                         // get object
                         api.crudGetByIdOne(local.optionsId({
                             id: options.id
@@ -809,7 +824,7 @@
             // jslint-hack
             local.utility2.nop(options);
             [{
-                data: { body: { fieldRequired: true } },
+                data: { body: { propRequired: true } },
                 key: 'crudCreateOne',
                 method: 'post'
             }, {
@@ -824,7 +839,7 @@
             });
             // test validateByParamDefList's error handling-behavior
             [{
-                data: { body: { fieldRequired: null } },
+                data: { body: { propRequired: null } },
                 key: 'crudCreateOne',
                 method: 'post'
             }, {
@@ -846,8 +861,8 @@
             });
             // test validateByPropertyDef's circular-reference handling-behavior
             local.swmg.validateByPropertyDef({
-                data: { fieldObject: {} },
-                propertyDef: { fieldObject: { type: 'object' } }
+                data: { propObject: {} },
+                propertyDef: { propObject: { type: 'object' } }
             });
             onError();
         };
@@ -858,38 +873,38 @@
              */
             var optionsCopy;
             options = {
-                schema: local.swmg.swaggerJson.definitions.TestCrudModel,
-                data: { fieldRequired: true }
+                data: { propRequired: true },
+                schema: local.swmg.swaggerJson.definitions.TestCrudModel
             };
             [
-                { key: 'fieldArray', value: [null] },
-                { key: 'fieldArraySubdoc', value: [{ fieldRequired: true }] },
-                { key: 'fieldBoolean', value: true },
-                { key: 'fieldInteger', value: 0 },
-                { key: 'fieldIntegerInt32', value: 0 },
-                { key: 'fieldIntegerInt64', value: 0 },
-                { key: 'fieldNumberFloat', value: 0.5 },
-                { key: 'fieldNumberDouble', value: 0.5 },
-                { key: 'fieldObject', value: {} },
-                { key: 'fieldObjectSubdoc', value: {} },
-                { key: 'fieldString', value: '' },
-                { key: 'fieldStringByte', value: local.modeJs === 'browser'
+                { key: 'propArray', value: [null] },
+                { key: 'propArraySubdoc', value: [{ propRequired: true }] },
+                { key: 'propBoolean', value: true },
+                { key: 'propInteger', value: 0 },
+                { key: 'propIntegerInt32', value: 0 },
+                { key: 'propIntegerInt64', value: 0 },
+                { key: 'propNumberFloat', value: 0.5 },
+                { key: 'propNumberDouble', value: 0.5 },
+                { key: 'propObject', value: {} },
+                { key: 'propObjectSubdoc', value: {} },
+                { key: 'propString', value: '' },
+                { key: 'propStringByte', value: local.modeJs === 'browser'
                     ? local.global.btoa(local.utility2.stringAsciiCharset)
                     : new Buffer(local.utility2.stringAsciiCharset).toString('base64') },
-                { key: 'fieldStringDate', value: '1971-01-01' },
-                { key: 'fieldStringDatetime', value: '1971-01-01T00:00:00Z' },
-                { key: 'fieldStringEmail', value: 'q@q.com' },
-                { key: 'fieldStringJson', value: 'null' },
-                { key: 'fieldUndefined', value: null },
-                { key: 'fieldUndefined', value: undefined },
-                { key: 'fieldUndefined', value: true }
+                { key: 'propStringDate', value: '1971-01-01' },
+                { key: 'propStringDatetime', value: '1971-01-01T00:00:00Z' },
+                { key: 'propStringEmail', value: 'q@q.com' },
+                { key: 'propStringJson', value: 'null' },
+                { key: 'propUndefined', value: null },
+                { key: 'propUndefined', value: undefined },
+                { key: 'propUndefined', value: true }
             ].forEach(function (element) {
                 optionsCopy = local.utility2.jsonCopy(options.data);
                 optionsCopy[element.key] = element.value;
                 // test circular-reference handling-behavior
-                optionsCopy.fieldArraySubdoc = optionsCopy.fieldArraySubdoc || [optionsCopy];
-                optionsCopy.fieldObject = optionsCopy.fieldObject || optionsCopy;
-                optionsCopy.fieldObjectSubdoc = optionsCopy.fieldObjectSubdoc || optionsCopy;
+                optionsCopy.propArraySubdoc = optionsCopy.propArraySubdoc || [optionsCopy];
+                optionsCopy.propObject = optionsCopy.propObject || optionsCopy;
+                optionsCopy.propObjectSubdoc = optionsCopy.propObjectSubdoc || optionsCopy;
                 local.swmg.validateBySchema({ data: optionsCopy, schema: options.schema });
             });
             onError();
@@ -901,34 +916,34 @@
              */
             var error, optionsCopy;
             options = {
-                schema: local.swmg.swaggerJson.definitions.TestCrudModel,
-                data: { fieldRequired: true }
+                data: { propRequired: true },
+                schema: local.swmg.swaggerJson.definitions.TestCrudModel
             };
             [
                 { data: null },
-                { key: 'fieldArray', value: true },
-                { key: 'fieldArraySubdoc', value: [{ fieldRequired: null }] },
-                { key: 'fieldBoolean', value: 0 },
-                { key: 'fieldInteger', value: true },
-                { key: 'fieldInteger', value: Infinity },
-                { key: 'fieldInteger', value: NaN },
-                { key: 'fieldIntegerInt32', value: 0.5 },
-                { key: 'fieldIntegerInt64', value: 0.5 },
-                { key: 'fieldNumber', value: true },
-                { key: 'fieldNumber', value: Infinity },
-                { key: 'fieldNumber', value: NaN },
-                { key: 'fieldNumberFloat', value: true },
-                { key: 'fieldNumberDouble', value: true },
-                { key: 'fieldObject', value: true },
-                { key: 'fieldObjectSubdoc', value: 'non-object' },
-                { key: 'fieldRequired', value: null },
-                { key: 'fieldRequired', value: undefined },
-                { key: 'fieldString', value: true },
-                { key: 'fieldStringByte', value: local.utility2.stringAsciiCharset },
-                { key: 'fieldStringDate', value: 'null' },
-                { key: 'fieldStringDatetime', value: 'null' },
-                { key: 'fieldStringEmail', value: 'null' },
-                { key: 'fieldStringJson', value: 'syntax error' }
+                { key: 'propArray', value: true },
+                { key: 'propArraySubdoc', value: [{ propRequired: null }] },
+                { key: 'propBoolean', value: 0 },
+                { key: 'propInteger', value: true },
+                { key: 'propInteger', value: Infinity },
+                { key: 'propInteger', value: NaN },
+                { key: 'propIntegerInt32', value: 0.5 },
+                { key: 'propIntegerInt64', value: 0.5 },
+                { key: 'propNumber', value: true },
+                { key: 'propNumber', value: Infinity },
+                { key: 'propNumber', value: NaN },
+                { key: 'propNumberFloat', value: true },
+                { key: 'propNumberDouble', value: true },
+                { key: 'propObject', value: true },
+                { key: 'propObjectSubdoc', value: 'non-object' },
+                { key: 'propRequired', value: null },
+                { key: 'propRequired', value: undefined },
+                { key: 'propString', value: true },
+                { key: 'propStringByte', value: local.utility2.stringAsciiCharset },
+                { key: 'propStringDate', value: 'null' },
+                { key: 'propStringDatetime', value: 'null' },
+                { key: 'propStringEmail', value: 'null' },
+                { key: 'propStringJson', value: 'syntax error' }
             ].forEach(function (element) {
                 try {
                     error = null;
@@ -1014,8 +1029,8 @@
                         _collectionCreate: { capped: true, size: 1 },
                         // test _collectionCreateIndexList handling-behavior
                         _collectionCreateIndexList: [{
-                            key: { fieldIndexed: 1 },
-                            name: 'fieldIndexed_1'
+                            key: { propIndexed: 1 },
+                            name: 'propIndexed_1'
                         }],
                         _collectionName: 'SwmgTestMisc'
                     }, onNext);
@@ -1102,6 +1117,149 @@
     case 'node':
         // test null apiUpdate handling-behavior
         local.swmg.apiUpdate({});
+        // init test api
+        local.swmg.apiUpdate({
+            definitions: {
+                // init TestCrudModel schema
+                TestCrudModel: {
+                    // drop collection on init
+                    _collectionDrop: true,
+                    _collectionName: 'SwmgTestCrud',
+                    // init default crud-api
+                    _crudApi: '_test',
+                    properties: {
+                        propArray: { items: {}, type: 'array' },
+                        propArraySubdoc: {
+                            default: [{ propRequired: true }],
+                            items: { $ref: '#/definitions/TestCrudModel' },
+                            type: 'array'
+                        },
+                        propBoolean: { type: 'boolean' },
+                        propInteger: { type: 'integer' },
+                        propIntegerInt32: { format: 'int32', type: 'integer' },
+                        propIntegerInt64: { format: 'int64', type: 'integer' },
+                        propNumber: { type: 'number' },
+                        propNumberDouble: { format: 'double', type: 'number' },
+                        propNumberFloat: { format: 'float', type: 'number' },
+                        propObject: { type: 'object' },
+                        propObjectSubdoc: { $ref: '#/definitions/TestNullModel' },
+                        propRequired: { default: true },
+                        propString: { type: 'string' },
+                        propStringByte: { format: 'byte', type: 'string' },
+                        propStringDate: { format: 'date', type: 'string' },
+                        propStringDatetime: { format: 'date-time', type: 'string' },
+                        propStringEmail:
+                            { default: 'a@a.com', format: 'email', type: 'string' },
+                        propStringJson:
+                            { default: 'null', format: 'json', type: 'string' },
+                        propUndefined: {}
+                    },
+                    required: ['propRequired'],
+                    'x-inheritList': [{ $ref: '#/definitions/JsonapiResource' }]
+                },
+                // init TestNullModel schema
+                TestNullModel: {}
+            },
+            paths: {
+                // test custom api handling-behavior
+                '/_test/echo': { post: {
+                    _collectionName: 'SwmgTestCrud',
+                    // test extra-param handling-behavior
+                    _paramExtraDict: { paramExtra2: '{{paramExtra}}' },
+                    operationId: 'echo',
+                    parameters: [{
+                        // test array-csv-param handling-behavior
+                        collectionFormat: 'csv',
+                        description: 'csv-array param',
+                        in: 'query',
+                        items: { type: 'string' },
+                        name: 'paramArrayCsv',
+                        type: 'array'
+                    }, {
+                        // test array-pipes-param handling-behavior
+                        collectionFormat: 'pipes',
+                        description: 'pipes-array param',
+                        in: 'query',
+                        items: { type: 'string' },
+                        name: 'paramArrayPipes',
+                        type: 'array'
+                    }, {
+                        // test array-ssv-param handling-behavior
+                        collectionFormat: 'ssv',
+                        description: 'ssv-array param',
+                        in: 'query',
+                        items: { type: 'string' },
+                        name: 'paramArraySsv',
+                        type: 'array'
+                    }, {
+                        // test array-tsv-param handling-behavior
+                        collectionFormat: 'tsv',
+                        description: 'tsv-array param',
+                        in: 'query',
+                        items: { type: 'string' },
+                        name: 'paramArrayTsv',
+                        type: 'array'
+                    }, {
+                        description: 'body',
+                        // test body-param handling-behavior
+                        in: 'body',
+                        name: 'paramBody',
+                        schema: { $ref: '#/definitions/Undefined' }
+                    }, {
+                        description: 'extra param',
+                        in: 'query',
+                        // test extra-param handling-behavior
+                        name: 'paramExtra',
+                        type: 'string'
+                    }, {
+                        description: 'header param',
+                        // test header-param handling-behavior
+                        in: 'header',
+                        name: 'paramHeader',
+                        type: 'string'
+                    }, {
+                        description: 'optional param',
+                        in: 'query',
+                        // test optional-param handling-behavior
+                        name: 'paramOptional',
+                        type: 'string'
+                    }],
+                    summary: 'echo request params back to client',
+                    tags: ['_test']
+                } },
+                // test midddleware-error handling-behavior
+                '/_test/errorMiddleware': { get: {
+                    operationId: 'errorMiddleware',
+                    tags: ['_test']
+                } },
+                // test undefined api handling-behavior
+                '/_test/errorUndefinedApi': { get: {
+                    operationId: 'errorUndefinedApi',
+                    tags: ['_test']
+                } },
+                // test undefined crud-api handling-behavior
+                '/_test/errorUndefinedCrud': { get: {
+                    _collectionName: 'SwmgTestCrud',
+                    _crudApi: true,
+                    operationId: 'errorUndefinedCrud',
+                    tags: ['_test']
+                } }
+            },
+            _tagDict: { _test: { description: 'internal test-api' } }
+        });
+        // init test-middleware
+        local.middleware.middlewareList.push(function (request, response, nextMiddleware) {
+            switch (request.swmgPathname) {
+            case 'POST /_test/echo':
+                response.end(JSON.stringify(request.swmgParamDict));
+                break;
+            case 'GET /_test/errorMiddleware':
+                nextMiddleware(new Error('dummy error'));
+                break;
+            default:
+                nextMiddleware();
+            }
+        });
         // run validation test
         local.testCase_validateByParamDefList_default(null, local.utility2.onErrorDefault);
         local.testCase_validateBySchema_default(null, local.utility2.onErrorDefault);

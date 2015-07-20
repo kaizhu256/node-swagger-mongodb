@@ -15,25 +15,6 @@
 
     // run shared js-env code
     (function () {
-        local.swmg.normalizeErrorJsonapi = function (error) {
-            /*
-             * this function will convert the error to jsonapi format,
-             * http://jsonapi.org/format/#errors
-             */
-            if (error) {
-                local.swmg.normalizeIdSwagger(error);
-                error.status = Number(error.status) || 500;
-                error.errors = error.errors || [{
-                    code: String(error.code || error.status),
-                    detail: error.detail || error.stack,
-                    id: error.id || Math.random().toString(16).slice(2),
-                    message: error.message,
-                    status: error.status
-                }];
-            }
-            return error;
-        };
-
         local.swmg.normalizeIdMongodb = function (data) {
             /*
              * this function will recursively convert the property id to _id
@@ -111,6 +92,38 @@
                 data[key] = tmp;
             });
             return data;
+        };
+
+        local.swmg.onErrorJsonapi = function (options, onError) {
+            /*
+             * this function will convert the error and data to jsonapi format,
+             * http://jsonapi.org/format/#errors
+             * and pass them to onError
+             */
+            options = options || {};
+            return function (error, data) {
+                if (error) {
+                    local.swmg.normalizeIdSwagger(error);
+                    error.statusCode = Number(error.statusCode) || 500;
+                    error.errors = error.errors || {
+                        code: String(error.code || error.statusCode),
+                        detail: error.detail || error.stack,
+                        id: error.id || options.id || Math.random().toString(16).slice(2),
+                        message: error.message
+                    };
+                    if (!Array.isArray(error.errors)) {
+                        error.errors = [error.errors];
+                    }
+                    onError(error);
+                    return;
+                }
+                options.data = data;
+                local.swmg.normalizeIdSwagger(options);
+                if (!Array.isArray(options.data)) {
+                    options.data = [options.data];
+                }
+                onError(error, options);
+            };
         };
 
         local.swmg.schemaDereference = function ($ref) {
@@ -346,16 +359,8 @@
             /*
              * this function will run the low-level crud-api on the given options.data
              */
-            var modeNext, onError2, onNext, tmp;
-            onError2 = function (error) {
-                if (error) {
-                    error._id = error._id || options.data._id;
-                }
-                onError(
-                    local.swmg.normalizeErrorJsonapi(error),
-                    local.swmg.normalizeIdSwagger(options.response)
-                );
-            };
+            var modeNext, onNext;
+            options.onError2 = local.swmg.onErrorJsonapi(options.response, onError);
             modeNext = 0;
             onNext = local.utility2.onErrorWithStack(function (error, data) {
                 local.utility2.testTryCatch(function () {
@@ -387,8 +392,6 @@
                         options.response = { _id: options.data._id };
                         // init _timeCreated
                         switch (options.operationId) {
-                        case 'crudReplaceOne':
-                        case 'crudReplaceOrCreateOne':
                         case 'crudUpdateOne':
                         case 'crudUpdateOrCreateOne':
                             options.collection
@@ -399,20 +402,21 @@
                         break;
                     case 2:
                         // init _timeCreated and _timeModified
-                        tmp = data && data._timeCreated;
+                        options.tmp = data && data._timeCreated;
                         switch (options.operationId) {
                         case 'crudCreateOne':
+                        case 'crudReplaceOne':
+                        case 'crudReplaceOrCreateOne':
                             options.data._timeCreated =
                                 options.data._timeModified = new Date().toISOString();
                             break;
-                        case 'crudReplaceOne':
-                        case 'crudReplaceOrCreateOne':
                         case 'crudUpdateOne':
                         case 'crudUpdateOrCreateOne':
                             options.data._timeCreated =
                                 options.data._timeModified = new Date().toISOString();
-                            if (tmp < options.data._timeCreated && new Date(tmp).getTime()) {
-                                options.data._timeCreated = tmp;
+                            if (options.tmp < options.data._timeCreated &&
+                                    new Date(options.tmp).getTime()) {
+                                options.data._timeCreated = options.tmp;
                             }
                             break;
                         }
@@ -458,7 +462,7 @@
                             options.cursor = options.collection.find(data[0], data[1], data[2]);
                             options.cursor.toArray(onNext);
                             break;
-                        case 'crudGetDistinctValueByFieldMany':
+                        case 'crudGetDistinctValueByPropertyMany':
                             // find data
                             options.collection.distinct(
                                 options.data.field.replace((/^id$/), '_id'),
@@ -486,15 +490,6 @@
                                 .optionsId, { $set: options.data }, { upsert: true }, onNext);
                             break;
                         default:
-                            // run custom-api
-                            if (typeof options._crudApi === 'function') {
-                                modeNext = Infinity;
-                                options._crudApi(options, function (error, data) {
-                                    options.response.data = data;
-                                    onNext(error);
-                                });
-                                return;
-                            }
                             onNext(new Error('undefined crud operation - ' +
                                 options.schemaName + '.' + options.operationId));
                         }
@@ -504,13 +499,11 @@
                         data = local.utility2.jsonCopy(data);
                         switch (options.operationId) {
                         case 'crudAggregateMany':
-                        case 'crudGetDistinctValueByFieldMany':
-                        case 'crudGetByQueryMany':
-                            options.response.data = data;
-                            break;
                         case 'crudCountByQueryOne':
                         case 'crudGetByIdOne':
-                            options.response.data = [data];
+                        case 'crudGetDistinctValueByPropertyMany':
+                        case 'crudGetByQueryMany':
+                            options.response.data = data;
                             break;
                         case 'crudCreateOne':
                         case 'crudReplaceOne':
@@ -528,7 +521,7 @@
                             options.response.meta = data;
                             break;
                         case 'crudExistsByIdOne':
-                            options.response.data = [!!data];
+                            options.response.data = !!data;
                             break;
                         }
                         modeNext += 1;
@@ -536,13 +529,13 @@
                         break;
                     case 4:
                         // jsonCopy object to prevent side-effects
-                        options.response.data = [local.utility2.jsonCopy(data)];
+                        options.response.data = local.utility2.jsonCopy(data);
                         onNext();
                         break;
                     default:
-                        onError2(error);
+                        options.onError2(error, options.response.data);
                     }
-                }, onError2);
+                }, options.onError2);
             });
             onNext();
         };
@@ -561,30 +554,49 @@
                 if (!schema._collectionName) {
                     return;
                 }
-                // init JsonapiResponseData{{schemaName}}
                 local.utility2.objectSetDefault(options, JSON.parse(JSON.stringify({
                     definitions: {
-                        'JsonapiResponseData{{schemaName}}': {
+                        // init JsonapiResponse{{_schemaName}}
+                        'JsonapiResponse{{_schemaName}}': {
                             properties: { data: {
-                                items: { $ref: '#/definitions/{{schemaName}}' },
+                                items: { $ref: '#/definitions/{{_schemaName}}' },
                                 type: 'array'
                             } },
-                            'x-inheritList': [{ $ref: '#/definitions/JsonapiResponseData' }]
+                            'x-inheritList': [{ $ref: '#/definitions/JsonapiResponse' }]
                         }
                     }
-                })
-                    .replace((/\{\{schemaName\}\}/g), schemaName)
-                    ), 2);
+                }).replace((/\{\{_schemaName\}\}/g), schemaName)), 2);
+                // hack - init swaggerJson$$Dummy,
+                // to pass validation warnings for auto-created schemas
+                tmp = local.swmg.swaggerJson$$Dummy;
+                local.utility2.objectSetOverride(tmp, JSON.parse(JSON.stringify({
+                    paths: { '/$$Dummy/{{_schemaName}}': { get: {
+                        responses: {
+                            200: {
+                                description: '',
+                                schema: { $ref:
+                                    '#/definitions/JsonapiResponse{{_schemaName}}' }
+                            }
+                        }
+                    } } }
+                }).replace((/\{\{_schemaName\}\}/g), schemaName)), 2);
                 // init crud-api
                 if (schema._crudApi) {
                     local.utility2.objectSetDefault(options, JSON.parse(JSON.stringify(
                         local.swmg.cacheDict.swaggerJsonPathsCrudDefault
                     )
-                        .replace((/\{\{collectionName\}\}/g), schema._collectionName)
-                        .replace((/\{\{crudApi\}\}/g), schema._crudApi)
-                        .replace((/\{\{schemaName\}\}/g), schemaName)
+                        .replace((/\{\{_collectionName\}\}/g), schema._collectionName)
+                        .replace((/\{\{_crudApi\}\}/g), schema._crudApi)
+                        .replace((/\{\{_schemaName\}\}/g), schema._schemaName)
                         ), 2);
                 }
+                // init collectionName / crudApi / schemaName
+                schema = options.definitions[schemaName] = JSON.parse(
+                    JSON.stringify(schema)
+                        .replace((/\{\{_collectionName\}\}/g), schema._collectionName)
+                        .replace((/\{\{_crudApi\}\}/g), schema._crudApi)
+                        .replace((/\{\{_schemaName\}\}/g), schema._schemaName)
+                );
                 // update cacheDict.collection
                 local.utility2.onReady.counter += 1;
                 local.utility2.taskRunOrSubscribe({
@@ -602,12 +614,11 @@
                     // init crud-api
                     if (methodPath._crudApi && local.swmg.cacheDict
                             .methodPathCrudDefault[methodPath.operationId]) {
-                        local.utility2.objectSetDefault(methodPath, JSON.parse(JSON.stringify(
-                            local.swmg.cacheDict.methodPathCrudDefault[methodPath.operationId]
-                        )
-                            .replace((/\{\{collectionName\}\}/g), methodPath._collectionName)
-                            .replace((/\{\{schemaName\}\}/g), methodPath._schemaName)
-                            ), 2);
+                        local.utility2.objectSetDefault(
+                            methodPath,
+                            local.swmg.cacheDict.methodPathCrudDefault[methodPath.operationId],
+                            2
+                        );
                     }
                     // init defaults
                     local.utility2.objectSetDefault(methodPath, {
@@ -616,11 +627,18 @@
                             200: {
                                 description: 'ok - ' +
                                     'http://jsonapi.org/format/#document-top-level',
-                                schema: { $ref: '#/definitions/JsonapiResponseData' }
+                                schema: { $ref: '#/definitions/JsonapiResponse' }
                             }
                         },
                         tags: []
                     }, 2);
+                    // init collectionName / crudApi / schemaName
+                    local.utility2.objectSetOverride(methodPath, JSON.parse(
+                        JSON.stringify(methodPath)
+                            .replace((/\{\{_collectionName\}\}/g), methodPath._collectionName)
+                            .replace((/\{\{_crudApi\}\}/g), methodPath._crudApi)
+                            .replace((/\{\{_schemaName\}\}/g), methodPath._schemaName)
+                    ), 1);
                     // update cacheDict.methodPath
                     local.swmg.cacheDict.methodPath[method.toUpperCase() + ' ' + path.replace(
                         (/\{.*/),
@@ -686,44 +704,11 @@
             local.swmg.swaggerJson = JSON.parse(local.utility2
                 .jsonStringifyOrdered(local.utility2.jsonCopy(local.swmg.swaggerJson)));
             // validate swaggerJson
-            local.swmg.validateBySwagger(local.utility2
-                .objectSetDefault(local.utility2.jsonCopy(local.swmg.swaggerJson), {
-                    // hack - dummy schema to pass validation
-                    definitions: {
-                        _dummy: {
-                            properties: {
-                                Array: {
-                                    items: { $ref: '#/definitions/Array' },
-                                    type: 'array'
-                                },
-                                MongodbAggregationPipeline: {
-                                    items: { $ref: '#/definitions/MongodbAggregationPipeline' },
-                                    type: 'array'
-                                },
-                                Object: { items: { $ref: '#/definitions/Object' } },
-                                Undefined: { items: { $ref: '#/definitions/Undefined' } }
-                            }
-                        }
-                    },
-                    // hack - dummy path to pass validation
-                    paths: { '/_dummy': { get: {
-                        parameters: [{
-                            in: 'body',
-                            name: 'body',
-                            schema: { $ref: '#/definitions/_dummy' }
-                        }],
-                        responses: {
-                            200: {
-                                description: '',
-                                schema: { $ref: '#/definitions/JsonapiResponseData' }
-                            },
-                            default: {
-                                description: '',
-                                schema: { $ref: '#/definitions/JsonapiResponseError' }
-                            }
-                        }
-                    } } }
-                }, 2));
+            local.swmg.validateBySwagger(local.utility2.objectSetDefault(
+                local.utility2.jsonCopy(local.swmg.swaggerJson),
+                local.swmg.swaggerJson$$Dummy,
+                2
+            ));
             // init crud-api
             local.swmg.api = new local.swmg.SwaggerClient({
                 url: 'http://localhost:' + local.utility2.serverPortInit()
@@ -858,16 +843,17 @@
              */
             if (!error) {
                 error = new Error('404 Not Found');
-                error.status = 404;
+                error.statusCode = 404;
             }
-            local.swmg.normalizeErrorJsonapi(error);
-            local.utility2.serverRespondHeadSet(request, response, error.status, {});
-            // debug statusCode / method / url
-            local.utility2.errorMessagePrepend(error, response.statusCode + ' ' +
-                request.method + ' ' + request.url + '\n');
-            // print error.stack to stderr
-            local.utility2.onErrorDefault(error);
-            response.end(JSON.stringify(error));
+            local.swmg.onErrorJsonapi(null, function (error) {
+                local.utility2.serverRespondHeadSet(request, response, error.statusCode, {});
+                // debug statusCode / method / url
+                local.utility2.errorMessagePrepend(error, response.statusCode + ' ' +
+                    request.method + ' ' + request.url + '\n');
+                // print error.stack to stderr
+                local.utility2.onErrorDefault(error);
+                response.end(JSON.stringify(error));
+            })(error);
         };
 
         local.swmg.middlewareSwagger = function (request, response, nextMiddleware) {
@@ -1041,39 +1027,28 @@
                         code: { type: 'string' },
                         detail: { type: 'string' },
                         id: { type: 'string' },
-                        message: { type: 'string' },
-                        status: { type: 'integer' }
+                        message: { type: 'string' }
                     }
-                },
-                // http://jsonapi.org/format/#document-meta
-                JsonapiMeta: {
-                    properties: {}
                 },
                 // http://jsonapi.org/format/#document-structure-resource-objects
                 JsonapiResource: {
                     properties: {
-                        _timeCreated: { format: 'date-time', type: 'string' },
-                        _timeModified: { format: 'date-time', type: 'string' },
                         id: { type: 'string' }
                     }
                 },
                 // http://jsonapi.org/format/#document-structure-top-level
-                JsonapiResponseData: {
+                JsonapiResponse: {
                     properties: {
                         data: {
                             items: { $ref: '#/definitions/JsonapiResource' },
                             type: 'array'
                         },
-                        meta: { $ref: '#/definitions/JsonapiMeta' }
-                    }
-                },
-                // http://jsonapi.org/format/#document-structure-top-level
-                JsonapiResponseError: {
-                    properties: {
                         errors: {
                             items: { $ref: '#/definitions/JsonapiError' },
                             type: 'array'
-                        }
+                        },
+                        meta: { $ref: '#/definitions/Object' },
+                        statusCode: { type: 'integer' }
                     }
                 },
                 // http://docs.mongodb.org/manual/reference/operator/aggregation/
@@ -1093,6 +1068,40 @@
             paths: {},
             swagger: '2.0',
             tags: []
+        };
+        // hack - init swaggerJson$$Dummy to pass validation warnings for auto-created schemas
+        local.swmg.swaggerJson$$Dummy = {
+            definitions: {
+                $$Dummy: {
+                    properties: {
+                        propArray: {
+                            items: { $ref: '#/definitions/Array' },
+                            type: 'array'
+                        },
+                        propMongodbAggregationPipeline: {
+                            items: { $ref: '#/definitions/MongodbAggregationPipeline' },
+                            type: 'array'
+                        },
+                        propObject: { items: { $ref: '#/definitions/Object' } },
+                        propUndefined: { items: { $ref: '#/definitions/Undefined' } }
+                    }
+                },
+                JsonapiResponse$$Dummy: {
+                    properties: { data: {
+                        items: { $ref: '#/definitions/$$Dummy' },
+                        type: 'array'
+                    } },
+                    'x-inheritList': [{ $ref: '#/definitions/JsonapiResponse' }]
+                }
+            },
+            paths: { '/$$Dummy': { get: {
+                responses: {
+                    200: {
+                        description: '',
+                        schema: { $ref: '#/definitions/JsonapiResponse$$Dummy' }
+                    }
+                }
+            } } }
         };
         // init assets
         local.utility2.cacheDict.assets['/assets/swagger-mongodb.js'] =
@@ -1159,11 +1168,13 @@
                         '});' +
                     '}' +
                 '} catch (errorCaught) {' +
-                    'errorCaught.data =' +
-                        'JSON.stringify(window.swmg.normalizeErrorJsonapi(errorCaught));' +
-                    'errorCaught.headers = { "Content-Type": "application/json" };' +
-                    'console.error(errorCaught);' +
-                    'obj.on.error(errorCaught);' +
+                    'window.swmg.onErrorJsonapi(null, function (error) {' +
+                        'console.error(error);' +
+                        'obj.on.error({' +
+                            'data: JSON.stringify(error),' +
+                            'headers: { "Content-Type": "application/json" }' +
+                        '});' +
+                    '})(errorCaught);' +
                     'return;' +
                 '}' +
                 'new SwaggerHttp().execute(obj, opts);')
@@ -1268,8 +1279,8 @@
 /*jslint maxlen: 104*/
 // init swaggerJsonPathsCrudDefault
 local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
-    '/{{crudApi}}/crudAggregateMany': { post: {
-        _collectionName: '{{collectionName}}',
+    '/{{_crudApi}}/crudAggregateMany': { post: {
+        _collectionName: '{{_collectionName}}',
         _crudApi: true,
         operationId: 'crudAggregateMany',
         parameters: [{
@@ -1282,11 +1293,11 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
                 type: 'array'
             }
         }],
-        summary: 'aggregate many {{schemaName}} objects',
-        tags: ['{{crudApi}}']
+        summary: 'aggregate many {{_schemaName}} objects',
+        tags: ['{{_crudApi}}']
     } },
-    '/{{crudApi}}/crudCountByQueryOne': { get: {
-        _collectionName: '{{collectionName}}',
+    '/{{_crudApi}}/crudCountByQueryOne': { get: {
+        _collectionName: '{{_collectionName}}',
         _crudApi: true,
         operationId: 'crudCountByQueryOne',
         parameters: [{
@@ -1297,45 +1308,45 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             name: 'query',
             type: 'string'
         }],
-        summary: 'count many {{schemaName}} objects by query',
-        tags: ['{{crudApi}}']
+        summary: 'count many {{_schemaName}} objects by query',
+        tags: ['{{_crudApi}}']
     } },
-    '/{{crudApi}}/crudCreateOne': { post: {
-        _collectionName: '{{collectionName}}',
+    '/{{_crudApi}}/crudCreateOne': { post: {
+        _collectionName: '{{_collectionName}}',
         _crudApi: true,
         operationId: 'crudCreateOne',
         parameters: [{
-            description: '{{schemaName}} object',
+            description: '{{_schemaName}} object',
             in: 'body',
             name: 'body',
             required: true,
-            schema: { $ref: '#/definitions/{{schemaName}}' }
+            schema: { $ref: '#/definitions/{{_schemaName}}' }
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
         } },
-        summary: 'create one {{schemaName}} object',
-        tags: ['{{crudApi}}']
+        summary: 'create one {{_schemaName}} object',
+        tags: ['{{_crudApi}}']
     } },
-    '/{{crudApi}}/crudDeleteByIdOne/{id}': { delete: {
-        _collectionName: '{{collectionName}}',
+    '/{{_crudApi}}/crudDeleteByIdOne/{id}': { delete: {
+        _collectionName: '{{_collectionName}}',
         _crudApi: true,
         operationId: 'crudDeleteByIdOne',
         parameters: [{
-            description: '{{schemaName}} id',
+            description: '{{_schemaName}} id',
             in: 'path',
             name: 'id',
             required: true,
             type: 'string'
         }],
-        summary: 'delete one {{schemaName}} object by id',
-        tags: ['{{crudApi}}']
+        summary: 'delete one {{_schemaName}} object by id',
+        tags: ['{{_crudApi}}']
     } },
-    '/{{crudApi}}/crudGetDistinctValueByFieldMany': { get: {
-        _collectionName: '{{collectionName}}',
+    '/{{_crudApi}}/crudGetDistinctValueByPropertyMany': { get: {
+        _collectionName: '{{_collectionName}}',
         _crudApi: true,
-        operationId: 'crudGetDistinctValueByFieldMany',
+        operationId: 'crudGetDistinctValueByPropertyMany',
         parameters: [{
             description: 'mongodb query param',
             default: 'id',
@@ -1351,15 +1362,15 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             name: 'query',
             type: 'string'
         }],
-        summary: 'get many distinct {{schemaName}} values by field',
-        tags: ['{{crudApi}}']
+        summary: 'get many distinct {{_schemaName}} values by field',
+        tags: ['{{_crudApi}}']
     } },
-    '/{{crudApi}}/crudExistsByIdOne/{id}': { get: {
-        _collectionName: '{{collectionName}}',
+    '/{{_crudApi}}/crudExistsByIdOne/{id}': { get: {
+        _collectionName: '{{_collectionName}}',
         _crudApi: true,
         operationId: 'crudExistsByIdOne',
         parameters: [{
-            description: '{{schemaName}} id',
+            description: '{{_schemaName}} id',
             in: 'path',
             name: 'id',
             required: true,
@@ -1367,17 +1378,17 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
         } },
-        summary: 'check if one {{schemaName}} object exists by id',
-        tags: ['{{crudApi}}']
+        summary: 'check if one {{_schemaName}} object exists by id',
+        tags: ['{{_crudApi}}']
     } },
-    '/{{crudApi}}/crudGetByIdOne/{id}': { get: {
-        _collectionName: '{{collectionName}}',
+    '/{{_crudApi}}/crudGetByIdOne/{id}': { get: {
+        _collectionName: '{{_collectionName}}',
         _crudApi: true,
         operationId: 'crudGetByIdOne',
         parameters: [{
-            description: '{{schemaName}} id',
+            description: '{{_schemaName}} id',
             in: 'path',
             name: 'id',
             required: true,
@@ -1385,13 +1396,13 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
         } },
-        summary: 'get one {{schemaName}} object by id',
-        tags: ['{{crudApi}}']
+        summary: 'get one {{_schemaName}} object by id',
+        tags: ['{{_crudApi}}']
     } },
-    '/{{crudApi}}/crudGetByQueryMany': { get: {
-        _collectionName: '{{collectionName}}',
+    '/{{_crudApi}}/crudGetByQueryMany': { get: {
+        _collectionName: '{{_collectionName}}',
         _crudApi: true,
         operationId: 'crudGetByQueryMany',
         parameters: [{
@@ -1439,82 +1450,82 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
         } },
-        summary: 'get many {{schemaName}} objects by query',
-        tags: ['{{crudApi}}']
+        summary: 'get many {{_schemaName}} objects by query',
+        tags: ['{{_crudApi}}']
     } },
-    '/{{crudApi}}/crudReplaceOne': { put: {
-        _collectionName: '{{collectionName}}',
+    '/{{_crudApi}}/crudReplaceOne': { put: {
+        _collectionName: '{{_collectionName}}',
         _crudApi: true,
         operationId: 'crudReplaceOne',
         parameters: [{
-            description: '{{schemaName}} object',
+            description: '{{_schemaName}} object',
             in: 'body',
             name: 'body',
             required: true,
-            schema: { $ref: '#/definitions/{{schemaName}}' }
+            schema: { $ref: '#/definitions/{{_schemaName}}' }
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
         } },
-        summary: 'replace one {{schemaName}} object',
-        tags: ['{{crudApi}}']
+        summary: 'replace one {{_schemaName}} object',
+        tags: ['{{_crudApi}}']
     } },
-    '/{{crudApi}}/crudReplaceOrCreateOne': { put: {
-        _collectionName: '{{collectionName}}',
+    '/{{_crudApi}}/crudReplaceOrCreateOne': { put: {
+        _collectionName: '{{_collectionName}}',
         _crudApi: true,
         operationId: 'crudReplaceOrCreateOne',
         parameters: [{
-            description: '{{schemaName}} object',
+            description: '{{_schemaName}} object',
             in: 'body',
             name: 'body',
             required: true,
-            schema: { $ref: '#/definitions/{{schemaName}}' }
+            schema: { $ref: '#/definitions/{{_schemaName}}' }
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
         } },
-        summary: 'replace or create one {{schemaName}} object',
-        tags: ['{{crudApi}}']
+        summary: 'replace or create one {{_schemaName}} object',
+        tags: ['{{_crudApi}}']
     } },
-    '/{{crudApi}}/crudUpdateOne': { put: {
-        _collectionName: '{{collectionName}}',
+    '/{{_crudApi}}/crudUpdateOne': { put: {
+        _collectionName: '{{_collectionName}}',
         _crudApi: true,
         operationId: 'crudUpdateOne',
         parameters: [{
-            description: '{{schemaName}} object',
+            description: '{{_schemaName}} object',
             in: 'body',
             name: 'body',
             required: true,
-            schema: { $ref: '#/definitions/{{schemaName}}' }
+            schema: { $ref: '#/definitions/{{_schemaName}}' }
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
         } },
-        summary: 'update one {{schemaName}} object',
-        tags: ['{{crudApi}}']
+        summary: 'update one {{_schemaName}} object',
+        tags: ['{{_crudApi}}']
     } },
-    '/{{crudApi}}/crudUpdateOrCreateOne': { put: {
-        _collectionName: '{{collectionName}}',
+    '/{{_crudApi}}/crudUpdateOrCreateOne': { put: {
+        _collectionName: '{{_collectionName}}',
         _crudApi: true,
         operationId: 'crudUpdateOrCreateOne',
         parameters: [{
-            description: '{{schemaName}} object',
+            description: '{{_schemaName}} object',
             in: 'body',
             name: 'body',
             required: true,
-            schema: { $ref: '#/definitions/{{schemaName}}' }
+            schema: { $ref: '#/definitions/{{_schemaName}}' }
         }],
         responses: { 200: {
             description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponseData{{schemaName}}' }
+            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
         } },
-        summary: 'update or create one {{schemaName}} object',
-        tags: ['{{crudApi}}']
+        summary: 'update or create one {{_schemaName}} object',
+        tags: ['{{_crudApi}}']
     } }
 } };
 // init methodPathCrudDefault
