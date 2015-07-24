@@ -83,14 +83,6 @@
                 }
                 data[paramDef.name] = tmp;
             });
-            // init extra param
-            Object.keys(methodPath._paramExtraDict || {}).forEach(function (key) {
-                tmp = methodPath._paramExtraDict[key];
-                if (typeof tmp === 'string') {
-                    tmp = local.utility2.stringFormat(tmp, data);
-                }
-                data[key] = tmp;
-            });
             return data;
         };
 
@@ -101,22 +93,23 @@
              * and pass them to onError
              */
             options = options || {};
+            options.id = options.id || local.utility2.uuidTime();
             return function (error, data) {
                 // handle error
                 if (error) {
+                    if (error.errors) {
+                        onError(error);
+                        return;
+                    }
                     local.swmg.normalizeIdSwagger(error);
-                    local.utility2.objectSetDefault(error, options);
-                    error.statusCode = Number(error.statusCode) || 500;
-                    error.errors = error.errors || {
+                    options.statusCode = Number(error.statusCode) || 500;
+                    options.errors = [local.utility2.objectSetDefault({
                         code: String(error.code || error.statusCode),
                         detail: error.detail || error.stack,
-                        id: error.id || options.id || Math.random().toString(16).slice(2),
+                        id: error.id || options.id,
                         message: error.message
-                    };
-                    if (!Array.isArray(error.errors)) {
-                        error.errors = [error.errors];
-                    }
-                    onError(error);
+                    }, error)];
+                    onError(options);
                     return;
                 }
                 // handle data
@@ -575,15 +568,16 @@
                     } } }
                 }).replace((/\{\{_schemaName\}\}/g), schemaName)), 2);
                 // init crud-api
-                if (schema._crudApi) {
-                    local.utility2.objectSetDefault(options, JSON.parse(JSON.stringify(
-                        local.swmg.cacheDict.swaggerJsonPathsCrudDefault
-                    )
+                (schema._crudApiList || []).forEach(function (methodPath) {
+                    methodPath = JSON.parse(local.swmg.cacheDict.methodPathCrudDefault[
+                        methodPath
+                    ]
                         .replace((/\{\{_collectionName\}\}/g), schema._collectionName)
                         .replace((/\{\{_crudApi\}\}/g), schema._crudApi)
-                        .replace((/\{\{_schemaName\}\}/g), schema._schemaName)
-                        ), 2);
-                }
+                        .replace((/\{\{_schemaName\}\}/g), schema._schemaName));
+                    options.paths[methodPath._path] = options.paths[methodPath._path] || {};
+                    options.paths[methodPath._path][methodPath._method] = methodPath;
+                });
                 // init collectionName / crudApi / schemaName
                 schema = options.definitions[schemaName] = JSON.parse(
                     JSON.stringify(schema)
@@ -606,13 +600,10 @@
                     methodPath._method = method;
                     methodPath._path = path;
                     // init crud-api
-                    if (methodPath._crudApi && local.swmg.cacheDict
-                            .methodPathCrudDefault[methodPath.operationId]) {
-                        local.utility2.objectSetDefault(
-                            methodPath,
-                            local.swmg.cacheDict.methodPathCrudDefault[methodPath.operationId],
-                            2
-                        );
+                    tmp = methodPath._crudApi &&
+                        local.swmg.cacheDict.methodPathCrudDefault[methodPath.operationId];
+                    if (tmp) {
+                        local.utility2.objectSetDefault(methodPath, JSON.parse(tmp), 2);
                     }
                     // init methodPath
                     local.utility2.objectSetDefault(methodPath, {
@@ -639,7 +630,7 @@
                         function (match0) {
                             return match0.replace((/[^\/]/g), '');
                         }
-                    )] = methodPath;
+                    )] = JSON.stringify(methodPath);
                 });
             });
             // merge tags
@@ -887,6 +878,7 @@
                                 local.swmg.cacheDict.methodPath[request.swmgPathname];
                             // if swmgMethodPath exists, then break and continue
                             if (request.swmgMethodPath) {
+                                request.swmgMethodPath = JSON.parse(request.swmgMethodPath);
                                 onNext();
                                 break;
                             }
@@ -1271,11 +1263,13 @@
         };
 /* jslint-indent-begin 8 */
 /*jslint maxlen: 104*/
-// init swaggerJsonPathsCrudDefault
-local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
-    '/{{_crudApi}}/crudAggregateMany': { post: {
+// init methodPathCrudDefault
+local.swmg.cacheDict.methodPathCrudDefault = {
+    crudAggregateMany: {
         _collectionName: '{{_collectionName}}',
-        _crudApi: true,
+        _crudApi: '{{_crudApi}}',
+        _method: 'post',
+        _path: '/{{_crudApi}}/crudAggregateMany',
         operationId: 'crudAggregateMany',
         parameters: [{
             description: 'mongodb aggregation array',
@@ -1283,20 +1277,22 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             name: 'body',
             required: true,
             schema: {
-                items: { $ref: '#/definitions/MongodbAggregationPipeline' },
+                items: { '$ref': '#/definitions/MongodbAggregationPipeline' },
                 type: 'array'
             }
         }],
         summary: 'aggregate many {{_schemaName}} objects',
         tags: ['{{_crudApi}}']
-    } },
-    '/{{_crudApi}}/crudCountByQueryOne': { get: {
+    },
+    crudCountByQueryOne: {
         _collectionName: '{{_collectionName}}',
-        _crudApi: true,
+        _crudApi: '{{_crudApi}}',
+        _method: 'get',
+        _path: '/{{_crudApi}}/crudCountByQueryOne',
         operationId: 'crudCountByQueryOne',
         parameters: [{
-            description: 'mongodb query param',
             default: '{}',
+            description: 'mongodb query param',
             format: 'json',
             in: 'query',
             name: 'query',
@@ -1304,28 +1300,34 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         }],
         summary: 'count many {{_schemaName}} objects by query',
         tags: ['{{_crudApi}}']
-    } },
-    '/{{_crudApi}}/crudCreateOne': { post: {
+    },
+    crudCreateOne: {
         _collectionName: '{{_collectionName}}',
-        _crudApi: true,
+        _crudApi: '{{_crudApi}}',
+        _method: 'post',
+        _path: '/{{_crudApi}}/crudCreateOne',
         operationId: 'crudCreateOne',
         parameters: [{
             description: '{{_schemaName}} object',
             in: 'body',
             name: 'body',
             required: true,
-            schema: { $ref: '#/definitions/{{_schemaName}}' }
+            schema: { '$ref': '#/definitions/{{_schemaName}}' }
         }],
-        responses: { 200: {
-            description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
-        } },
+        responses: {
+            200: {
+                description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
+                schema: { '$ref': '#/definitions/JsonapiResponse{{_schemaName}}' }
+            }
+        },
         summary: 'create one {{_schemaName}} object',
         tags: ['{{_crudApi}}']
-    } },
-    '/{{_crudApi}}/crudDeleteByIdOne/{id}': { delete: {
+    },
+    crudDeleteByIdOne: {
         _collectionName: '{{_collectionName}}',
-        _crudApi: true,
+        _crudApi: '{{_crudApi}}',
+        _method: 'delete',
+        _path: '/{{_crudApi}}/crudDeleteByIdOne/{id}',
         operationId: 'crudDeleteByIdOne',
         parameters: [{
             description: '{{_schemaName}} id',
@@ -1336,32 +1338,12 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
         }],
         summary: 'delete one {{_schemaName}} object by id',
         tags: ['{{_crudApi}}']
-    } },
-    '/{{_crudApi}}/crudGetDistinctValueByPropertyMany': { get: {
+    },
+    crudExistsByIdOne: {
         _collectionName: '{{_collectionName}}',
-        _crudApi: true,
-        operationId: 'crudGetDistinctValueByPropertyMany',
-        parameters: [{
-            description: 'mongodb query param',
-            default: 'id',
-            in: 'query',
-            name: 'field',
-            required: true,
-            type: 'string'
-        }, {
-            description: 'mongodb query param',
-            default: '{}',
-            format: 'json',
-            in: 'query',
-            name: 'query',
-            type: 'string'
-        }],
-        summary: 'get many distinct {{_schemaName}} values by field',
-        tags: ['{{_crudApi}}']
-    } },
-    '/{{_crudApi}}/crudExistsByIdOne/{id}': { get: {
-        _collectionName: '{{_collectionName}}',
-        _crudApi: true,
+        _crudApi: '{{_crudApi}}',
+        _method: 'get',
+        _path: '/{{_crudApi}}/crudExistsByIdOne/{id}',
         operationId: 'crudExistsByIdOne',
         parameters: [{
             description: '{{_schemaName}} id',
@@ -1370,16 +1352,14 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             required: true,
             type: 'string'
         }],
-        responses: { 200: {
-            description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
-        } },
         summary: 'check if one {{_schemaName}} object exists by id',
         tags: ['{{_crudApi}}']
-    } },
-    '/{{_crudApi}}/crudGetByIdOne/{id}': { get: {
+    },
+    crudGetByIdOne: {
         _collectionName: '{{_collectionName}}',
-        _crudApi: true,
+        _crudApi: '{{_crudApi}}',
+        _method: 'get',
+        _path: '/{{_crudApi}}/crudGetByIdOne/{id}',
         operationId: 'crudGetByIdOne',
         parameters: [{
             description: '{{_schemaName}} id',
@@ -1388,74 +1368,106 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             required: true,
             type: 'string'
         }],
-        responses: { 200: {
-            description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
-        } },
+        responses: {
+            200: {
+                description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
+                schema: { '$ref': '#/definitions/JsonapiResponse{{_schemaName}}' }
+            }
+        },
         summary: 'get one {{_schemaName}} object by id',
         tags: ['{{_crudApi}}']
-    } },
-    '/{{_crudApi}}/crudGetByQueryMany': { get: {
+    },
+    crudGetByQueryMany: {
         _collectionName: '{{_collectionName}}',
-        _crudApi: true,
+        _crudApi: '{{_crudApi}}',
+        _method: 'get',
+        _path: '/{{_crudApi}}/crudGetByQueryMany',
         operationId: 'crudGetByQueryMany',
         parameters: [{
-            description: 'mongodb query param',
             default: '{}',
+            description: 'mongodb query param',
             format: 'json',
             in: 'query',
             name: 'query',
             required: true,
             type: 'string'
         }, {
-            description: 'mongodb fields param',
             default: '{}',
+            description: 'mongodb fields param',
             format: 'json',
             in: 'query',
             name: 'fields',
             type: 'string'
         }, {
-            description: 'mongodb cursor hint param',
             default: '{}',
+            description: 'mongodb cursor hint param',
             format: 'json',
             in: 'query',
             name: 'hint',
             type: 'string'
         }, {
-            description: 'mongodb cursor limit param',
             default: 10,
+            description: 'mongodb cursor limit param',
             in: 'query',
             name: 'limit',
             required: true,
             type: 'integer'
         }, {
-            description: 'mongodb cursor skip param',
             default: 0,
+            description: 'mongodb cursor skip param',
             in: 'query',
             name: 'skip',
             type: 'integer'
         }, {
-            description: 'mongodb cursor sort param',
             default: '{"_timeModified":-1}',
+            description: 'mongodb cursor sort param',
             format: 'json',
             in: 'query',
             name: 'sort',
             type: 'string'
         }],
-        responses: { 200: {
-            description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
-        } },
+        responses: {
+            200: {
+                description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
+                schema: { '$ref': '#/definitions/JsonapiResponse{{_schemaName}}' }
+            }
+        },
         summary: 'get many {{_schemaName}} objects by query',
         tags: ['{{_crudApi}}']
-    } },
-    '/{{_crudApi}}/crudReplaceOne': { put: {
+    },
+    crudGetDistinctValueByPropertyMany: {
         _collectionName: '{{_collectionName}}',
-        _crudApi: true,
+        _crudApi: '{{_crudApi}}',
+        _method: 'get',
+        _path: '/{{_crudApi}}/crudGetDistinctValueByPropertyMany',
+        operationId: 'crudGetDistinctValueByPropertyMany',
+        parameters: [{
+            default: 'id',
+            description: 'mongodb query param',
+            in: 'query',
+            name: 'field',
+            required: true,
+            type: 'string'
+        }, {
+            default: '{}',
+            description: 'mongodb query param',
+            format: 'json',
+            in: 'query',
+            name: 'query',
+            type: 'string'
+        }],
+        summary: 'get many distinct {{_schemaName}} values by field',
+        tags: ['{{_crudApi}}']
+    },
+    crudReplaceOne: {
+        _collectionName: '{{_collectionName}}',
+        _crudApi: '{{_crudApi}}',
+        _method: 'put',
+        _path: '/{{_crudApi}}/crudReplaceOne',
         operationId: 'crudReplaceOne',
         parameters: [{
-            description: 'upsert {{_schemaName}} object if it does not exist',
             default: false,
+            description: 'upsert {{_schemaName}} object if it does not exist',
             format: 'json',
             in: 'query',
             name: 'upsert',
@@ -1465,22 +1477,26 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             in: 'body',
             name: 'body',
             required: true,
-            schema: { $ref: '#/definitions/{{_schemaName}}' }
+            schema: { '$ref': '#/definitions/{{_schemaName}}' }
         }],
-        responses: { 200: {
-            description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
-        } },
+        responses: {
+            200: {
+                description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
+                schema: { '$ref': '#/definitions/JsonapiResponse{{_schemaName}}' }
+            }
+        },
         summary: 'replace one {{_schemaName}} object',
         tags: ['{{_crudApi}}']
-    } },
-    '/{{_crudApi}}/crudUpdateOne': { put: {
+    },
+    crudUpdateOne: {
         _collectionName: '{{_collectionName}}',
-        _crudApi: true,
+        _crudApi: '{{_crudApi}}',
+        _method: 'put',
+        _path: '/{{_crudApi}}/crudUpdateOne',
         operationId: 'crudUpdateOne',
         parameters: [{
-            description: 'upsert {{_schemaName}} object if it does not exist',
             default: false,
+            description: 'upsert {{_schemaName}} object if it does not exist',
             format: 'json',
             in: 'query',
             name: 'upsert',
@@ -1490,30 +1506,23 @@ local.swmg.cacheDict.swaggerJsonPathsCrudDefault = { paths: {
             in: 'body',
             name: 'body',
             required: true,
-            schema: { $ref: '#/definitions/{{_schemaName}}' }
+            schema: { '$ref': '#/definitions/{{_schemaName}}' }
         }],
-        responses: { 200: {
-            description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-            schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
-        } },
+        responses: {
+            200: {
+                description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
+                schema: { '$ref': '#/definitions/JsonapiResponse{{_schemaName}}' }
+            }
+        },
         summary: 'update one {{_schemaName}} object',
         tags: ['{{_crudApi}}']
-    } }
-} };
-// init methodPathCrudDefault
-(function () {
-    var dict;
-    dict = local.swmg.cacheDict.swaggerJsonPathsCrudDefault.paths;
-    local.swmg.cacheDict.methodPathCrudDefault = {};
-    Object.keys(dict).forEach(function (path) {
-        Object.keys(dict[path]).forEach(function (method) {
-            var methodPath;
-            methodPath = dict[path][method];
-            local.swmg.cacheDict.methodPathCrudDefault[methodPath.operationId] = methodPath;
-        });
-    });
-}());
+    }
+};
 /* jslint-indent-end */
+        Object.keys(local.swmg.cacheDict.methodPathCrudDefault).forEach(function (key) {
+            local.swmg.cacheDict.methodPathCrudDefault[key] =
+                JSON.stringify(local.swmg.cacheDict.methodPathCrudDefault[key]);
+        });
     }());
     return local;
 }())));

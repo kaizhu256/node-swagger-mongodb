@@ -437,8 +437,6 @@ width="100%" \
                         switch (paramDef.name) {
                         case 'orderId':
                         case 'petId':
-                            methodPath._paramExtraDict = methodPath._paramExtraDict || {};
-                            methodPath._paramExtraDict.id = '{{' + paramDef.name + '}}';
                             delete paramDef.format;
                             paramDef.type = 'string';
                             break;
@@ -459,6 +457,16 @@ width="100%" \
                         : modeNext + 1;
                     switch (modeNext) {
                     case 1:
+                        // init id
+                        ((request.swmgMethodPath && request.swmgMethodPath.parameters) || [
+                        ]).forEach(function (paramDef) {
+                            switch (paramDef.name) {
+                            case 'orderId':
+                            case 'petId':
+                                request.swmgParamDict.id = request.swmgParamDict[paramDef.name];
+                                break;
+                            }
+                        });
                         // init options
                         if (request.swmgMethodPath) {
                             options = {
@@ -660,27 +668,28 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.7.10"
+    "version": "2015.7.11"
 }
 ```
 
 
 
 # todo
+- add cached param for crudGetByQueryMany
 - add SwmgLoginTokenCapped
 - add crudCreateMany / crudReplaceMany / crudUpdateMany
 - re-enable user login/logout
-- fix /echo responseSchema
 - test /user/login and /user/logout
 - add max / min validation
-- add formData param-type
 - none
 
 
 
-# change since 3f906622
-- npm publish 2015.7.10
-- merge crudReplaceOrCreateOne into crudReplaceOne and crudUpdateOrCreateOne into crudUpdateOne with optional upsert param
+# change since 0a9f14d0
+- 2015.7.11
+- stringify values in swmg.cacheDict
+- add schema._crudApiList param
+- remove redundant methodPath._paramExtraDict feature
 - none
 
 

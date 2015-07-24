@@ -334,7 +334,6 @@
                         paramArraySsv: ['aa', 'bb'],
                         paramArrayTsv: ['aa', 'bb'],
                         paramBody: 'hello!',
-                        paramExtra: true,
                         paramHeader: 'hello'
                     }), data);
                     onError();
@@ -1149,6 +1148,18 @@
                     _collectionName: 'SwmgTestCrud',
                     // init default crud-api
                     _crudApi: '_test',
+                    _crudApiList: [
+                        'crudAggregateMany',
+                        'crudCountByQueryOne',
+                        'crudCreateOne',
+                        'crudDeleteByIdOne',
+                        'crudExistsByIdOne',
+                        'crudGetByIdOne',
+                        'crudGetByQueryMany',
+                        'crudGetDistinctValueByPropertyMany',
+                        'crudReplaceOne',
+                        'crudUpdateOne'
+                    ],
                     properties: {
                         propArray: { items: {}, type: 'array' },
                         propArraySubdoc: {
@@ -1186,8 +1197,6 @@
                 // test custom api handling-behavior
                 '/_test/echo': { post: {
                     _collectionName: 'SwmgTestCrud',
-                    // test extra-param handling-behavior
-                    _paramExtraDict: { paramExtra: true },
                     operationId: 'echo',
                     parameters: [{
                         // test array-csv-param handling-behavior
