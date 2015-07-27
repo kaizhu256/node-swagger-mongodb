@@ -7,7 +7,7 @@ lightweight swagger-ui crud-api backed by mongodb
 
 
 # live test-server
-[![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.testExampleJs.slimerjs..png)](https://hrku01-swagger-mongodb-beta.herokuapp.com)
+[![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.herokuDeploy.slimerjs..png)](https://hrku01-swagger-mongodb-beta.herokuapp.com)
 
 
 
@@ -283,21 +283,21 @@ width="100%" \
                     Pet: {
                         // drop collection on init
                         _collectionDrop: true,
-                        // replace or create fixtures
+                        // upsert fixtures
                         _collectionFixtureList: [{
-                            id: 'pet1',
+                            id: 'pet0',
                             name: 'birdie',
                             photoUrls: [],
                             status: 'available',
                             tags: [{ name: 'bird'}]
                         }, {
-                            id: 'pet2',
+                            id: 'pet1',
                             name: 'kittie',
                             status: 'pending',
                             photoUrls: [],
                             tags: [{ name: 'cat'}]
                         }, {
-                            id: 'pet3',
+                            id: 'pet2',
                             name: 'doggie',
                             photoUrls: [],
                             status: 'sold',
@@ -314,15 +314,15 @@ width="100%" \
                         }],
                         // drop collection on init
                         _collectionDrop: true,
-                        // replace or create fixtures
+                        // upsert fixtures
                         _collectionFixtureList: [{
-                            id: 'order1',
+                            id: 'order0',
                             status: 'available'
                         }, {
-                            id: 'order2',
+                            id: 'order1',
                             status: 'pending'
                         }, {
-                            id: 'order3',
+                            id: 'order2',
                             status: 'sold'
                         }],
                         _collectionName: 'SwmgOrder',
@@ -340,11 +340,11 @@ width="100%" \
                         }],
                         // drop collection on init
                         _collectionDrop: true,
-                        // replace or create fixtures
+                        // upsert fixtures
                         _collectionFixtureList: [{
                             email: 'john@doe.com',
                             firstName: 'john',
-                            id: 'user1',
+                            id: 'user0',
                             lastName: 'doe',
                             password: 'hello',
                             phone: '1234-5678',
@@ -352,7 +352,7 @@ width="100%" \
                         }, {
                             email: 'jane@doe.com',
                             firstName: 'jane',
-                            id: 'user2',
+                            id: 'user1',
                             lastName: 'doe',
                             password: 'bye',
                             phone: '8765-4321',
@@ -414,12 +414,16 @@ width="100%" \
                             schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
                         }
                     } }, 2);
-                    // init crudCreateOne / crudDeleteByIdOne / crudGetByIdOne
+                    // init crudCreateMany / crudCreateOne / crudDeleteByIdOne / crudGetByIdOne
                     switch (methodPath.operationId) {
                     case 'addPet':
                     case 'createUser':
                     case 'placeOrder':
                         methodPath.operationId = 'crudCreateOne';
+                        break;
+                    case 'createUsersWithArrayInput':
+                    case 'createUsersWithListInput':
+                        methodPath.operationId = 'crudCreateMany';
                         break;
                     case 'deleteOrder':
                     case 'deletePet':
@@ -448,7 +452,7 @@ width="100%" \
         }());
         // init petstore-middleware
         local.middleware.middlewareList.push(function (request, response, nextMiddleware) {
-            var modeNext, onNext, onParallel, options, result;
+            var modeNext, onNext, options;
             modeNext = 0;
             onNext = function (error, data) {
                 local.utility2.testTryCatch(function () {
@@ -552,6 +556,8 @@ width="100%" \
                         // handle user request
                         case 'DELETE /user/':
                         case 'GET /user/':
+                        case 'POST /user/createWithArray':
+                        case 'POST /user/createWithList':
                             options.optionsId = { username: request.swmgParamDict.username};
                             local.swmg._crudApi(options, onNext);
                             break;
@@ -559,28 +565,6 @@ width="100%" \
                             options.data.username = options.data.body.username;
                             options.optionsId = { username: request.swmgParamDict.username};
                             local.swmg._crudApi(options, onNext);
-                            break;
-                        case 'POST /user/createWithArray':
-                        case 'POST /user/createWithList':
-                            onParallel = local.utility2.onParallel(function (error) {
-                                onNext(error, result);
-                            });
-                            onParallel.counter += 1;
-                            result = { data: [] };
-                            // replace or create list of objects in parallel
-                            options.data.body.forEach(function (element, ii) {
-                                onParallel.counter += 1;
-                                local.swmg._crudApi({
-                                    collectionName: request.swmgMethodPath._collectionName,
-                                    data: { body: element, upsert: true },
-                                    operationId: 'crudReplaceOne',
-                                    schemaName: request.swmgMethodPath._schemaName
-                                }, function (error, data) {
-                                    result.data[ii] = data && data.data && data.data[0];
-                                    onParallel(error);
-                                });
-                            });
-                            onParallel();
                             break;
                         case 'PUT /user/':
                             options.data.body.username = options.data.username;
@@ -613,7 +597,7 @@ width="100%" \
 [![screen-capture](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.testExampleJs.png)](https://travis-ci.org/kaizhu256/node-swagger-mongodb)
 
 #### output from phantomjs-lite
-[![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.testExampleJs.slimerjs..png)](https://hrku01-swagger-mongodb-beta.herokuapp.com)
+[![screen-capture](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.testExampleJs.slimerjs..png)](https://hrku01-swagger-mongodb-beta.herokuapp.com)
 
 
 
@@ -637,7 +621,7 @@ width="100%" \
     "dependencies": {
         "mongodb-minimal": "^2015.6.3",
         "swagger-ui-lite": "^2015.6.1",
-        "utility2": "~2015.7.5"
+        "utility2": "~2015.7.9"
     },
     "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
@@ -661,14 +645,12 @@ width="100%" \
     },
     "scripts": {
         "build-ci": "node_modules/.bin/utility2 shRun shReadmeBuild",
-        "postinstall": \
-"node_modules/.bin/utility2 shRun shReadmeExportFile example.js example.js",
         "start": "npm_config_mode_auto_restart=1 \
 node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.7.11"
+    "version": "2015.7.12"
 }
 ```
 
@@ -676,8 +658,7 @@ node_modules/.bin/utility2 test test.js"
 
 # todo
 - add cached param for crudGetByQueryMany
-- add SwmgLoginTokenCapped
-- add crudCreateMany / crudReplaceMany / crudUpdateMany
+- add SwmgUserLoginTokenCapped
 - re-enable user login/logout
 - test /user/login and /user/logout
 - add max / min validation
@@ -685,11 +666,11 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 0a9f14d0
-- 2015.7.11
-- stringify values in swmg.cacheDict
-- add schema._crudApiList param
-- remove redundant methodPath._paramExtraDict feature
+# change since 1b2ab0ce
+- npm publish 2015.7.12
+- add crudCreateMany / crudDeleteByQueryMany / crudReplaceMany
+- fix swmg.onErrorJsonapi not passing error.stack
+- remove validation check for swmg.crudUpdateOne, in order to remove require constraint
 - none
 
 

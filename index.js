@@ -92,23 +92,38 @@
              * http://jsonapi.org/format/#errors
              * and pass them to onError
              */
-            options = options || {};
-            options.id = options.id || local.utility2.uuidTime();
             return function (error, data) {
+                if (typeof options === 'function') {
+                    options = options();
+                }
+                options = options || {};
+                options.id = options.id || local.utility2.uuidTime();
                 // handle error
                 if (error) {
-                    if (error.errors) {
+                    if (error.errors && Array.isArray(error.errors) && error.errors[0]) {
                         onError(error);
                         return;
                     }
-                    local.swmg.normalizeIdSwagger(error);
+                    // prepend mongodb-errmsg
+                    if (error.errmsg) {
+                        local.utility2.errorMessagePrepend(error, error.errmsg + '\n');
+                    }
+                    options.message = error.message;
+                    options.stack = error.stack;
                     options.statusCode = Number(error.statusCode) || 500;
-                    options.errors = [local.utility2.objectSetDefault({
-                        code: String(error.code || error.statusCode),
-                        detail: error.detail || error.stack,
-                        id: error.id || options.id,
-                        message: error.message
-                    }, error)];
+                    options.errors = local.utility2
+                        .jsonCopy(local.swmg.normalizeIdSwagger(error));
+                    local.utility2.objectSetDefault(options.errors, {
+                        code: options.statusCode,
+                        detail: options.stack,
+                        id: options.id,
+                        message: options.message
+                    });
+                    options.errors.code = String(options.errors.code);
+                    options.errors.detail = String(options.errors.detail);
+                    options.errors.id = String(options.errors.id);
+                    options.errors.message = String(options.errors.message);
+                    options.errors = [options.errors];
                     onError(options);
                     return;
                 }
@@ -201,7 +216,7 @@
                 }
                 options.circularList.push(data);
             }
-            // validate embedded in propertyDef.schema.type
+            // validate propertyDef embedded in propertyDef.schema.type
             if (!propertyDef.type && propertyDef.schema && propertyDef.schema.type) {
                 propertyDef = propertyDef.schema;
             }
@@ -356,7 +371,9 @@
              * this function will run the low-level crud-api on the given options.data
              */
             var modeNext, onNext;
-            options.onError2 = local.swmg.onErrorJsonapi(options.response, onError);
+            options.onError2 = local.swmg.onErrorJsonapi(function () {
+                return options.response;
+            }, onError);
             modeNext = 0;
             onNext = local.utility2.onErrorWithStack(function (error, data) {
                 local.utility2.testTryCatch(function () {
@@ -383,6 +400,7 @@
                                 options.data._id ||
                                 local.utility2.uuidTime());
                         options.optionsId = options.optionsId || { _id: options.data._id };
+                        options.optionsIdKey = Object.keys(options.optionsId)[0];
                         // init collection
                         options.collection =
                             local.swmg.cacheDict.collection[options.collectionName];
@@ -434,6 +452,11 @@
                             // delete data
                             options.collection.removeOne(options.optionsId, onNext);
                             break;
+                        case 'crudDeleteByQueryMany':
+                            // delete data
+                            options.collection.remove(local.swmg
+                                .normalizeIdMongodb(JSON.parse(options.data.query)), onNext);
+                            break;
                         case 'crudExistsByIdOne':
                             // find data
                             options.collection.findOne(options.optionsId, { _id: 1 }, onNext);
@@ -465,6 +488,45 @@
                                 onNext
                             );
                             break;
+                        case 'crudCreateMany':
+                        case 'crudReplaceMany':
+                            // insert / replace data
+                            if (!options.data.body.length) {
+                                options.response.data = [];
+                                modeNext = Infinity;
+                                onNext();
+                                break;
+                            }
+                            options.bulk = options.collection.initializeOrderedBulkOp();
+                            options.data.body.forEach(function (element) {
+                                // init id
+                                element._id = element._id || local.utility2.uuidTime();
+                                element[options.optionsIdKey] = element[options.optionsIdKey] ||
+                                    element._id;
+                                // init _timeCreated and _timeModified
+                                element._timeCreated =
+                                    element._timeModified = new Date().toISOString();
+                                switch (options.operationId) {
+                                case 'crudCreateMany':
+                                    // insert data
+                                    options.bulk.insert(element);
+                                    break;
+                                case 'crudReplaceMany':
+                                    options.bulkFindQuery = {};
+                                    options.bulkFindQuery[options.optionsIdKey] =
+                                        element[options.optionsIdKey];
+                                    options.bulkFind = options.bulk.find(options.bulkFindQuery);
+                                    // upsert data
+                                    if (options.data.upsert) {
+                                        options.bulkFind = options.bulkFind.upsert();
+                                    }
+                                    // replace data
+                                    options.bulkFind.replaceOne(element);
+                                    break;
+                                }
+                            });
+                            options.bulk.execute(onNext);
+                            break;
                         case 'crudReplaceOne':
                             // replace data
                             options.collection.update(options.optionsId, options.data.body, {
@@ -494,19 +556,29 @@
                         case 'crudGetByQueryMany':
                             options.response.data = data;
                             break;
+                        case 'crudCreateMany':
+                        case 'crudReplaceMany':
+                            options.response.meta = data;
+                            options.collection.find({
+                                _id: { $in: options.data.body.map(function (element) {
+                                    return element._id;
+                                }) }
+                            }).toArray(onNext);
+                            return;
+                        case 'crudDeleteByIdOne':
+                        case 'crudDeleteByQueryMany':
+                            options.response.meta = data;
+                            break;
                         case 'crudCreateOne':
                         case 'crudReplaceOne':
                         case 'crudUpdateOne':
                             options.response.meta = data;
-                            if (!options.response.meta.n) {
-                                onNext(new Error('crud operation failed'));
+                            if (options.response.meta.n !== 1) {
+                                onNext(new Error(options.operationId + ' failed'));
                                 return;
                             }
                             options.collection.findOne(options.optionsId, onNext);
                             return;
-                        case 'crudDeleteByIdOne':
-                            options.response.meta = data;
-                            break;
                         case 'crudExistsByIdOne':
                             options.response.data = !!data;
                             break;
@@ -515,8 +587,21 @@
                         onNext(error);
                         break;
                     case 4:
-                        // jsonCopy object to prevent side-effects
-                        options.response.data = local.utility2.jsonCopy(data);
+                        switch (options.operationId) {
+                        case 'crudCreateMany':
+                        case 'crudReplaceMany':
+                            options.tmp = {};
+                            data.forEach(function (element) {
+                                options.tmp[element._id] = element;
+                            });
+                            options.response.data = options.data.body.map(function (element) {
+                                return options.tmp[element._id];
+                            });
+                            break;
+                        default:
+                            // jsonCopy object to prevent side-effects
+                            options.response.data = local.utility2.jsonCopy(data);
+                        }
                         onNext();
                         break;
                     default:
@@ -705,12 +790,12 @@
             /*
              * this function will create a mongodb collection
              */
-            var collection, modeNext, onNext, onParallel;
+            var collection, modeNext, onNext;
             modeNext = 0;
             onNext = function (error) {
-                modeNext = error
-                    ? Infinity
-                    : modeNext + 1;
+                // validate no error occurred
+                local.utility2.assert(!error, error);
+                modeNext += 1;
                 switch (modeNext) {
                 case 1:
                     collection = local.swmg.cacheDict.collection[schema._collectionName] =
@@ -767,29 +852,19 @@
                     onNext();
                     return;
                 case 4:
-                    onParallel = local.utility2.onParallel(onNext);
-                    onParallel.counter += 1;
-                    // replace or create fixtures
-                    local.utility2.jsonCopy(schema._collectionFixtureList || [
-                    ]).forEach(function (element) {
-                        // validate element
-                        local.swmg.validateBySchema({
-                            data: element,
-                            key: schema._schemaName,
-                            schema: schema
-                        });
-                        onParallel.counter += 1;
-                        local.swmg._crudApi({
-                            collectionName: schema._collectionName,
-                            data: { body: element, upsert: true },
-                            operationId: 'crudReplaceOne',
-                            schemaName: schema._schemaName
-                        }, onParallel);
-                    });
-                    onParallel();
+                    // upsert fixtures
+                    local.swmg._crudApi({
+                        collectionName: schema._collectionName,
+                        data: {
+                            body: local.utility2.jsonCopy(schema._collectionFixtureList || []),
+                            upsert: true
+                        },
+                        operationId: 'crudReplaceMany',
+                        schemaName: schema._schemaName
+                    }, onNext);
                     return;
                 default:
-                    onError(error);
+                    onError();
                 }
             };
             onNext();
@@ -1136,10 +1211,17 @@
                 'var missingParams = [];'
             )
             // swagger-hack - add modeErroData and validation handling
-            .replace('new SwaggerHttp().execute(obj, opts);', String() +
-                'if (opts.modeErrorData) {' +
+            .replace('new SwaggerHttp().execute(obj, opts);', 'if (opts.modeErrorData) {' +
                     'var onError = success;' +
-                    'error = function (error) { onError(error.obj || error, error); };' +
+                    'error = function (error) {' +
+                        'error = error.obj || error;' +
+                        'error = error.data || error;' +
+                        'try { error = JSON.parse(error) } catch (ignore) {}' +
+                        'if (typeof error === "string") {' +
+                            'error = { message: error };' +
+                        '}' +
+                        'onError(error);' +
+                    '};' +
                     'success = function (data) { onError(null, data); };' +
                 '}' +
                 'try {' +
@@ -1164,6 +1246,9 @@
                     'return;' +
                 '}' +
                 'new SwaggerHttp().execute(obj, opts);')
+            // swagger-hack - handle json error
+            .replace('new_err.status = res.status;', 'new_err.status = res.status;' +
+                'if (res.body && res.body.message && res.body.stack) { err = res.body; }')
             // swagger-hack - disable online validation
             .replace("if ('validatorUrl' in opts.swaggerOptions) {", "if (true) {");
         local.utility2.cacheDict.assets['/assets/swagger-ui.explorer_icons.png'] = local.fs
@@ -1277,7 +1362,7 @@ local.swmg.cacheDict.methodPathCrudDefault = {
             name: 'body',
             required: true,
             schema: {
-                items: { '$ref': '#/definitions/MongodbAggregationPipeline' },
+                items: { $ref: '#/definitions/MongodbAggregationPipeline' },
                 type: 'array'
             }
         }],
@@ -1301,6 +1386,22 @@ local.swmg.cacheDict.methodPathCrudDefault = {
         summary: 'count many {{_schemaName}} objects by query',
         tags: ['{{_crudApi}}']
     },
+    crudCreateMany: {
+        _collectionName: '{{_collectionName}}',
+        _crudApi: '{{_crudApi}}',
+        _method: 'put',
+        _path: '/{{_crudApi}}/crudCreateMany',
+        operationId: 'crudCreateMany',
+        parameters: [{
+            description: '{{_schemaName}} object list',
+            in: 'body',
+            name: 'body',
+            required: true,
+            schema: { items: { $ref: '#/definitions/{{_schemaName}}' }, type: 'array' }
+        }],
+        summary: 'create many {{_schemaName}} objects in ordered list',
+        tags: ['{{_crudApi}}']
+    },
     crudCreateOne: {
         _collectionName: '{{_collectionName}}',
         _crudApi: '{{_crudApi}}',
@@ -1312,12 +1413,12 @@ local.swmg.cacheDict.methodPathCrudDefault = {
             in: 'body',
             name: 'body',
             required: true,
-            schema: { '$ref': '#/definitions/{{_schemaName}}' }
+            schema: { $ref: '#/definitions/{{_schemaName}}' }
         }],
         responses: {
             200: {
                 description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-                schema: { '$ref': '#/definitions/JsonapiResponse{{_schemaName}}' }
+                schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
             }
         },
         summary: 'create one {{_schemaName}} object',
@@ -1337,6 +1438,30 @@ local.swmg.cacheDict.methodPathCrudDefault = {
             type: 'string'
         }],
         summary: 'delete one {{_schemaName}} object by id',
+        tags: ['{{_crudApi}}']
+    },
+    crudDeleteByQueryMany: {
+        _collectionName: '{{_collectionName}}',
+        _crudApi: '{{_crudApi}}',
+        _method: 'delete',
+        _path: '/{{_crudApi}}/crudDeleteByQueryMany',
+        operationId: 'crudDeleteByQueryMany',
+        parameters: [{
+            default: '{"_id":{"$in":["id0","id1"]}}',
+            description: 'mongodb query param',
+            format: 'json',
+            in: 'query',
+            name: 'query',
+            required: true,
+            type: 'string'
+        }],
+        responses: {
+            200: {
+                description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
+                schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
+            }
+        },
+        summary: 'get many {{_schemaName}} objects by query',
         tags: ['{{_crudApi}}']
     },
     crudExistsByIdOne: {
@@ -1371,7 +1496,7 @@ local.swmg.cacheDict.methodPathCrudDefault = {
         responses: {
             200: {
                 description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-                schema: { '$ref': '#/definitions/JsonapiResponse{{_schemaName}}' }
+                schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
             }
         },
         summary: 'get one {{_schemaName}} object by id',
@@ -1429,7 +1554,7 @@ local.swmg.cacheDict.methodPathCrudDefault = {
         responses: {
             200: {
                 description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-                schema: { '$ref': '#/definitions/JsonapiResponse{{_schemaName}}' }
+                schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
             }
         },
         summary: 'get many {{_schemaName}} objects by query',
@@ -1459,6 +1584,28 @@ local.swmg.cacheDict.methodPathCrudDefault = {
         summary: 'get many distinct {{_schemaName}} values by field',
         tags: ['{{_crudApi}}']
     },
+    crudReplaceMany: {
+        _collectionName: '{{_collectionName}}',
+        _crudApi: '{{_crudApi}}',
+        _method: 'put',
+        _path: '/{{_crudApi}}/crudReplaceMany',
+        operationId: 'crudReplaceMany',
+        parameters: [{
+            description: '{{_schemaName}} object list',
+            in: 'body',
+            name: 'body',
+            required: true,
+            schema: { items: { $ref: '#/definitions/{{_schemaName}}' }, type: 'array' }
+        }, {
+            default: false,
+            description: 'upsert {{_schemaName}} object if it does not exist',
+            in: 'query',
+            name: 'upsert',
+            type: 'boolean'
+        }],
+        summary: 'replace many {{_schemaName}} objects in ordered list',
+        tags: ['{{_crudApi}}']
+    },
     crudReplaceOne: {
         _collectionName: '{{_collectionName}}',
         _crudApi: '{{_crudApi}}',
@@ -1466,23 +1613,22 @@ local.swmg.cacheDict.methodPathCrudDefault = {
         _path: '/{{_crudApi}}/crudReplaceOne',
         operationId: 'crudReplaceOne',
         parameters: [{
-            default: false,
-            description: 'upsert {{_schemaName}} object if it does not exist',
-            format: 'json',
-            in: 'query',
-            name: 'upsert',
-            type: 'boolean'
-        }, {
             description: '{{_schemaName}} object',
             in: 'body',
             name: 'body',
             required: true,
-            schema: { '$ref': '#/definitions/{{_schemaName}}' }
+            schema: { $ref: '#/definitions/{{_schemaName}}' }
+        }, {
+            default: false,
+            description: 'upsert {{_schemaName}} object if it does not exist',
+            in: 'query',
+            name: 'upsert',
+            type: 'boolean'
         }],
         responses: {
             200: {
                 description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-                schema: { '$ref': '#/definitions/JsonapiResponse{{_schemaName}}' }
+                schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
             }
         },
         summary: 'replace one {{_schemaName}} object',
@@ -1495,23 +1641,22 @@ local.swmg.cacheDict.methodPathCrudDefault = {
         _path: '/{{_crudApi}}/crudUpdateOne',
         operationId: 'crudUpdateOne',
         parameters: [{
-            default: false,
-            description: 'upsert {{_schemaName}} object if it does not exist',
-            format: 'json',
-            in: 'query',
-            name: 'upsert',
-            type: 'boolean'
-        }, {
-            description: '{{_schemaName}} object',
+            description: '{{_schemaName}} object with no validation check',
             in: 'body',
             name: 'body',
             required: true,
-            schema: { '$ref': '#/definitions/{{_schemaName}}' }
+            schema: { $ref: '#/definitions/Object' }
+        }, {
+            default: false,
+            description: 'upsert {{_schemaName}} object if it does not exist',
+            in: 'query',
+            name: 'upsert',
+            type: 'boolean'
         }],
         responses: {
             200: {
                 description: '200 ok - http://jsonapi.org/format/#document-structure-top-level',
-                schema: { '$ref': '#/definitions/JsonapiResponse{{_schemaName}}' }
+                schema: { $ref: '#/definitions/JsonapiResponse{{_schemaName}}' }
             }
         },
         summary: 'update one {{_schemaName}} object',

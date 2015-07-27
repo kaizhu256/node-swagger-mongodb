@@ -48,9 +48,9 @@
             });
         };
 
-        local.testCase_crudCreateManyXxx_default = function (options, onError) {
+        local.testCase_crudCreateMany_default = function (options, onError) {
             /*
-             * this function will test crudCreateManyXxx's default handling-behavior
+             * this function will test crudCreateMany's default handling-behavior
              */
             var api, modeNext, onError2, onNext, onParallel;
             if (!options) {
@@ -58,17 +58,34 @@
                 onParallel.counter += 1;
                 [
                     '',
+                    'pet',
+                    'store',
                     'user'
                 ].forEach(function (api) {
+                    // test create handling-behavior
                     [
+                        'crudCreateMany',
+                        'crudReplaceMany',
                         'createUsersWithArrayInput',
                         'createUsersWithListInput'
                     ].forEach(function (operationId) {
                         onParallel.counter += 1;
-                        local.testCase_crudCreateManyXxx_default({
+                        local.testCase_crudCreateMany_default({
                             api: api,
                             id: 'test_' + local.utility2.uuidTime(),
                             operationId: operationId
+                        }, onParallel);
+                    });
+                    // test upsert handling-behavior
+                    [
+                        'crudReplaceMany'
+                    ].forEach(function (operationId) {
+                        onParallel.counter += 1;
+                        local.testCase_crudCreateMany_default({
+                            api: api,
+                            id: 'test_' + local.utility2.uuidTime(),
+                            operationId: operationId,
+                            upsert: true
                         }, onParallel);
                     });
                 });
@@ -93,8 +110,10 @@
                     case 1:
                         // init options
                         options.body = [
-                            local.optionsId({ id: options.id + '0' }),
-                            local.optionsId({ id: options.id + '1' })
+                            local.optionsId({ id: options.id + '0', propRequired: true }),
+                            local.optionsId({ id: options.id + '1', propRequired: true }),
+                            // test default id handling-behavior
+                            local.optionsId({ propRequired: true })
                         ];
                         options.modeErrorData = true;
                         // init api
@@ -105,32 +124,56 @@
                             onError2();
                             return;
                         }
-                        // test crudCreateManyXxx's default handling-behavior
+                        // test crudCreateMany's default handling-behavior
                         data = local.utility2.jsonCopy(options);
-                        api[options.operationId](local.optionsId(data), options, onNext);
+                        api[options.operationId](data, options, onNext);
                         break;
                     case 2:
-                        onParallel = local.utility2.onParallel(onError);
-                        onParallel.counter += 1;
                         // validate object
-                        local.utility2.assert(data.obj.data.length === 2, data.obj.data.length);
-                        data.obj.data.forEach(function (data, ii) {
-                            local.utility2.assert(
-                                data.id === options.id + ii,
-                                [data.id, options.id]
-                            );
-                            // remove object by id
-                            onParallel.counter += 1;
-                            local.testCase_crudDeleteById_default({
-                                api: options.api,
-                                id: options.id + ii
-                            }, onParallel);
-                        });
-                        onParallel();
+                        data = data.obj.data;
+                        local.utility2.assert(data.length === options.body.length, data.length);
+                        switch (options.operationId) {
+                        case 'crudReplaceMany':
+                            if (!options.upsert) {
+                                local.utility2.assert(data.every(function (element) {
+                                    return !element;
+                                }), data);
+                                modeNext = Infinity;
+                                onNext();
+                                return;
+                            }
+                            break;
+                        }
+                        local.utility2.assert(data.every(function (element) {
+                            return element;
+                        }), data);
+                        options.body = data;
+                        // init query
+                        options.query = JSON.stringify({ id: { $in: options.body.map(
+                            function (element) {
+                                return element.id;
+                            }
+                        ) } });
+                        // validate object
+                        api.crudGetByQueryMany({
+                            limit: 8,
+                            query: options.query
+                        }, options, onNext);
+                        break;
+                    case 3:
+                        // validate object
+                        data = data.obj.data;
+                        local.utility2.assert(data.length === options.body.length, data.length);
+                        local.utility2.assert(data.every(function (element) {
+                            return element;
+                        }), data);
+                        onNext();
                         break;
                     default:
-                        onError2(error);
-                        break;
+                        // validate no error occurred
+                        local.utility2.assert(!error, error);
+                        // remove object by query
+                        local.testCase_crudDeleteByQueryMany_default(options, onError2);
                     }
                 }, onError2);
             };
@@ -195,11 +238,11 @@
             modeNext = 0;
             onNext = function (error, data) {
                 local.utility2.testTryCatch(function () {
-                    modeNext = error
-                        ? Infinity
-                        : modeNext + 1;
+                    modeNext += 1;
                     switch (modeNext) {
                     case 1:
+                        // validate no error occurred
+                        local.utility2.assert(!error, error);
                         // init options
                         options.body = local.optionsId({
                             id: options.id,
@@ -221,6 +264,8 @@
                         }), options, onNext);
                         break;
                     case 2:
+                        // validate no error occurred
+                        local.utility2.assert(!error, error);
                         // validate object does not exist
                         local.utility2.assert(data.obj.data[0] === null, data.obj.data[0]);
                         // test createXxx's default handling-behavior
@@ -228,6 +273,21 @@
                         api[options.operationId](local.optionsId(data), options, onNext);
                         break;
                     case 3:
+                        switch (options.operationId) {
+                        case 'crudReplaceOne':
+                        case 'crudUpdateOne':
+                            if (!options.upsert) {
+                                // validate error occurred
+                                local.utility2.assert(error, error);
+                                modeNext = Infinity;
+                                onNext();
+                                return;
+                            }
+                            break;
+                        default:
+                            // validate no error occurred
+                            local.utility2.assert(!error, error);
+                        }
                         // validate object
                         data = data.obj.data[0];
                         options._timeCreated = data._timeCreated;
@@ -252,6 +312,8 @@
                         }), options, onNext);
                         break;
                     case 4:
+                        // validate no error occurred
+                        local.utility2.assert(!error, error);
                         // validate object
                         data = data.obj.data[0];
                         local.utility2.assert(
@@ -276,26 +338,39 @@
                             local.utility2
                                 .assert(data.propRequired === true, data.propRequired);
                         }
-                        if (options.modeNoDelete) {
+                        switch (options.operationId) {
+                        case 'crudCreateOne':
+                            // test duplicate createXxx's error handling-behavior
+                            data = local.utility2.jsonCopy(options);
+                            api[options.operationId](local.optionsId(data), options, onNext);
+                            break;
+                        default:
+                            onNext();
+                        }
+                        break;
+                    case 5:
+                        switch (options.operationId) {
+                        case 'crudCreateOne':
+                            // validate error occurred
+                            local.utility2.assert(error, error);
+                            modeNext = Infinity;
                             onNext();
                             return;
+                        default:
+                            // validate no error occurred
+                            local.utility2.assert(!error, error);
                         }
-                        // remove object by id
-                        local.testCase_crudDeleteById_default(options, onNext);
+                        onNext();
                         break;
                     default:
-                        switch (options.operationId) {
-                        case 'crudReplaceOne':
-                        case 'crudUpdateOne':
-                            if (!options.upsert) {
-                                // validate error occurred
-                                local.utility2.assert(error, error);
-                                error = null;
-                            }
-                            break;
+                        if (options.modeNoDelete) {
+                            onError2(error, options);
+                            return;
                         }
-                        onError2(error, options);
-                        break;
+                        // validate no error occurred
+                        local.utility2.assert(!error, error);
+                        // remove object by id
+                        local.testCase_crudDeleteByIdOne_default(options, onError2);
                     }
                 }, onError2);
             };
@@ -434,21 +509,78 @@
                             local.utility2.assert(data.length === 1, data.length);
                         }
                         local.utility2.assert(data[0], data[0]);
-                        // remove object by id
-                        local.testCase_crudDeleteById_default(options, onNext);
+                        onNext();
                         break;
                     default:
-                        onError2(error);
-                        break;
+                        // validate no error occurred
+                        local.utility2.assert(!error, error);
+                        // remove object by id
+                        local.testCase_crudDeleteByIdOne_default(options, onError2);
                     }
                 }, onError2);
             };
             onNext(options && options.error);
         };
 
-        local.testCase_crudDeleteById_default = function (options, onError) {
+        local.testCase_crudDeleteByQueryMany_default = function (options, onError) {
             /*
-             * this function will test crudDeleteById's default handling-behavior
+             * this function will test crudDeleteByQueryMany's default handling-behavior
+             */
+            var api, modeNext, onNext, onParallel;
+            modeNext = 0;
+            onNext = function (error, data) {
+                local.utility2.testTryCatch(function () {
+                    modeNext = error
+                        ? Infinity
+                        : modeNext + 1;
+                    switch (modeNext) {
+                    case 1:
+                        // init options
+                        options = options || {};
+                        options.id = options.id || local.utility2.uuidTime();
+                        options.modeErrorData = true;
+                        // init api
+                        options.api = options.api || '_test';
+                        api = local.swmg.api[options.api];
+                        // remove object by query
+                        options.query = options.query || '{"id":{"$in":["id0","id1"]}}';
+                        if (!api.crudDeleteByQueryMany) {
+                            onParallel = local.utility2.onParallel(onNext);
+                            onParallel.counter += 1;
+                            JSON.parse(options.query).id.$in.forEach(function (id) {
+                                onParallel.counter += 1;
+                                api.crudDeleteByIdOne(local
+                                    .optionsId({ id: id }), options, onParallel);
+                            });
+                            onParallel();
+                            return;
+                        }
+                        api.crudDeleteByQueryMany({ query: options.query }, options, onNext);
+                        break;
+                    case 2:
+                        // validate object does not exist
+                        api.crudGetByQueryMany({
+                            limit: 8,
+                            query: options.query
+                        }, options, onNext);
+                        break;
+                    case 3:
+                        // validate object does not exist
+                        data = data.obj.data;
+                        local.utility2.assert(data.length === 0, data.length);
+                        onNext();
+                        break;
+                    default:
+                        onError(error);
+                    }
+                }, onError);
+            };
+            onNext(options && options.error);
+        };
+
+        local.testCase_crudDeleteByIdOne_default = function (options, onError) {
+            /*
+             * this function will test crudDeleteByIdOne's default handling-behavior
              */
             var api, modeNext, onNext;
             modeNext = 0;
@@ -484,16 +616,15 @@
                         break;
                     default:
                         onError(error);
-                        break;
                     }
                 }, onError);
             };
             onNext(options && options.error);
         };
 
-        local.testCase_crudUpdateXxx_default = function (options, onError) {
+        local.testCase_crudReplaceXxx_default = function (options, onError) {
             /*
-             * this function will test crudUpdateXxx's default handling-behavior
+             * this function will test crudReplaceXxx's default handling-behavior
              */
             var api, modeNext, onError2, onNext, onParallel;
             if (!options) {
@@ -505,26 +636,26 @@
                     'store',
                     'user'
                 ].forEach(function (api) {
-                    // test update handling behavior
+                    // test update handling-behavior
                     [
                         'crudReplaceOne',
                         'crudUpdateOne',
                         'updatePetWithForm'
                     ].forEach(function (operationId) {
                         onParallel.counter += 1;
-                        local.testCase_crudUpdateXxx_default({
+                        local.testCase_crudReplaceXxx_default({
                             api: api,
                             id: 'test_' + local.utility2.uuidTime(),
                             operationId: operationId
                         }, onParallel);
                     });
-                    // test upsert handling behavior
+                    // test upsert handling-behavior
                     [
                         'crudReplaceOne',
                         'crudUpdateOne'
                     ].forEach(function (operationId) {
                         onParallel.counter += 1;
-                        local.testCase_crudUpdateXxx_default({
+                        local.testCase_crudReplaceXxx_default({
                             api: api,
                             id: 'test_' + local.utility2.uuidTime(),
                             operationId: operationId,
@@ -661,12 +792,13 @@
                             local.utility2
                                 .assert(data.propRequired === false, data.propRequired);
                         }
-                        // remove object by id
-                        local.testCase_crudDeleteById_default(options, onNext);
+                        onNext();
                         break;
                     default:
-                        onError2(error);
-                        break;
+                        // validate no error occurred
+                        local.utility2.assert(!error, error);
+                        // remove object by id
+                        local.testCase_crudDeleteByIdOne_default(options, onError2);
                     }
                 }, onError2);
             };
@@ -754,12 +886,13 @@
                             data._timeModified > options._timeModified,
                             [data._timeModified, options._timeModified]
                         );
-                        // remove object by id
-                        local.testCase_crudDeleteById_default(options, onNext);
+                        onNext();
                         break;
                     default:
-                        onError(error);
-                        break;
+                        // validate no error occurred
+                        local.utility2.assert(!error, error);
+                        // remove object by id
+                        local.testCase_crudDeleteByIdOne_default(options, onError);
                     }
                 }, onError);
             };
@@ -814,11 +947,12 @@
             [
                 'testCase_collectionCreate_misc',
                 'testCase_crudAggregateMany_default',
-                'testCase_crudCreateManyXxx_default',
+                'testCase_crudCreateMany_default',
                 'testCase_crudCreateXxx_default',
                 'testCase_crudGetXxx_default',
-                'testCase_crudDeleteById_default',
-                'testCase_crudUpdateXxx_default',
+                'testCase_crudDeleteByIdOne_default',
+                'testCase_crudDeleteByQueryMany_default',
+                'testCase_crudReplaceXxx_default',
                 'testCase_crudUploadFile_default'
             ].forEach(function (testCase) {
                 if (local[testCase]) {
@@ -1056,19 +1190,6 @@
                         _collectionName: 'SwmgTestMisc'
                     }, onNext);
                     break;
-                case 4:
-                    local.swmg.collectionCreate({
-                        // test error handling-behavior
-                        _collectionCreateIndexList: [],
-                        _collectionName: 'SwmgTestMisc'
-                    }, function (error) {
-                        local.utility2.testTryCatch(function () {
-                            // validate error occurred
-                            local.utility2.assert(error, error);
-                            onNext();
-                        }, onNext);
-                    });
-                    break;
                 default:
                     onError(error);
                 }
@@ -1151,12 +1272,15 @@
                     _crudApiList: [
                         'crudAggregateMany',
                         'crudCountByQueryOne',
+                        'crudCreateMany',
                         'crudCreateOne',
+                        'crudDeleteByQueryMany',
                         'crudDeleteByIdOne',
                         'crudExistsByIdOne',
                         'crudGetByIdOne',
                         'crudGetByQueryMany',
                         'crudGetDistinctValueByPropertyMany',
+                        'crudReplaceMany',
                         'crudReplaceOne',
                         'crudUpdateOne'
                     ],
@@ -1333,14 +1457,7 @@
                     'browser';
             }
         }());
-        // init global
-        local.global = local.modeJs === 'browser'
-            ? window
-            : global;
-        // init utility2
-        local.utility2 = local.modeJs === 'browser'
-            ? window.utility2
-            : require('utility2');
+        // init example.js
         if (local.modeJs === 'node') {
             require('fs').writeFileSync(
                 './example.js',
@@ -1355,6 +1472,14 @@
             // init example.js
             local = require('./example.js');
         }
+        // init global
+        local.global = local.modeJs === 'browser'
+            ? window
+            : global;
+        // init utility2
+        local.utility2 = local.modeJs === 'browser'
+            ? window.utility2
+            : require('utility2');
         // init onReady
         local.utility2.onReadyInit();
         // init swmg
