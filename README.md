@@ -6,6 +6,11 @@ lightweight swagger-ui crud-api backed by mongodb
 
 
 
+# note
+- requires mongodb 2.6 or higer
+
+
+
 # live test-server
 [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.herokuDeploy.slimerjs..png)](https://hrku01-swagger-mongodb-beta.herokuapp.com)
 
@@ -619,13 +624,13 @@ width="100%" \
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
-        "mongodb-minimal": "^2015.6.3",
-        "swagger-ui-lite": "^2015.6.1",
-        "utility2": "~2015.7.9"
+        "mongodb-minimal": "^2015.6.4",
+        "swagger-ui-lite": "^2015.6.2",
+        "utility2": "~2015.7.10"
     },
     "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
-        "phantomjs-lite": "^2015.6.1"
+        "phantomjs-lite": "^2015.7.1"
     },
     "engines": { "node": ">=0.10 <=0.12" },
     "keywords": [
@@ -650,13 +655,17 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.7.12"
+    "version": "2015.7.13"
 }
 ```
 
 
 
 # todo
+- add logging feature
+- rename delete to remove for naming consistency
+- merge response.meta into response.data
+- migrate to travis-ci docker container build
 - add cached param for crudGetByQueryMany
 - add SwmgUserLoginTokenCapped
 - re-enable user login/logout
@@ -666,11 +675,10 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 1b2ab0ce
-- npm publish 2015.7.12
-- add crudCreateMany / crudDeleteByQueryMany / crudReplaceMany
-- fix swmg.onErrorJsonapi not passing error.stack
-- remove validation check for swmg.crudUpdateOne, in order to remove require constraint
+# change since 611e604d
+- npm publish 2015.7.13
+- update README.md
+- update dependencies
 - none
 
 

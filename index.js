@@ -1339,13 +1339,7 @@
             ? window.utility2
             : require('utility2');
         // init swagger-mongodb
-        local.swmg = {
-            cacheDict: {
-                collection: {},
-                methodPath: {}
-            },
-            local: local
-        };
+        local.swmg = { cacheDict: { collection: {}, methodPath: {} }, local: local };
 /* jslint-indent-begin 8 */
 /*jslint maxlen: 104*/
 // init methodPathCrudDefault
