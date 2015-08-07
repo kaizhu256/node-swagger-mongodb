@@ -54,6 +54,8 @@
              */
             var api, modeNext, onError2, onNext, onParallel;
             if (!options) {
+                onError();
+                return;
                 onParallel = local.utility2.onParallel(onError);
                 onParallel.counter += 1;
                 [
@@ -1445,6 +1447,7 @@
     (function () {
         // init local
         local = {};
+        // init js-env
         local.modeJs = (function () {
             try {
                 return module.exports &&
@@ -1457,37 +1460,43 @@
                     'browser';
             }
         }());
-        // init example.js
-        if (local.modeJs === 'node') {
-            require('fs').writeFileSync(
-                './example.js',
-                require('fs').readFileSync('./README.md', 'utf8')
-                    // support syntax-highlighting
-                    .replace((/[\S\s]+?\n.*?example.js\s*?```\w*?\n/), function (match0) {
-                        // preserve lineno
-                        return match0.replace((/.+/g), '');
-                    })
-                    .replace((/\n```[\S\s]+/), '')
-            );
-            // init example.js
-            local = require('./example.js');
+        switch (local.modeJs) {
+        // re-init local from window.local
+        case 'browser':
+            local = window.local;
+            break;
+        // re-init local from example.js
+        case 'node':
+            [
+                process.cwd(),
+                // test dir !== __dirname handling-behavior
+                ''
+            ].forEach(function (dir) {
+                if (dir !== __dirname) {
+                    local = require(__dirname + '/example.js');
+                    return;
+                }
+                require('fs').writeFileSync(
+                    __dirname + '/example.js',
+                    require('fs').readFileSync(__dirname + '/README.md', 'utf8')
+                        // support syntax-highlighting
+                        .replace((/[\S\s]+?\n.*?example.js\s*?```\w*?\n/), function (match0) {
+                            // preserve lineno
+                            return match0.replace((/.+/g), '');
+                        })
+                        .replace((/\n```[\S\s]+/), '')
+                        // disable mock package.json env
+                        .replace(/(process.env.npm_package_\w+ = )/g, '// $1')
+                        // alias require('$npm_package_name') to require('index.js');
+                        .replace(
+                            "require('" + process.env.npm_package_name + "')",
+                            "require(__dirname + '/index.js')"
+                        )
+                );
+                local = require(__dirname + '/example.js');
+            });
+            break;
         }
-        // init global
-        local.global = local.modeJs === 'browser'
-            ? window
-            : global;
-        // init utility2
-        local.utility2 = local.modeJs === 'browser'
-            ? window.utility2
-            : require('utility2');
-        // init onReady
-        local.utility2.onReadyInit();
-        // init swmg
-        local.swmg = local.modeJs === 'browser'
-            ? window.swmg
-            : require('./index.js');
-        // export local
-        local.global.local = local;
     }());
     return local;
 }())));

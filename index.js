@@ -1318,6 +1318,7 @@
     (function () {
         // init local
         local = {};
+        // init js-env
         local.modeJs = (function () {
             try {
                 return module.exports &&

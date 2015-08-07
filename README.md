@@ -6,11 +6,6 @@ lightweight swagger-ui crud-api backed by mongodb
 
 
 
-# note
-- requires mongodb 2.6 or higer
-
-
-
 # live test-server
 [![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.herokuDeploy.slimerjs..png)](https://hrku01-swagger-mongodb-beta.herokuapp.com)
 
@@ -39,6 +34,14 @@ lightweight swagger-ui crud-api backed by mongodb
 - unstable branch
 - HEAD is arbitrary
 - commit history may be rewritten
+
+
+
+# documentation
+- requires mongodb 2.6 or higher
+- [api-doc](https://kaizhu256.github.io/node-swagger-mongodb/build/doc.api.html)
+
+[![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.docApiCreate.slimerjs._2Fhome_2Ftravis_2Fbuild_2Fkaizhu256_2Fnode-swagger-mongodb_2Ftmp_2Fbuild_2Fdoc.api.html.png)](https://kaizhu256.github.io/node-swagger-mongodb/build/doc.api.html)
 
 
 
@@ -73,27 +76,14 @@ instruction
     stupid: true
 */
 
-(function () {
+(function (local) {
     'use strict';
+    switch (local.modeJs) {
+
+
+
     // run node js-env code
-    (function () {
-        var local;
-        // init local
-        local = {};
-        local.global = global;
-        local.modeJs = 'node';
-        try {
-            local.swmg = require('swagger-mongodb');
-        } catch (errorCaught) {
-            local.swmg = require('./index.js');
-        }
-        local.utility2 = local.swmg.local.utility2;
-        // init onReady
-        local.utility2.onReadyInit();
-        // import swmg.local
-        Object.keys(local.swmg.local).forEach(function (key) {
-            local[key] = local[key] || local.swmg.local[key];
-        });
+    case 'node':
         // export local
         module.exports = local;
         // init assets
@@ -141,6 +131,7 @@ width="100%" \
 '    <script src="/assets/utility2.js"></script>\n' +
 '    <script src="/assets/swagger-ui.rollup.js"></script>\n' +
 '    <script src="/assets/swagger-mongodb.js"></script>\n' +
+'    <script src="/assets/example.js"></script>\n' +
 '    <script src="/test/test.js"></script>\n' +
 '    <script>\n' +
 '    window.utility2 = window.utility2 || {};\n' +
@@ -170,6 +161,11 @@ width="100%" \
             { envDict: local.utility2.envDict },
             ''
         );
+        local.utility2.cacheDict.assets['/assets/example.js'] =
+            local.utility2.istanbul_lite.instrumentSync(
+                local.fs.readFileSync(__dirname + '/example.js', 'utf8'),
+                __dirname + '/example.js'
+            );
         local.utility2.cacheDict.assets['/test/test.js'] =
             local.utility2.istanbul_lite.instrumentInPackage(
                 local.fs.readFileSync(local.swmg.__dirname + '/test.js', 'utf8'),
@@ -594,12 +590,56 @@ width="100%" \
         });
         // run server-test
         local.utility2.testRunServer(local);
+        break;
+    }
+}((function () {
+    'use strict';
+    var local;
+
+
+
+    // run shared js-env code
+    (function () {
+        // init local
+        local = {};
+        // init js-env
+        local.modeJs = (function () {
+            try {
+                return module.exports &&
+                    typeof process.versions.node === 'string' &&
+                    typeof require('http').createServer === 'function' &&
+                    'node';
+            } catch (errorCaughtNode) {
+                return typeof navigator.userAgent === 'string' &&
+                    typeof document.querySelector('body') === 'object' &&
+                    'browser';
+            }
+        }());
+        // init global
+        local.global = local.modeJs === 'browser'
+            ? window
+            : global;
+        // export local
+        local.global.local = local;
+        // init swagger-mongodb
+        local.swmg = local.modeJs === 'browser'
+            ? window.swmg
+            : require('swagger-mongodb');
+        // import swmg.local
+        Object.keys(local.swmg.local).forEach(function (key) {
+            local[key] = local[key] || local.swmg.local[key];
+        });
+        // init utility2
+        local.utility2 = local.swmg.local.utility2;
+        // init onReady
+        local.utility2.onReadyInit();
     }());
-}());
+    return local;
+}())));
 ```
 
 #### output from shell
-[![screen-capture](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.testExampleJs.png)](https://travis-ci.org/kaizhu256/node-swagger-mongodb)
+[![screen-capture](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.testExampleJs.svg)](https://travis-ci.org/kaizhu256/node-swagger-mongodb)
 
 #### output from phantomjs-lite
 [![screen-capture](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.testExampleJs.slimerjs..png)](https://hrku01-swagger-mongodb-beta.herokuapp.com)
@@ -614,7 +654,7 @@ width="100%" \
 
 
 # package-listing
-[![screen-capture](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.gitLsTree.png)](https://github.com/kaizhu256/node-swagger-mongodb)
+[![screen-capture](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.gitLsTree.svg)](https://github.com/kaizhu256/node-swagger-mongodb)
 
 
 
@@ -626,7 +666,7 @@ width="100%" \
     "dependencies": {
         "mongodb-minimal": "^2015.6.4",
         "swagger-ui-lite": "^2015.6.2",
-        "utility2": "~2015.7.10"
+        "utility2": "~2015.8.2"
     },
     "description": "lightweight swagger-ui crud-api backed by mongodb",
     "devDependencies": {
@@ -655,13 +695,14 @@ node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.7.13"
+    "version": "2015.8.1"
 }
 ```
 
 
 
 # todo
+- fix tests for testCase_crudCreateMany_default
 - add logging feature
 - rename delete to remove for naming consistency
 - merge response.meta into response.data
@@ -675,16 +716,17 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 611e604d
-- npm publish 2015.7.13
-- update README.md
-- update dependencies
+# change since 03ff56ba
+- npm publish 2015.8.1
+- add auto-generated api-doc
+- update example.js loading in test.js
+- migrate build to travis-ci's docker infrastructure
 - none
 
 
 
 # changelog of last 50 commits
-[![screen-capture](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.gitLog.png)](https://github.com/kaizhu256/node-swagger-mongodb/commits)
+[![screen-capture](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.gitLog.svg)](https://github.com/kaizhu256/node-swagger-mongodb/commits)
 
 
 
@@ -698,6 +740,8 @@ node_modules/.bin/utility2 test test.js"
 
 shBuild() {
     # this function will run the main build
+    local TEST_URL || return $?
+
     # init env
     export npm_config_mode_slimerjs=1 || return $?
     . node_modules/.bin/utility2 && shInit || return $?
@@ -707,12 +751,17 @@ shBuild() {
 
     # test example js script
     export npm_config_timeout_exit=10000 || return $?
-    MODE_BUILD=testExampleJs \
-        shRunScreenCapture shReadmeTestJs example.js || return $?
+    MODE_BUILD=testExampleJs shRunScreenCapture \
+        shReadmeTestJs example.js || return $?
     unset npm_config_timeout_exit || return $?
 
     # run npm-test
     MODE_BUILD=npmTest shRunScreenCapture npm test || return $?
+
+    # create api-doc
+    shDocApiCreate \
+        '{moduleDict:{"swagger-mongodb":'\
+        '{alias:"swmg",module:require("./index.js")}}}' || return $?
 
     # if running legacy-node, then do not continue
     [ "$(node --version)" \< "v0.12" ] && return
