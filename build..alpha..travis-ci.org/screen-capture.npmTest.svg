@@ -6,12 +6,12 @@
 <tspan x="10" y="58">&gt; utility2 shRun shReadmeExportPackageJson &amp;&amp; node_modules/.bin/utility2 test test.js</tspan>
 <tspan x="10" y="74"></tspan>
 <tspan x="10" y="90"></tspan>
-<tspan x="10" y="106">[MODE_BUILD=npmTest] - 2015-08-12T14:08:14Z - npm-testing /home/travis/build/kaizhu256/node-swag\</tspan>
+<tspan x="10" y="106">[MODE_BUILD=npmTest] - 2015-08-17T16:28:12Z - npm-testing /home/travis/build/kaizhu256/node-swag\</tspan>
 <tspan x="10" y="122">ger-mongodb</tspan>
 <tspan x="10" y="138"></tspan>
 <tspan x="10" y="154"></tspan>
 <tspan x="10" y="170">covering $ node /home/travis/build/kaizhu256/node-swagger-mongodb/test.js</tspan>
-<tspan x="10" y="186">server starting on port 52519</tspan>
+<tspan x="10" y="186">server starting on port 55378</tspan>
 <tspan x="10" y="202"></tspan>
 <tspan x="10" y="218">/home/travis/build/kaizhu256/node-swagger-mongodb/test.js</tspan>
 <tspan x="10" y="234"> #1 Unreachable 'onParallel' after 'return'.</tspan>
@@ -35,22 +35,22 @@
 <tspan x="10" y="522">[node test-case 11 of 17 passed] - testCase_crudDeleteByQueryMany_default</tspan>
 <tspan x="10" y="538">[node test-case 12 of 17 passed] - testCase_crudDeleteByIdOne_default</tspan>
 <tspan x="10" y="554">[node test-case 13 of 17 passed] - testCase_crudCreateXxx_default</tspan>
-<tspan x="10" y="570">[node test-case 14 of 17 passed] - testCase_crudUploadFile_default</tspan>
-<tspan x="10" y="586">[node test-case 15 of 17 passed] - testCase_crudGetXxx_default</tspan>
+<tspan x="10" y="570">[node test-case 14 of 17 passed] - testCase_crudGetXxx_default</tspan>
+<tspan x="10" y="586">[node test-case 15 of 17 passed] - testCase_crudUploadFile_default</tspan>
 <tspan x="10" y="602">[node test-case 16 of 17 passed] - testCase_crudReplaceXxx_default</tspan>
 <tspan x="10" y="618">[node test-case 17 of 17 passed] - testCase_testPage_default</tspan>
 <tspan x="10" y="634"></tspan>
 <tspan x="10" y="650">-------------------------------------------------------</tspan>
 <tspan x="10" y="666">| test-report - npmTest - browser - / - Mozilla/5.0 (Unknown; Linux x86_64) AppleWebKit/534.34 (\</tspan>
-<tspan x="10" y="682">KHTML, like Gecko) PhantomJS/1.9.8 Safari/534.34 - 2015-08-12T14:08:17.093Z</tspan>
-<tspan x="10" y="698">|    1400 ms            0 failed       14 passed      |</tspan>
+<tspan x="10" y="682">KHTML, like Gecko) PhantomJS/1.9.8 Safari/534.34 - 2015-08-17T16:28:15.072Z</tspan>
+<tspan x="10" y="698">|    1229 ms            0 failed       14 passed      |</tspan>
 <tspan x="10" y="714">-------------------------------------------------------</tspan>
 <tspan x="10" y="730">| test-report - npmTest - browser - / - Mozilla/5.0 (X11; Linux x86_64; rv:31.0) Gecko/20100101 \</tspan>
-<tspan x="10" y="746">SlimerJS/0.9.5 - 2015-08-12T14:08:19.191Z</tspan>
-<tspan x="10" y="762">|    1410 ms            0 failed       14 passed      |</tspan>
+<tspan x="10" y="746">SlimerJS/0.9.5 - 2015-08-17T16:28:15.628Z</tspan>
+<tspan x="10" y="762">|    1669 ms            0 failed       14 passed      |</tspan>
 <tspan x="10" y="778">-------------------------------------------------------</tspan>
-<tspan x="10" y="794">| test-report - npmTest - node - linux v0.12.7 - 2015-08-12T14:08:14.804Z</tspan>
-<tspan x="10" y="810">|    6201 ms            0 failed       17 passed      |</tspan>
+<tspan x="10" y="794">| test-report - npmTest - node - linux v0.12.7 - 2015-08-17T16:28:13.002Z</tspan>
+<tspan x="10" y="810">|    4869 ms            0 failed       17 passed      |</tspan>
 <tspan x="10" y="826">-------------------------------------------------------</tspan>
 <tspan x="10" y="842"></tspan>
 <tspan x="10" y="858">created test-report file:///home/travis/build/kaizhu256/node-swagger-mongodb/tmp/build/test-repo\</tspan>
