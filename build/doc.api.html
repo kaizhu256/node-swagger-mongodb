@@ -281,19 +281,21 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>apiUpdate
             local.utility2.objectSetOverride(methodPath, JSON.parse(
                 JSON.stringify(methodPath) ...</pre></li>
 <li>example usage<pre class="docApiCodePre">...
-            local,
-            __dirname + '/swagger-ui.rollup.js'
-        );
-        local.swmg.SwaggerClient = local.SwaggerClient;
-        local.swmg.SwaggerUi = local.SwaggerUi;
-    }());
-    // init api
-    local.<span class="docApiCodeKeywordSpan">swmg.apiUpdate</span>({});
-    break;
-}
-}((function () {
-'use strict';
-var local;
+                    delete paramDef.format;
+                    paramDef.type = 'string';
+                    break;
+                }
+            });
+        });
+    });
+    local.<span class="docApiCodeKeywordSpan">swmg.apiUpdate</span>(options);
+}());
+// init petstore-middleware
+local.middleware.middlewareList.push(function (request, response, nextMiddleware) {
+    var modeNext, onNext, options;
+    modeNext = 0;
+    onNext = function (error, data) {
+        local.utility2.testTryCatch(function () {
 ...</pre></li>
 </ul>
 
@@ -386,21 +388,21 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>collectionCrea
     onNext();
 }</pre></li>
 <li>example usage<pre class="docApiCodePre">...
-            .replace((/\{\{_schemaName\}\}/g), schema._schemaName)
-    );
-    // update cacheDict.collection
-    local.utility2.onReady.counter += 1;
-    local.utility2.taskRunOrSubscribe({
-        key: 'swagger-mongodb.mongodbConnect'
-    }, function () {
-        local.<span class="docApiCodeKeywordSpan">swmg.collectionCreate</span>(schema, local.utility2.onReady);
-    });
-});
-// update paths
-Object.keys(options.paths).forEach(function (path) {
-    Object.keys(options.paths[path]).forEach(function (method) {
-        methodPath = options.paths[path][method];
-        methodPath._method = method;
+            onNext = function (error) {
+modeNext = error
+    ? Infinity
+    : modeNext + 1;
+switch (modeNext) {
+case 1:
+    // test null schema handling-behavior
+    local.<span class="docApiCodeKeywordSpan">swmg.collectionCreate</span>({
+        _collectionName: 'SwmgTestMisc',
+        // test _collectionReadonly handling-behavior
+        _collectionReadonly: true
+    }, onNext);
+    break;
+case 2:
+    local.swmg.collectionCreate({
 ...</pre></li>
 </ul>
 
@@ -859,21 +861,21 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>validateByPara
     }
 }</pre></li>
 <li>example usage<pre class="docApiCodePre">...
-    ? Infinity
-    : modeNext + 1;
-switch (modeNext) {
-case 1:
-    // jsonCopy object to prevent side-effects
-    options.data = local.utility2.jsonCopy(options.data);
-    // validate params
-    local.<span class="docApiCodeKeywordSpan">swmg.validateByParamDefList</span>({
-        data: options.data,
-        key: options.schemaName + '.' + options.operationId,
-        paramDefList: options.paramDefList
-    });
-    // convert id to mongodb format
-    local.swmg.normalizeIdMongodb(options);
-    // init body
+    data: { query: '{}' },
+    key: 'crudCountByQueryOne',
+    method: 'get'
+}].forEach(function (options) {
+    options.paramDefList = local.swmg.swaggerJson
+        .paths['/_test/' + options.key][options.method]
+        .parameters;
+    local.<span class="docApiCodeKeywordSpan">swmg.validateByParamDefList</span>(options);
+});
+// test validateByParamDefList's error handling-behavior
+[{
+    data: { body: { propRequired: null } },
+    key: 'crudCreateOne',
+    method: 'post'
+}, {
 ...</pre></li>
 </ul>
 
@@ -995,21 +997,21 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>validateByProp
     }
 }</pre></li>
 <li>example usage<pre class="docApiCodePre">...
-var data, key;
-try {
-    data = options.data;
-    // validate data
-    local.utility2.assert(data && typeof data === 'object', data);
-    (options.paramDefList || []).forEach(function (paramDef) {
-        key = paramDef.name;
-        local.<span class="docApiCodeKeywordSpan">swmg.validateByPropertyDef</span>({
-            data: data[key],
-            key: key,
-            propertyDef: paramDef,
-            required: paramDef.required
-        });
+        } catch (errorCaught) {
+            error = errorCaught;
+        }
+        // validate error occurred
+        local.utility2.assert(error, error);
     });
-} catch (errorCaught) {
+    // test validateByPropertyDef's circular-reference handling-behavior
+    local.<span class="docApiCodeKeywordSpan">swmg.validateByPropertyDef</span>({
+        data: { propObject: {} },
+        propertyDef: { propObject: { type: 'object' } }
+    });
+    onError();
+};
+
+local.testCase_validateBySchema_default = function (options, onError) {
 ...</pre></li>
 </ul>
 
@@ -1064,21 +1066,21 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>validateBySche
     }
 }</pre></li>
 <li>example usage<pre class="docApiCodePre">...
-            propertyDef.type) + '" property cannot be null or undefined');
-    }
-    return;
-}
-// validate schema
-tmp = propertyDef.$ref || (propertyDef.schema && propertyDef.schema.$ref);
-if (tmp) {
-    local.<span class="docApiCodeKeywordSpan">swmg.validateBySchema</span>({
-        circularList: options.circularList,
-        data: data,
-        key: tmp,
-        schema: local.swmg.schemaDereference(tmp)
+    ].forEach(function (element) {
+        optionsCopy = local.utility2.jsonCopy(options.data);
+        optionsCopy[element.key] = element.value;
+        // test circular-reference handling-behavior
+        optionsCopy.propArraySubdoc = optionsCopy.propArraySubdoc || [optionsCopy];
+        optionsCopy.propObject = optionsCopy.propObject || optionsCopy;
+        optionsCopy.propObjectSubdoc = optionsCopy.propObjectSubdoc || optionsCopy;
+        local.<span class="docApiCodeKeywordSpan">swmg.validateBySchema</span>({ data: optionsCopy, schema: options.schema });
     });
-    return;
-}
+    onError();
+};
+
+local.testCase_validateBySchema_error = function (options, onError) {
+    /*
+     * this function will test validateBySchema's error handling-behavior
 ...</pre></li>
 </ul>
 
@@ -1112,21 +1114,21 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>validateBySwag
     );
 }</pre></li>
 <li>example usage<pre class="docApiCodePre">...
-            });
+local.utility2.nop(options);
+local.utility2.testMock([
+    // suppress console.error
+    [console, { error: local.utility2.nop }]
+], function (onError) {
+    [null, {}].forEach(function (element) {
+        try {
+            local.<span class="docApiCodeKeywordSpan">swmg.validateBySwagger</span>(element);
+        } catch (errorCaught) {
+            error = errorCaught;
+        }
+        // validate error occurred
+        local.utility2.assert(error, error);
     });
-});
-// jsonCopy object to prevent side-effects
-local.swmg.swaggerJson = JSON.parse(local.utility2
-    .jsonStringifyOrdered(local.utility2.jsonCopy(local.swmg.swaggerJson)));
-// validate swaggerJson
-local.<span class="docApiCodeKeywordSpan">swmg.validateBySwagger</span>(local.utility2.objectSetDefault(
-    local.utility2.jsonCopy(local.swmg.swaggerJson),
-    local.swmg.swaggerJson$$Dummy,
-    2
-));
-// init crud-api
-local.swmg.api = new local.swmg.SwaggerClient({
-    url: 'http://localhost:' + local.utility2.serverPortInit()
+    onError();
 ...</pre></li>
 </ul>
 
