@@ -6,12 +6,12 @@
 <tspan x="10" y="58">&gt; utility2 shRun shReadmeExportPackageJson &amp;&amp; node_modules/.bin/utility2 test test.js</tspan>
 <tspan x="10" y="74"></tspan>
 <tspan x="10" y="90"></tspan>
-<tspan x="10" y="106">[MODE_BUILD=npmTest] - 2015-08-19T07:21:32Z - npm-testing /home/travis/build/kaizhu256/node-swag\</tspan>
+<tspan x="10" y="106">[MODE_BUILD=npmTest] - 2015-08-19T10:56:06Z - npm-testing /home/travis/build/kaizhu256/node-swag\</tspan>
 <tspan x="10" y="122">ger-mongodb</tspan>
 <tspan x="10" y="138"></tspan>
 <tspan x="10" y="154"></tspan>
 <tspan x="10" y="170">covering $ node /home/travis/build/kaizhu256/node-swagger-mongodb/test.js</tspan>
-<tspan x="10" y="186">server starting on port 40980</tspan>
+<tspan x="10" y="186">server starting on port 40423</tspan>
 <tspan x="10" y="202"></tspan>
 <tspan x="10" y="218">/home/travis/build/kaizhu256/node-swagger-mongodb/test.js</tspan>
 <tspan x="10" y="234"> #1 Unreachable 'onParallel' after 'return'.</tspan>
@@ -42,15 +42,15 @@
 <tspan x="10" y="634"></tspan>
 <tspan x="10" y="650">-------------------------------------------------------</tspan>
 <tspan x="10" y="666">| test-report - npmTest - browser - / - Mozilla/5.0 (Unknown; Linux x86_64) AppleWebKit/534.34 (\</tspan>
-<tspan x="10" y="682">KHTML, like Gecko) PhantomJS/1.9.8 Safari/534.34 - 2015-08-19T07:21:37.046Z</tspan>
-<tspan x="10" y="698">|    1910 ms            0 failed       14 passed      |</tspan>
+<tspan x="10" y="682">KHTML, like Gecko) PhantomJS/1.9.8 Safari/534.34 - 2015-08-19T10:56:08.977Z</tspan>
+<tspan x="10" y="698">|    1262 ms            0 failed       14 passed      |</tspan>
 <tspan x="10" y="714">-------------------------------------------------------</tspan>
 <tspan x="10" y="730">| test-report - npmTest - browser - / - Mozilla/5.0 (X11; Linux x86_64; rv:31.0) Gecko/20100101 \</tspan>
-<tspan x="10" y="746">SlimerJS/0.9.6 - 2015-08-19T07:21:37.592Z</tspan>
-<tspan x="10" y="762">|    2783 ms            0 failed       14 passed      |</tspan>
+<tspan x="10" y="746">SlimerJS/0.9.6 - 2015-08-19T10:56:09.566Z</tspan>
+<tspan x="10" y="762">|    1958 ms            0 failed       14 passed      |</tspan>
 <tspan x="10" y="778">-------------------------------------------------------</tspan>
-<tspan x="10" y="794">| test-report - npmTest - node - linux v0.12.7 - 2015-08-19T07:21:33.376Z</tspan>
-<tspan x="10" y="810">|    7552 ms            0 failed       17 passed      |</tspan>
+<tspan x="10" y="794">| test-report - npmTest - node - linux v0.12.7 - 2015-08-19T10:56:07.003Z</tspan>
+<tspan x="10" y="810">|    5201 ms            0 failed       17 passed      |</tspan>
 <tspan x="10" y="826">-------------------------------------------------------</tspan>
 <tspan x="10" y="842"></tspan>
 <tspan x="10" y="858">created test-report file:///home/travis/build/kaizhu256/node-swagger-mongodb/tmp/build/test-repo\</tspan>
