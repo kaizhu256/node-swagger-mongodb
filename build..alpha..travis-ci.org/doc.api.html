@@ -325,7 +325,8 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>collectionCrea
                 return;
             }
             // drop collection on init
-            if (schema._collectionDrop) {
+            if (schema._collectionDrop &&
+                    local.utility2.envDict.npm_config_mode_collection_drop !== '0') {
                 console.warn('dropping collection ' + schema._collectionName + ' ...');
                 local.swmg.db.command({ drop: schema._collectionName }, function () {
                     onNext();

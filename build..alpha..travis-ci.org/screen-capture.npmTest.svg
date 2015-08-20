@@ -6,12 +6,12 @@
 <tspan x="10" y="58">&gt; utility2 shRun shReadmeExportPackageJson &amp;&amp; node_modules/.bin/utility2 test test.js</tspan>
 <tspan x="10" y="74"></tspan>
 <tspan x="10" y="90"></tspan>
-<tspan x="10" y="106">[MODE_BUILD=npmTest] - 2015-08-20T04:00:59Z - npm-testing /home/travis/build/kaizhu256/node-swag\</tspan>
+<tspan x="10" y="106">[MODE_BUILD=npmTest] - 2015-08-20T04:30:29Z - npm-testing /home/travis/build/kaizhu256/node-swag\</tspan>
 <tspan x="10" y="122">ger-mongodb</tspan>
 <tspan x="10" y="138"></tspan>
 <tspan x="10" y="154"></tspan>
 <tspan x="10" y="170">covering $ node /home/travis/build/kaizhu256/node-swagger-mongodb/test.js</tspan>
-<tspan x="10" y="186">server starting on port 44378</tspan>
+<tspan x="10" y="186">server starting on port 47933</tspan>
 <tspan x="10" y="202">&gt; dropping collection SwmgOrder ...</tspan>
 <tspan x="10" y="218">dropping collection SwmgUser ...</tspan>
 <tspan x="10" y="234">dropping collection SwmgPet ...</tspan>
@@ -37,15 +37,15 @@
 <tspan x="10" y="554"></tspan>
 <tspan x="10" y="570">-------------------------------------------------------</tspan>
 <tspan x="10" y="586">| test-report - npmTest - browser - / - Mozilla/5.0 (Unknown; Linux x86_64) AppleWebKit/534.34 (\</tspan>
-<tspan x="10" y="602">KHTML, like Gecko) PhantomJS/1.9.8 Safari/534.34 - 2015-08-20T04:01:02.606Z</tspan>
-<tspan x="10" y="618">|    1314 ms            0 failed       14 passed      |</tspan>
+<tspan x="10" y="602">KHTML, like Gecko) PhantomJS/1.9.8 Safari/534.34 - 2015-08-20T04:30:32.308Z</tspan>
+<tspan x="10" y="618">|    1176 ms            0 failed       14 passed      |</tspan>
 <tspan x="10" y="634">-------------------------------------------------------</tspan>
 <tspan x="10" y="650">| test-report - npmTest - browser - / - Mozilla/5.0 (X11; Linux x86_64; rv:31.0) Gecko/20100101 \</tspan>
-<tspan x="10" y="666">SlimerJS/0.9.6 - 2015-08-20T04:01:03.058Z</tspan>
-<tspan x="10" y="682">|    1731 ms            0 failed       14 passed      |</tspan>
+<tspan x="10" y="666">SlimerJS/0.9.6 - 2015-08-20T04:30:32.525Z</tspan>
+<tspan x="10" y="682">|    1582 ms            0 failed       14 passed      |</tspan>
 <tspan x="10" y="698">-------------------------------------------------------</tspan>
-<tspan x="10" y="714">| test-report - npmTest - node - linux v0.12.7 - 2015-08-20T04:01:00.555Z</tspan>
-<tspan x="10" y="730">|    4913 ms            0 failed       17 passed      |</tspan>
+<tspan x="10" y="714">| test-report - npmTest - node - linux v0.12.7 - 2015-08-20T04:30:30.143Z</tspan>
+<tspan x="10" y="730">|    4712 ms            0 failed       17 passed      |</tspan>
 <tspan x="10" y="746">-------------------------------------------------------</tspan>
 <tspan x="10" y="762"></tspan>
 <tspan x="10" y="778">created test-report file:///home/travis/build/kaizhu256/node-swagger-mongodb/tmp/build/test-repo\</tspan>
