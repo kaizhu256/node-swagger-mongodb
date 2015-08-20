@@ -2,16 +2,16 @@
 <rect height="1070" fill="#555" width="720"></rect>
 <text fill="#7f7" font-family="Courier New" font-size="12" xml:space="preserve">
 <tspan x="10" y="26"></tspan>
-<tspan x="10" y="42">&gt; swagger-mongodb@2015.8.1 test /home/travis/build/kaizhu256/node-swagger-mongodb</tspan>
+<tspan x="10" y="42">&gt; swagger-mongodb@2015.8.2 test /home/travis/build/kaizhu256/node-swagger-mongodb</tspan>
 <tspan x="10" y="58">&gt; utility2 shRun shReadmeExportPackageJson &amp;&amp; node_modules/.bin/utility2 test test.js</tspan>
 <tspan x="10" y="74"></tspan>
 <tspan x="10" y="90"></tspan>
-<tspan x="10" y="106">[MODE_BUILD=npmTest] - 2015-08-20T03:47:21Z - npm-testing /home/travis/build/kaizhu256/node-swag\</tspan>
+<tspan x="10" y="106">[MODE_BUILD=npmTest] - 2015-08-20T03:57:44Z - npm-testing /home/travis/build/kaizhu256/node-swag\</tspan>
 <tspan x="10" y="122">ger-mongodb</tspan>
 <tspan x="10" y="138"></tspan>
 <tspan x="10" y="154"></tspan>
 <tspan x="10" y="170">covering $ node /home/travis/build/kaizhu256/node-swagger-mongodb/test.js</tspan>
-<tspan x="10" y="186">server starting on port 42743</tspan>
+<tspan x="10" y="186">server starting on port 60437</tspan>
 <tspan x="10" y="202">&gt; dropping collection SwmgOrder ...</tspan>
 <tspan x="10" y="218">dropping collection SwmgUser ...</tspan>
 <tspan x="10" y="234">dropping collection SwmgPet ...</tspan>
@@ -26,26 +26,26 @@
 <tspan x="10" y="378">[node test-case 7 of 17 passed] - testCase_crudEcho_default</tspan>
 <tspan x="10" y="394">[node test-case 8 of 17 passed] - testCase_crudXxx_error</tspan>
 <tspan x="10" y="410">[node test-case 9 of 17 passed] - testCase_collectionCreate_misc</tspan>
-<tspan x="10" y="426">[node test-case 10 of 17 passed] - testCase_crudDeleteByIdOne_default</tspan>
-<tspan x="10" y="442">[node test-case 11 of 17 passed] - testCase_crudDeleteByQueryMany_default</tspan>
+<tspan x="10" y="426">[node test-case 10 of 17 passed] - testCase_crudDeleteByQueryMany_default</tspan>
+<tspan x="10" y="442">[node test-case 11 of 17 passed] - testCase_crudDeleteByIdOne_default</tspan>
 <tspan x="10" y="458">[node test-case 12 of 17 passed] - testCase_crudCreateMany_default</tspan>
 <tspan x="10" y="474">[node test-case 13 of 17 passed] - testCase_crudCreateXxx_default</tspan>
 <tspan x="10" y="490">[node test-case 14 of 17 passed] - testCase_crudGetXxx_default</tspan>
-<tspan x="10" y="506">[node test-case 15 of 17 passed] - testCase_crudUploadFile_default</tspan>
-<tspan x="10" y="522">[node test-case 16 of 17 passed] - testCase_crudReplaceXxx_default</tspan>
+<tspan x="10" y="506">[node test-case 15 of 17 passed] - testCase_crudReplaceXxx_default</tspan>
+<tspan x="10" y="522">[node test-case 16 of 17 passed] - testCase_crudUploadFile_default</tspan>
 <tspan x="10" y="538">[node test-case 17 of 17 passed] - testCase_testPage_default</tspan>
 <tspan x="10" y="554"></tspan>
 <tspan x="10" y="570">-------------------------------------------------------</tspan>
 <tspan x="10" y="586">| test-report - npmTest - browser - / - Mozilla/5.0 (Unknown; Linux x86_64) AppleWebKit/534.34 (\</tspan>
-<tspan x="10" y="602">KHTML, like Gecko) PhantomJS/1.9.8 Safari/534.34 - 2015-08-20T03:47:24.186Z</tspan>
-<tspan x="10" y="618">|    1315 ms            0 failed       14 passed      |</tspan>
+<tspan x="10" y="602">KHTML, like Gecko) PhantomJS/1.9.8 Safari/534.34 - 2015-08-20T03:57:46.938Z</tspan>
+<tspan x="10" y="618">|    1143 ms            0 failed       14 passed      |</tspan>
 <tspan x="10" y="634">-------------------------------------------------------</tspan>
 <tspan x="10" y="650">| test-report - npmTest - browser - / - Mozilla/5.0 (X11; Linux x86_64; rv:31.0) Gecko/20100101 \</tspan>
-<tspan x="10" y="666">SlimerJS/0.9.6 - 2015-08-20T03:47:24.873Z</tspan>
-<tspan x="10" y="682">|    1719 ms            0 failed       14 passed      |</tspan>
+<tspan x="10" y="666">SlimerJS/0.9.6 - 2015-08-20T03:57:47.386Z</tspan>
+<tspan x="10" y="682">|    1578 ms            0 failed       14 passed      |</tspan>
 <tspan x="10" y="698">-------------------------------------------------------</tspan>
-<tspan x="10" y="714">| test-report - npmTest - node - linux v0.12.7 - 2015-08-20T03:47:22.101Z</tspan>
-<tspan x="10" y="730">|    5154 ms            0 failed       17 passed      |</tspan>
+<tspan x="10" y="714">| test-report - npmTest - node - linux v0.12.7 - 2015-08-20T03:57:44.863Z</tspan>
+<tspan x="10" y="730">|    4797 ms            0 failed       17 passed      |</tspan>
 <tspan x="10" y="746">-------------------------------------------------------</tspan>
 <tspan x="10" y="762"></tspan>
 <tspan x="10" y="778">created test-report file:///home/travis/build/kaizhu256/node-swagger-mongodb/tmp/build/test-repo\</tspan>

@@ -1,7 +1,7 @@
 <svg height="3918" width="720" xmlns="http://www.w3.org/2000/svg">
 <rect height="3918" fill="#555" width="720"></rect>
 <text fill="#7f7" font-family="Courier New" font-size="12" xml:space="preserve">
-<tspan x="10" y="26">2015-08-20 11:37:14 +0800</tspan>
+<tspan x="10" y="26">2015-08-20 11:56:41 +0800</tspan>
 <tspan x="10" y="42">- npm publish 2015.8.2</tspan>
 <tspan x="10" y="58">- fix tests for testCase_crudCreateMany_default</tspan>
 <tspan x="10" y="74">- merge response.meta into response.data</tspan>
