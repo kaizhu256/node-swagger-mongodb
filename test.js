@@ -54,8 +54,6 @@
              */
             var api, modeNext, onError2, onNext, onParallel;
             if (!options) {
-                onError();
-                return;
                 onParallel = local.utility2.onParallel(onError);
                 onParallel.counter += 1;
                 [

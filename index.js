@@ -565,20 +565,20 @@
                                 }) }
                             }).toArray(onNext);
                             return;
-                        case 'crudDeleteByIdOne':
-                        case 'crudDeleteByQueryMany':
-                            options.response.meta = data;
-                            break;
                         case 'crudCreateOne':
                         case 'crudReplaceOne':
                         case 'crudUpdateOne':
                             options.response.meta = data;
-                            if (options.response.meta.n !== 1) {
+                            if ((data.n || (data.result && data.result.n)) !== 1) {
                                 onNext(new Error(options.operationId + ' failed'));
                                 return;
                             }
                             options.collection.findOne(options.optionsId, onNext);
                             return;
+                        case 'crudDeleteByIdOne':
+                        case 'crudDeleteByQueryMany':
+                            options.response.meta = data;
+                            break;
                         case 'crudExistsByIdOne':
                             options.response.data = !!data;
                             break;
@@ -918,7 +918,7 @@
 
         local.swmg.middlewareSwagger = function (request, response, nextMiddleware) {
             /*
-             * this function will parse the request's header / path / query
+             * this function will run the main swagger-mongodb middleware
              */
             var modeNext, onNext, tmp;
             modeNext = 0;

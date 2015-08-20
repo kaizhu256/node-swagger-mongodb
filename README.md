@@ -1,6 +1,6 @@
 swagger-mongodb
 ===============
-lightweight swagger-ui crud-api backed by mongodb
+lightweight swagger-ui crud-middleware backed by mongodb
 
 [![NPM](https://img.shields.io/npm/v/swagger-mongodb.svg?style=flat-square)](https://www.npmjs.org/package/swagger-mongodb)
 
@@ -12,7 +12,6 @@ lightweight swagger-ui crud-api backed by mongodb
 
 
 # build-status [![travis-ci.org build-status](https://api.travis-ci.org/kaizhu256/node-swagger-mongodb.svg)](https://travis-ci.org/kaizhu256/node-swagger-mongodb)
-
 [![build commit status](https://kaizhu256.github.io/node-swagger-mongodb/build/build.badge.svg)](https://travis-ci.org/kaizhu256/node-swagger-mongodb)
 
 | git-branch : | [master](https://github.com/kaizhu256/node-swagger-mongodb/tree/master) | [beta](https://github.com/kaizhu256/node-swagger-mongodb/tree/beta) | [alpha](https://github.com/kaizhu256/node-swagger-mongodb/tree/alpha)|
@@ -38,15 +37,16 @@ lightweight swagger-ui crud-api backed by mongodb
 
 
 # documentation
-- requires mongodb 2.6 or higher
-- [api-doc](https://kaizhu256.github.io/node-swagger-mongodb/build/doc.api.html)
+#### this package requires
+- darwin or linux os
+- mongodb 2.6 or higher
 
-[![heroku.com test-server](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.docApiCreate.slimerjs._2Fhome_2Ftravis_2Fbuild_2Fkaizhu256_2Fnode-swagger-mongodb_2Ftmp_2Fbuild_2Fdoc.api.html.png)](https://kaizhu256.github.io/node-swagger-mongodb/build/doc.api.html)
+#### [api-doc](https://kaizhu256.github.io/node-swagger-mongodb/build/doc.api.html)
+[![api-doc](https://kaizhu256.github.io/node-swagger-mongodb/build/screen-capture.docApiCreate.slimerjs._2Fhome_2Ftravis_2Fbuild_2Fkaizhu256_2Fnode-swagger-mongodb_2Ftmp_2Fbuild_2Fdoc.api.html.png)](https://kaizhu256.github.io/node-swagger-mongodb/build/doc.api.html)
 
 
 
 # quickstart web example
-
 #### to run this example, follow the instruction in the script below
 - example.js
 
@@ -54,14 +54,12 @@ lightweight swagger-ui crud-api backed by mongodb
 /*
 example.js
 
-this node script will serve a
-lightweight swagger-ui crud-api backed by mongodb
+this node script will serve a lightweight swagger-ui crud-api backed by mongodb
 
 instruction
     1. save this script as example.js
     2. run the shell command:
-          $ npm install swagger-mongodb && \
-              npm_config_server_port=1337 node example.js
+          $ npm install swagger-mongodb && npm_config_server_port=1337 node example.js
     3. open a browser to http://localhost:1337
     4. interact with the swagger-ui crud-api
 */
@@ -115,19 +113,13 @@ instruction
 '</head>\n' +
 '<body>\n' +
 '    <div class="ajaxProgressDiv" style="display: none;">\n' +
-'    <div class="ajaxProgressBarDiv ajaxProgressBarDivLoading" \
->loading</div>\n' +
+'    <div class="ajaxProgressBarDiv ajaxProgressBarDivLoading">loading</div>\n' +
 '    </div>\n' +
-'    <h1 \
->{{envDict.npm_package_name}} [{{envDict.npm_package_version}}]</h1>\n' +
+'    <h1>{{envDict.npm_package_name}} [{{envDict.npm_package_version}}]</h1>\n' +
 '    <h3>{{envDict.npm_package_description}}</h3>\n' +
 '    <div class="testReportDiv"></div>\n' +
 '    <div id="swagger-ui-container" style="display: none;"></div>\n' +
-'    <iframe \
-height="512" \
-src="/assets/swagger-ui.html" \
-width="100%" \
-></iframe>\n' +
+'    <iframe height="512" src="/assets/swagger-ui.html" width="100%"></iframe>\n' +
 '    <script src="/assets/utility2.js"></script>\n' +
 '    <script src="/assets/swagger-ui.rollup.js"></script>\n' +
 '    <script src="/assets/swagger-mongodb.js"></script>\n' +
@@ -664,11 +656,11 @@ width="100%" \
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
-        "mongodb-minimal": "^2015.6.4",
+        "mongodb-minimal": "^2015.8.1",
         "swagger-ui-lite": "^2015.6.2",
-        "utility2": "~2015.8.2"
+        "utility2": "~2015.8.5"
     },
-    "description": "lightweight swagger-ui crud-api backed by mongodb",
+    "description": "lightweight swagger-ui crud-middleware backed by mongodb",
     "devDependencies": {
         "phantomjs-lite": "^2015.7.1"
     },
@@ -690,22 +682,24 @@ width="100%" \
     },
     "scripts": {
         "build-ci": "node_modules/.bin/utility2 shRun shReadmeBuild",
-        "start": "npm_config_mode_auto_restart=1 \
-node_modules/.bin/utility2 shRun node test.js",
+        "build-doc": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
+node_modules/.bin/utility2 shRun shDocApiCreate \"{ \
+exampleFileList:['example.js','test.js','index.js'], \
+moduleDict:{'swagger-mongodb':{aliasList:['swmg'],exports:require('./index.js')}} \
+}\"",
+        "start": "npm_config_mode_auto_restart=1 node_modules/.bin/utility2 shRun node test.js",
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.8.1"
+    "version": "2015.8.2"
 }
 ```
 
 
 
 # todo
-- fix tests for testCase_crudCreateMany_default
 - add logging feature
 - rename delete to remove for naming consistency
-- merge response.meta into response.data
 - migrate to travis-ci docker container build
 - add cached param for crudGetByQueryMany
 - add SwmgUserLoginTokenCapped
@@ -716,11 +710,11 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since 03ff56ba
-- npm publish 2015.8.1
-- add auto-generated api-doc
-- update example.js loading in test.js
-- migrate build to travis-ci's docker infrastructure
+# change since fbc24cce
+- npm publish 2015.8.2
+- fix tests for testCase_crudCreateMany_default
+- merge response.meta into response.data
+- add npm-script build-doc
 - none
 
 
@@ -751,17 +745,14 @@ shBuild() {
 
     # test example js script
     export npm_config_timeout_exit=10000 || return $?
-    MODE_BUILD=testExampleJs shRunScreenCapture \
-        shReadmeTestJs example.js || return $?
+    MODE_BUILD=testExampleJs shRunScreenCapture shReadmeTestJs example.js || return $?
     unset npm_config_timeout_exit || return $?
 
     # run npm-test
     MODE_BUILD=npmTest shRunScreenCapture npm test || return $?
 
     # create api-doc
-    shDocApiCreate \
-        '{moduleDict:{"swagger-mongodb":'\
-        '{alias:"swmg",module:require("./index.js")}}}' || return $?
+    npm run-script build-doc || return $?
 
     # if running legacy-node, then do not continue
     [ "$(node --version)" \< "v0.12" ] && return
@@ -774,8 +765,7 @@ shBuild() {
         [ "$CI_BRANCH" = beta ] ||
         [ "$CI_BRANCH" = master ]
     then
-        TEST_URL="https://hrku01-$npm_package_name-$CI_BRANCH.herokuapp.com" \
-            || return $?
+        TEST_URL="https://hrku01-$npm_package_name-$CI_BRANCH.herokuapp.com" || return $?
         TEST_URL="$TEST_URL?modeTest=phantom&timeExit={{timeExit}}" || return $?
         MODE_BUILD=herokuTest shPhantomTest "$TEST_URL" || return $?
     fi
@@ -784,29 +774,13 @@ shBuild
 
 # save exit-code
 EXIT_CODE=$?
-
-shBuildCleanup() {
-    # this function will cleanup build-artifacts in local build dir
-    # create package-listing
-    MODE_BUILD=gitLsTree shRunScreenCapture shGitLsTree || return $?
-    # create recent changelog of last 50 commits
-    MODE_BUILD=gitLog shRunScreenCapture git log -50 --pretty="%ai\u000a%B" || \
-        return $?
-}
-shBuildCleanup || exit $?
-
-shBuildGithubUploadCleanup() {
-    # this function will cleanup build-artifacts in local gh-pages repo
-    return
-}
-
+# create package-listing
+MODE_BUILD=gitLsTree shRunScreenCapture shGitLsTree || exit $?
+# create recent changelog of last 50 commits
+MODE_BUILD=gitLog shRunScreenCapture git log -50 --pretty="%ai\u000a%B" || exit $?
 # if running legacy-node, then do not continue
 [ "$(node --version)" \< "v0.12" ] && exit $EXIT_CODE
-
-# upload build-artifacts to github,
-# and if number of commits > 16, then squash older commits
+# upload build-artifacts to github, and if number of commits > 16, then squash older commits
 COMMIT_LIMIT=16 shBuildGithubUpload || exit $?
-
-# exit with $EXIT_CODE
 exit $EXIT_CODE
 ```
