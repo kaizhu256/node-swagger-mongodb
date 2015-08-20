@@ -2,7 +2,7 @@
 <rect height="510" fill="#555" width="720"></rect>
 <text fill="#7f7" font-family="Courier New" font-size="12" xml:space="preserve">
 <tspan x="10" y="26"></tspan>
-<tspan x="10" y="42">[MODE_BUILD=testExampleJs] - 2015-08-20T03:32:44Z - testing example.js</tspan>
+<tspan x="10" y="42">[MODE_BUILD=testExampleJs] - 2015-08-20T03:47:02Z - testing example.js</tspan>
 <tspan x="10" y="58"></tspan>
 <tspan x="10" y="74">jslint-lite@2015.6.3 node_modules/jslint-lite</tspan>
 <tspan x="10" y="90">npm install swagger-mongodb &amp;&amp; npm_config_server_port=1337 node example.js</tspan>
@@ -22,7 +22,7 @@
 <tspan x="10" y="314">re'); " &gt; node_modules/mongodb.js &amp;&amp; printf "module.exports = require('../mongodb-core');" &gt; nod\</tspan>
 <tspan x="10" y="330">e_modules/mongodb-core.js</tspan>
 <tspan x="10" y="346"></tspan>
-<tspan x="10" y="362">swagger-mongodb@2015.8.1 node_modules/swagger-mongodb</tspan>
+<tspan x="10" y="362">swagger-mongodb@2015.8.2 node_modules/swagger-mongodb</tspan>
 <tspan x="10" y="378">├── swagger-ui-lite@2015.6.2</tspan>
 <tspan x="10" y="394">├── utility2@2015.8.5 (istanbul-lite@2015.6.2)</tspan>
 <tspan x="10" y="410">└── mongodb-minimal@2015.8.1</tspan>
