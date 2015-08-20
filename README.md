@@ -2,7 +2,7 @@ swagger-mongodb
 ===============
 lightweight swagger-ui crud-middleware backed by mongodb
 
-[![NPM](https://img.shields.io/npm/v/swagger-mongodb.svg?style=flat-square)](https://www.npmjs.org/package/swagger-mongodb)
+[![NPM](https://img.shields.io/npm/v/swagger-mongodb.svg?style=flat-square)](https://www.npmjs.org/package/swagger-mongodb) [![NPM](https://img.shields.io/npm/dm/swagger-mongodb.svg?style=flat-square)](https://www.npmjs.org/package/swagger-mongodb)
 
 
 
