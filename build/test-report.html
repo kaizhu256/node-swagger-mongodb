@@ -1,0 +1,715 @@
+<style>
+.testReportPlatformDiv {
+border: 1px solid;
+border-radius: 5px;
+font-family: Helvetical Neue, Helvetica, Arial, sans-serif;
+margin-top: 20px;
+padding: 0 10px 10px 10px;
+text-align: left;
+}
+.testReportPlatformPre {
+background-color: #fdd;
+border: 1px;
+border-radius: 0 0 5px 5px;
+border-top-style: solid;
+margin-bottom: 0;
+padding: 10px;
+}
+.testReportPlatformPreHidden {
+display: none;
+}
+.testReportPlatformScreenCaptureImg {
+border: 1px solid;
+border-color: #000;
+margin: 5px 0 5px 0;
+max-height:256px;
+max-width:512px;
+}
+.testReportPlatformSpan {
+display: inline-block;
+width: 8em;
+}
+.testReportPlatformTable {
+border: 1px;
+border-top-style: solid;
+text-align: left;
+width: 100%;
+}
+.testReportPlatformTr:nth-child(odd) {
+background-color: #bfb;
+}
+.testReportTestFailed {
+background-color: #f99;
+}
+.testReportTestPending {
+background-color: #99f;
+}
+.testReportSummaryDiv {
+background-color: #bfb;
+}
+.testReportSummarySpan {
+display: inline-block;
+width: 6.5em;
+}
+</style>
+<div class="testReportPlatformDiv testReportSummaryDiv">
+<h2>swagger-mongodb test-report summary</h2>
+<h4>
+<span class="testReportSummarySpan">version</span>-
+2015.8.1<br>
+<span class="testReportSummarySpan">test date</span>- 2015-08-12T14:08:20.927Z<br>
+<span class="testReportSummarySpan">commit info</span>-
+20822aea74a8acaf2d7119f989922135b065811d - update README.md<br>
+</h4>
+<table class="testReportPlatformTable">
+<thead><tr>
+<th>total time-elapsed</th>
+<th>total tests failed</th>
+<th>total tests passed</th>
+<th>total tests pending</th>
+</tr></thead>
+<tbody><tr>
+<td>9339 ms</td>
+<td class="testReportTestPassed">0</td>
+<td>73</td>
+<td>0</td>
+</tr></tbody>
+</table>
+</div>
+
+<div class="testReportPlatformDiv">
+<h4>
+1. herokuTest - browser - / - Mozilla/5.0 (Unknown; Linux x86_64) AppleWebKit/534.34 (KHTML, like Gecko) PhantomJS/1.9.8 Safari/534.34 - 2015-08-12T14:09:14.218Z<br>
+<a href="screen-capture.herokuTest.phantomjs..png"><img class="testReportPlatformScreenCaptureImg" src="screen-capture.herokuTest.phantomjs..png"></a><br>
+<span class="testReportPlatformSpan">time-elapsed</span>- 1634 ms<br>
+<span class="testReportPlatformSpan">tests failed</span>- 0<br>
+<span class="testReportPlatformSpan">tests passed</span>- 14<br>
+<span class="testReportPlatformSpan">tests pending</span>- 0<br>
+</h4>
+<table class="testReportPlatformTable">
+<thead><tr>
+<th>#</th>
+<th>time-elapsed</th>
+<th>status</th>
+<th>test-case</th>
+</tr></thead>
+<tbody>
+
+<tr class="testReportPlatformTr">
+<td>1</td>
+<td>447 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_ajax_404</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>2</td>
+<td>0 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudCreateMany_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>3</td>
+<td>1357 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudCreateXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>4</td>
+<td>482 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudDeleteByIdOne_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>5</td>
+<td>482 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudDeleteByQueryMany_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>6</td>
+<td>491 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudEcho_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>7</td>
+<td>1543 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudGetXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>8</td>
+<td>1608 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudReplaceXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>9</td>
+<td>1588 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudUploadFile_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>10</td>
+<td>471 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudXxx_error</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>11</td>
+<td>0 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateByParamDefList_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>12</td>
+<td>3 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySchema_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>13</td>
+<td>14 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySchema_error</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>14</td>
+<td>1 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySwagger_default</td>
+</tr>
+
+</tbody>
+</table>
+<pre class="testReportPlatformPreHidden">
+
+</pre>
+</div>
+
+<div class="testReportPlatformDiv">
+<h4>
+2. herokuTest - browser - / - Mozilla/5.0 (X11; Linux x86_64; rv:31.0) Gecko/20100101 SlimerJS/0.9.5 - 2015-08-12T14:09:14.924Z<br>
+<a href="screen-capture.herokuTest.slimerjs..png"><img class="testReportPlatformScreenCaptureImg" src="screen-capture.herokuTest.slimerjs..png"></a><br>
+<span class="testReportPlatformSpan">time-elapsed</span>- 1503 ms<br>
+<span class="testReportPlatformSpan">tests failed</span>- 0<br>
+<span class="testReportPlatformSpan">tests passed</span>- 14<br>
+<span class="testReportPlatformSpan">tests pending</span>- 0<br>
+</h4>
+<table class="testReportPlatformTable">
+<thead><tr>
+<th>#</th>
+<th>time-elapsed</th>
+<th>status</th>
+<th>test-case</th>
+</tr></thead>
+<tbody>
+
+<tr class="testReportPlatformTr">
+<td>15</td>
+<td>135 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_ajax_404</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>16</td>
+<td>0 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudCreateMany_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>17</td>
+<td>927 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudCreateXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>18</td>
+<td>299 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudDeleteByIdOne_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>19</td>
+<td>300 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudDeleteByQueryMany_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>20</td>
+<td>78 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudEcho_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>21</td>
+<td>985 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudGetXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>22</td>
+<td>1448 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudReplaceXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>23</td>
+<td>1423 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudUploadFile_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>24</td>
+<td>252 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudXxx_error</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>25</td>
+<td>0 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateByParamDefList_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>26</td>
+<td>3 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySchema_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>27</td>
+<td>3 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySchema_error</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>28</td>
+<td>1 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySwagger_default</td>
+</tr>
+
+</tbody>
+</table>
+<pre class="testReportPlatformPreHidden">
+
+</pre>
+</div>
+
+<div class="testReportPlatformDiv">
+<h4>
+3. npmTest - browser - / - Mozilla/5.0 (Unknown; Linux x86_64) AppleWebKit/534.34 (KHTML, like Gecko) PhantomJS/1.9.8 Safari/534.34 - 2015-08-12T14:08:17.093Z<br>
+<a href="screen-capture.npmTest.phantomjs..png"><img class="testReportPlatformScreenCaptureImg" src="screen-capture.npmTest.phantomjs..png"></a><br>
+<span class="testReportPlatformSpan">time-elapsed</span>- 1400 ms<br>
+<span class="testReportPlatformSpan">tests failed</span>- 0<br>
+<span class="testReportPlatformSpan">tests passed</span>- 14<br>
+<span class="testReportPlatformSpan">tests pending</span>- 0<br>
+</h4>
+<table class="testReportPlatformTable">
+<thead><tr>
+<th>#</th>
+<th>time-elapsed</th>
+<th>status</th>
+<th>test-case</th>
+</tr></thead>
+<tbody>
+
+<tr class="testReportPlatformTr">
+<td>29</td>
+<td>42 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_ajax_404</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>30</td>
+<td>0 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudCreateMany_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>31</td>
+<td>1235 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudCreateXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>32</td>
+<td>620 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudDeleteByIdOne_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>33</td>
+<td>678 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudDeleteByQueryMany_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>34</td>
+<td>434 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudEcho_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>35</td>
+<td>1356 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudGetXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>36</td>
+<td>1375 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudReplaceXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>37</td>
+<td>1369 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudUploadFile_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>38</td>
+<td>470 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudXxx_error</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>39</td>
+<td>1 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateByParamDefList_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>40</td>
+<td>2 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySchema_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>41</td>
+<td>12 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySchema_error</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>42</td>
+<td>1 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySwagger_default</td>
+</tr>
+
+</tbody>
+</table>
+<pre class="testReportPlatformPreHidden">
+
+</pre>
+</div>
+
+<div class="testReportPlatformDiv">
+<h4>
+4. npmTest - browser - / - Mozilla/5.0 (X11; Linux x86_64; rv:31.0) Gecko/20100101 SlimerJS/0.9.5 - 2015-08-12T14:08:19.191Z<br>
+<a href="screen-capture.npmTest.slimerjs..png"><img class="testReportPlatformScreenCaptureImg" src="screen-capture.npmTest.slimerjs..png"></a><br>
+<span class="testReportPlatformSpan">time-elapsed</span>- 1410 ms<br>
+<span class="testReportPlatformSpan">tests failed</span>- 0<br>
+<span class="testReportPlatformSpan">tests passed</span>- 14<br>
+<span class="testReportPlatformSpan">tests pending</span>- 0<br>
+</h4>
+<table class="testReportPlatformTable">
+<thead><tr>
+<th>#</th>
+<th>time-elapsed</th>
+<th>status</th>
+<th>test-case</th>
+</tr></thead>
+<tbody>
+
+<tr class="testReportPlatformTr">
+<td>43</td>
+<td>228 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_ajax_404</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>44</td>
+<td>0 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudCreateMany_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>45</td>
+<td>1330 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudCreateXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>46</td>
+<td>324 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudDeleteByIdOne_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>47</td>
+<td>324 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudDeleteByQueryMany_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>48</td>
+<td>69 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudEcho_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>49</td>
+<td>1374 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudGetXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>50</td>
+<td>1364 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudReplaceXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>51</td>
+<td>1353 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudUploadFile_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>52</td>
+<td>280 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudXxx_error</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>53</td>
+<td>1 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateByParamDefList_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>54</td>
+<td>5 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySchema_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>55</td>
+<td>4 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySchema_error</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>56</td>
+<td>0 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySwagger_default</td>
+</tr>
+
+</tbody>
+</table>
+<pre class="testReportPlatformPreHidden">
+
+</pre>
+</div>
+
+<div class="testReportPlatformDiv">
+<h4>
+5. npmTest - node - linux v0.12.7 - 2015-08-12T14:08:14.804Z<br>
+<a href="screen-capture.npmTest.svg"><img class="testReportPlatformScreenCaptureImg" src="screen-capture.npmTest.svg"></a><br>
+<span class="testReportPlatformSpan">time-elapsed</span>- 6201 ms<br>
+<span class="testReportPlatformSpan">tests failed</span>- 0<br>
+<span class="testReportPlatformSpan">tests passed</span>- 17<br>
+<span class="testReportPlatformSpan">tests pending</span>- 0<br>
+</h4>
+<table class="testReportPlatformTable">
+<thead><tr>
+<th>#</th>
+<th>time-elapsed</th>
+<th>status</th>
+<th>test-case</th>
+</tr></thead>
+<tbody>
+
+<tr class="testReportPlatformTr">
+<td>57</td>
+<td>381 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_ajax_404</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>58</td>
+<td>481 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_collectionCreate_misc</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>59</td>
+<td>0 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudCreateMany_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>60</td>
+<td>2380 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudCreateXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>61</td>
+<td>623 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudDeleteByIdOne_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>62</td>
+<td>592 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudDeleteByQueryMany_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>63</td>
+<td>347 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudEcho_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>64</td>
+<td>2495 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudGetXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>65</td>
+<td>2512 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudReplaceXxx_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>66</td>
+<td>2440 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudUploadFile_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>67</td>
+<td>298 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_crudXxx_error</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>68</td>
+<td>1 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_middlewareBodyParse_misc</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>69</td>
+<td>6071 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_testPage_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>70</td>
+<td>1 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateByParamDefList_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>71</td>
+<td>4 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySchema_default</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>72</td>
+<td>6 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySchema_error</td>
+</tr>
+
+<tr class="testReportPlatformTr">
+<td>73</td>
+<td>1 ms</td>
+<td class="testReportTestPassed">passed</td>
+<td>testCase_validateBySwagger_default</td>
+</tr>
+
+</tbody>
+</table>
+<pre class="testReportPlatformPreHidden">
+
+</pre>
+</div>
+

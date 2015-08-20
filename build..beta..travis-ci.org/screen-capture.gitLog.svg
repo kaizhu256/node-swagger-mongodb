@@ -1,0 +1,245 @@
+<svg height="3870" width="720" xmlns="http://www.w3.org/2000/svg">
+<rect height="3870" fill="#555" width="720"></rect>
+<text fill="#7f7" font-family="Courier New" font-size="12" xml:space="preserve">
+<tspan x="10" y="26">2015-08-07 20:09:57 +0800</tspan>
+<tspan x="10" y="42">- npm publish 2015.8.1</tspan>
+<tspan x="10" y="58">- add auto-generated api-doc</tspan>
+<tspan x="10" y="74">- update example.js loading in test.js</tspan>
+<tspan x="10" y="90">- migrate build to travis-ci's docker infrastructure</tspan>
+<tspan x="10" y="106"></tspan>
+<tspan x="10" y="122">2015-07-31 19:09:52 +0800</tspan>
+<tspan x="10" y="138">- npm publish 2015.7.13</tspan>
+<tspan x="10" y="154">- update README.md</tspan>
+<tspan x="10" y="170">- update dependencies</tspan>
+<tspan x="10" y="186"></tspan>
+<tspan x="10" y="202">2015-07-27 21:18:00 +0800</tspan>
+<tspan x="10" y="218">- npm publish 2015.7.12</tspan>
+<tspan x="10" y="234">- add crudCreateMany / crudDeleteByQueryMany / crudReplaceMany</tspan>
+<tspan x="10" y="250">- fix swmg.onErrorJsonapi not passing error.stack</tspan>
+<tspan x="10" y="266">- remove validation check for swmg.crudUpdateOne, in order to remove require constraint</tspan>
+<tspan x="10" y="282"></tspan>
+<tspan x="10" y="298">2015-07-24 11:57:53 +0800</tspan>
+<tspan x="10" y="314">- 2015.7.11</tspan>
+<tspan x="10" y="330">- stringify values in swmg.cacheDict</tspan>
+<tspan x="10" y="346">- add schema._crudApiList param</tspan>
+<tspan x="10" y="362">- remove redundant methodPath._paramExtraDict feature</tspan>
+<tspan x="10" y="378"></tspan>
+<tspan x="10" y="394">2015-07-21 01:06:55 +0800</tspan>
+<tspan x="10" y="410">- npm publish 2015.7.10</tspan>
+<tspan x="10" y="426">- merge crudReplaceOrCreateOne into crudReplaceOne and crudUpdateOrCreateOne into crudUpdateOne \</tspan>
+<tspan x="10" y="442">with optional upsert param</tspan>
+<tspan x="10" y="458"></tspan>
+<tspan x="10" y="474">2015-07-20 15:30:08 +0800</tspan>
+<tspan x="10" y="490">- npm publish 2015.7.9</tspan>
+<tspan x="10" y="506">- disable user login/logout for coverage analysis</tspan>
+<tspan x="10" y="522">- revert test-code from README.md to test.js</tspan>
+<tspan x="10" y="538">- replace swmg.normalizeErrorJsonapi with swmg.onErrorJsonapi</tspan>
+<tspan x="10" y="554">- change api crudReplaceOrCreateOne's _timeCreated property to behave like crudCreateOne</tspan>
+<tspan x="10" y="570">- rename property to field</tspan>
+<tspan x="10" y="586">- add swmg.swaggerJson2014Dummy to pass validation warnings for auto-created schemas</tspan>
+<tspan x="10" y="602">- add definition JsonapiRequest</tspan>
+<tspan x="10" y="618">- hide _timeCreated and _timeModified from definitions</tspan>
+<tspan x="10" y="634">- create JsonapiResponse with JsonapiResponseError and JsonapiResponseData merged together</tspan>
+<tspan x="10" y="650"></tspan>
+<tspan x="10" y="666">2015-07-19 08:27:22 +0800</tspan>
+<tspan x="10" y="682">- npm publish 2015.7.8</tspan>
+<tspan x="10" y="698">- add api-endpoint GET http://localhost:8080/api/v0/user/login</tspan>
+<tspan x="10" y="714">- add api-endpoint GET http://localhost:8080/api/v0/user/logout</tspan>
+<tspan x="10" y="730">- add UserLoginToken model</tspan>
+<tspan x="10" y="746">- merge swmg.swaggerJsonTagsMerge into swmg.apiUpdate</tspan>
+<tspan x="10" y="762">- fix petstore tag-descriptions being overwritten</tspan>
+<tspan x="10" y="778"></tspan>
+<tspan x="10" y="794">2015-07-10 23:44:29 +0800</tspan>
+<tspan x="10" y="810">- npm publish 2015.7.7</tspan>
+<tspan x="10" y="826">- add api-endpoint POST http://localhost:8080/api/v0/user/createWithArray</tspan>
+<tspan x="10" y="842">- add api-endpoint POST http://localhost:8080/api/v0/user/createWithList</tspan>
+<tspan x="10" y="858">- add api-endpoint POST http://localhost:8080/api/v0/pet/{petId}/uploadImage</tspan>
+<tspan x="10" y="874">- rename api /_TestCrudModel/* to /_test/* and expose it in example.js</tspan>
+<tspan x="10" y="890">- add array check in body</tspan>
+<tspan x="10" y="906"></tspan>
+<tspan x="10" y="922">2015-07-09 09:00:36 +0800</tspan>
+<tspan x="10" y="938">- npm publish 2015.7.7-a</tspan>
+<tspan x="10" y="954">- revamp middleware sequence to [swmg.middlewareBodyParse, swmg.middlewareSwagger, swmg.middlewa\</tspan>
+<tspan x="10" y="970">reError]</tspan>
+<tspan x="10" y="986">- add api-endpoint POST http://localhost:8080/api/v0/pet/{petId}</tspan>
+<tspan x="10" y="1002">- rename normalizeParamSwagger to normalizeParamDictSwagger</tspan>
+<tspan x="10" y="1018">- rename validate* to validateBy*</tspan>
+<tspan x="10" y="1034"></tspan>
+<tspan x="10" y="1050">2015-07-08 10:39:51 +0800</tspan>
+<tspan x="10" y="1066">- npm publish 2015.7.6</tspan>
+<tspan x="10" y="1082">- split middleware into middlewareHeadParse, middlewareBodyParse, middlewareCrudApi</tspan>
+<tspan x="10" y="1098">- rename property to propertyDef</tspan>
+<tspan x="10" y="1114">- rename parameter to param</tspan>
+<tspan x="10" y="1130">- disable online validation</tspan>
+<tspan x="10" y="1146">- add client-side param validation</tspan>
+<tspan x="10" y="1162"></tspan>
+<tspan x="10" y="1178">2015-07-07 06:46:13 +0800</tspan>
+<tspan x="10" y="1194">- npm publish 2015.7.5</tspan>
+<tspan x="10" y="1210">- add _collectionFixtureList option in swmg.collectionCreate</tspan>
+<tspan x="10" y="1226">- add api-endpoint http://localhost:8080/api/v0/store/inventory</tspan>
+<tspan x="10" y="1242">- rename JsonApi* to Jsonapi*</tspan>
+<tspan x="10" y="1258"></tspan>
+<tspan x="10" y="1274">2015-07-06 20:31:33 +0800</tspan>
+<tspan x="10" y="1290">- npm publish 2015.7.4</tspan>
+<tspan x="10" y="1306">- add crudAggregateMany api</tspan>
+<tspan x="10" y="1322">- remove unused #/definitions/JsonApiLinks</tspan>
+<tspan x="10" y="1338">- fix validation warnings</tspan>
+<tspan x="10" y="1354">- update petstore responses</tspan>
+<tspan x="10" y="1370">- deprecate local.onMiddlewareError in favor of local.middlewareError</tspan>
+<tspan x="10" y="1386"></tspan>
+<tspan x="10" y="1402">2015-07-04 12:07:24 +0800</tspan>
+<tspan x="10" y="1418">- npm publish 2015.7.3</tspan>
+<tspan x="10" y="1434">- replace schemaName with crudApi for tags</tspan>
+<tspan x="10" y="1450">- add definition._collectionCreate param</tspan>
+<tspan x="10" y="1466">- add definition._collectionCreateIndexList param</tspan>
+<tspan x="10" y="1482">- add definition._collectionDrop param</tspan>
+<tspan x="10" y="1498">- add swmg.collectionCreate</tspan>
+<tspan x="10" y="1514">- integrate petstore-api into tests</tspan>
+<tspan x="10" y="1530"></tspan>
+<tspan x="10" y="1546">2015-07-03 16:27:07 +0800</tspan>
+<tspan x="10" y="1562">- npm publish 2015.7.2</tspan>
+<tspan x="10" y="1578">- auto-export example.js in test.js</tspan>
+<tspan x="10" y="1594">- replace utility2.streamReadAll with utility2.middlewareBodyGet for parsing http-body</tspan>
+<tspan x="10" y="1610">- add collectionFormat option for csv array</tspan>
+<tspan x="10" y="1626">- revamp petstore-api</tspan>
+<tspan x="10" y="1642"></tspan>
+<tspan x="10" y="1658">2015-06-30 20:24:43 +0800</tspan>
+<tspan x="10" y="1674">- npm publish 2015.7.1</tspan>
+<tspan x="10" y="1690">- revamping crudApi</tspan>
+<tspan x="10" y="1706"></tspan>
+<tspan x="10" y="1722">2015-06-25 18:49:52 +0800</tspan>
+<tspan x="10" y="1738">- npm publish 2015.6.13</tspan>
+<tspan x="10" y="1754">- update dependencies</tspan>
+<tspan x="10" y="1770"></tspan>
+<tspan x="10" y="1786">2015-06-24 22:28:58 +0800</tspan>
+<tspan x="10" y="1802">- npm publish 2015.6.12</tspan>
+<tspan x="10" y="1818">- fix version breakage with latest npm install</tspan>
+<tspan x="10" y="1834">- add crudGetDistinctValueByFieldMany api</tspan>
+<tspan x="10" y="1850"></tspan>
+<tspan x="10" y="1866">2015-06-22 01:00:26 +0800</tspan>
+<tspan x="10" y="1882">- npm publish 2015.6.11-a</tspan>
+<tspan x="10" y="1898">- add testCase_crudUpdateXxx_default</tspan>
+<tspan x="10" y="1914">- add options parameter to testCase</tspan>
+<tspan x="10" y="1930"></tspan>
+<tspan x="10" y="1946">2015-06-20 00:07:30 +0800</tspan>
+<tspan x="10" y="1962">- npm publish 2015.6.10-a</tspan>
+<tspan x="10" y="1978">- remove modeErrorIgnore flag</tspan>
+<tspan x="10" y="1994"></tspan>
+<tspan x="10" y="2010">2015-06-15 12:26:08 +0800</tspan>
+<tspan x="10" y="2026">- npm publish 2015.6.1-c</tspan>
+<tspan x="10" y="2042">- change dependency from mongodb to mongodb-minimal</tspan>
+<tspan x="10" y="2058"></tspan>
+<tspan x="10" y="2074">2015-06-04 00:09:50 +0800</tspan>
+<tspan x="10" y="2090">- npm publish 2015.6.1-a</tspan>
+<tspan x="10" y="2106">- rename onTaskEnd to onParallel</tspan>
+<tspan x="10" y="2122"></tspan>
+<tspan x="10" y="2138">2015-05-19 09:55:56 +0800</tspan>
+<tspan x="10" y="2154">- npm publish 2015.5.19-a</tspan>
+<tspan x="10" y="2170">- add _testCase_crudGetXxx_default</tspan>
+<tspan x="10" y="2186"></tspan>
+<tspan x="10" y="2202">2015-05-18 16:02:42 +0800</tspan>
+<tspan x="10" y="2218">- npm publish 2015.5.17-e</tspan>
+<tspan x="10" y="2234">- rename namespace swmgdb to swmg</tspan>
+<tspan x="10" y="2250">- add passwordSalt field to UserModel</tspan>
+<tspan x="10" y="2266"></tspan>
+<tspan x="10" y="2282">2015-05-18 01:31:58 +0800</tspan>
+<tspan x="10" y="2298">- npm publish 2015.5.17-d</tspan>
+<tspan x="10" y="2314">- fix crudGetByQueryMany api</tspan>
+<tspan x="10" y="2330"></tspan>
+<tspan x="10" y="2346">2015-05-18 01:11:04 +0800</tspan>
+<tspan x="10" y="2362">- npm publish 2015.5.17-c</tspan>
+<tspan x="10" y="2378">- update npm postinstall script</tspan>
+<tspan x="10" y="2394"></tspan>
+<tspan x="10" y="2410">2015-05-17 15:27:29 +0800</tspan>
+<tspan x="10" y="2426">- npm publish 2015.5.17-b</tspan>
+<tspan x="10" y="2442"></tspan>
+<tspan x="10" y="2458">2015-05-17 15:02:57 +0800</tspan>
+<tspan x="10" y="2474">- add demo screen-capture</tspan>
+<tspan x="10" y="2490"></tspan>
+<tspan x="10" y="2506">2015-05-17 14:07:50 +0800</tspan>
+<tspan x="10" y="2522">- npm publish 2015.5.17-a</tspan>
+<tspan x="10" y="2538">- add heroku deploy</tspan>
+<tspan x="10" y="2554">- add testCase_validateXxx_default</tspan>
+<tspan x="10" y="2570">- migrating to v0</tspan>
+<tspan x="10" y="2586">- add swagger param parsing to middleware</tspan>
+<tspan x="10" y="2602">- revampt to 100% use swagger-tools</tspan>
+<tspan x="10" y="2618"></tspan>
+<tspan x="10" y="2634">2015-05-16 13:41:55 +0800</tspan>
+<tspan x="10" y="2650">- npm publish 2015.5.8-b</tspan>
+<tspan x="10" y="2666">- add testCase_validateXxx_default</tspan>
+<tspan x="10" y="2682">- migrating to v0</tspan>
+<tspan x="10" y="2698">- add swagger param parsing to middleware</tspan>
+<tspan x="10" y="2714">- revampt to 100% use swagger-tools</tspan>
+<tspan x="10" y="2730"></tspan>
+<tspan x="10" y="2746">2015-05-10 22:43:35 +0800</tspan>
+<tspan x="10" y="2762">- npm publish 2015.5.10-a</tspan>
+<tspan x="10" y="2778">- migrating cms2 to node-swagger-mongodb</tspan>
+<tspan x="10" y="2794">- add swagger param parsing to middleware</tspan>
+<tspan x="10" y="2810">- working local crud</tspan>
+<tspan x="10" y="2826">- add middlewareAssetsCache and centralize assets into local.utility2.cacheDict.assets</tspan>
+<tspan x="10" y="2842">- add swagger param parsing to middleware</tspan>
+<tspan x="10" y="2858">- revampt to 100% use swagger-tools</tspan>
+<tspan x="10" y="2874"></tspan>
+<tspan x="10" y="2890">2015-05-04 12:44:57 +0800</tspan>
+<tspan x="10" y="2906">- passing npm test</tspan>
+<tspan x="10" y="2922">- use Infinity instead of NaN as fallback for modeNext</tspan>
+<tspan x="10" y="2938"></tspan>
+<tspan x="10" y="2954">2015-04-23 01:03:37 +0800</tspan>
+<tspan x="10" y="2970">integrating swagger-tools</tspan>
+<tspan x="10" y="2986"></tspan>
+<tspan x="10" y="3002">2015-04-22 18:09:12 +0800</tspan>
+<tspan x="10" y="3018">move User and Content models from index.js to test.js</tspan>
+<tspan x="10" y="3034"></tspan>
+<tspan x="10" y="3050">2015-04-20 10:29:33 +0800</tspan>
+<tspan x="10" y="3066">integrating swaggerUi.api into node env</tspan>
+<tspan x="10" y="3082"></tspan>
+<tspan x="10" y="3098">2015-04-19 00:19:08 +0800</tspan>
+<tspan x="10" y="3114">fix build</tspan>
+<tspan x="10" y="3130"></tspan>
+<tspan x="10" y="3146">2015-04-18 23:50:44 +0800</tspan>
+<tspan x="10" y="3162">update build script</tspan>
+<tspan x="10" y="3178"></tspan>
+<tspan x="10" y="3194">2015-04-18 23:47:45 +0800</tspan>
+<tspan x="10" y="3210">rudimentary npm test</tspan>
+<tspan x="10" y="3226"></tspan>
+<tspan x="10" y="3242">2015-04-18 23:23:12 +0800</tspan>
+<tspan x="10" y="3258">revamp tests</tspan>
+<tspan x="10" y="3274"></tspan>
+<tspan x="10" y="3290">2015-04-18 02:38:46 +0800</tspan>
+<tspan x="10" y="3306">testing userRole</tspan>
+<tspan x="10" y="3322"></tspan>
+<tspan x="10" y="3338">2015-03-26 18:52:06 +0800</tspan>
+<tspan x="10" y="3354">hack swagger to accept "object" type params</tspan>
+<tspan x="10" y="3370"></tspan>
+<tspan x="10" y="3386">2015-03-26 01:41:54 +0800</tspan>
+<tspan x="10" y="3402">force responseData.data to be an array</tspan>
+<tspan x="10" y="3418"></tspan>
+<tspan x="10" y="3434">2015-03-25 19:36:39 +0800</tspan>
+<tspan x="10" y="3450">remove default aliasList property, and add aliasOf, parentId</tspan>
+<tspan x="10" y="3466"></tspan>
+<tspan x="10" y="3482">2015-03-24 20:53:20 +0800</tspan>
+<tspan x="10" y="3498">'npm publish 2015.3.24-11'</tspan>
+<tspan x="10" y="3514"></tspan>
+<tspan x="10" y="3530">2015-03-24 18:23:29 +0800</tspan>
+<tspan x="10" y="3546">'npm publish 2015.3.24-10'</tspan>
+<tspan x="10" y="3562"></tspan>
+<tspan x="10" y="3578">2015-03-24 17:58:29 +0800</tspan>
+<tspan x="10" y="3594">rename onParallel to onTaskEnd</tspan>
+<tspan x="10" y="3610"></tspan>
+<tspan x="10" y="3626">2015-03-23 00:03:11 +0800</tspan>
+<tspan x="10" y="3642">recursively validate $ref in model properties</tspan>
+<tspan x="10" y="3658"></tspan>
+<tspan x="10" y="3674">2015-03-22 20:27:52 +0800</tspan>
+<tspan x="10" y="3690">define operations by operationId</tspan>
+<tspan x="10" y="3706"></tspan>
+<tspan x="10" y="3722">2015-03-22 19:26:30 +0800</tspan>
+<tspan x="10" y="3738">- add ContentDraft model</tspan>
+<tspan x="10" y="3754">- validate parameters</tspan>
+<tspan x="10" y="3770"></tspan>
+<tspan x="10" y="3786">2015-03-21 00:15:11 +0800</tspan>
+<tspan x="10" y="3802">add swaggerDatatypeValidate</tspan>
+<tspan x="10" y="3818"></tspan>
+<tspan x="10" y="3834">2015-03-18 09:00:24 +0800</tspan>
+<tspan x="10" y="3850">rename swaggerPathUpdate to swaggerModelUpdate</tspan>
+</text>
+</svg>
