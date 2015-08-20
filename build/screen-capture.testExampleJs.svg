@@ -2,7 +2,7 @@
 <rect height="510" fill="#555" width="720"></rect>
 <text fill="#7f7" font-family="Courier New" font-size="12" xml:space="preserve">
 <tspan x="10" y="26"></tspan>
-<tspan x="10" y="42">[MODE_BUILD=testExampleJs] - 2015-08-20T03:47:02Z - testing example.js</tspan>
+<tspan x="10" y="42">[MODE_BUILD=testExampleJs] - 2015-08-20T03:57:25Z - testing example.js</tspan>
 <tspan x="10" y="58"></tspan>
 <tspan x="10" y="74">jslint-lite@2015.6.3 node_modules/jslint-lite</tspan>
 <tspan x="10" y="90">npm install swagger-mongodb &amp;&amp; npm_config_server_port=1337 node example.js</tspan>
