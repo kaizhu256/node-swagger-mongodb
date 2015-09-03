@@ -657,7 +657,7 @@ instruction
     "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
         "mongodb-minimal": "^2015.8.1",
-        "swagger-ui-lite": "^2015.6.2",
+        "swagger-ui-lite": "^2015.8.1",
         "utility2": "~2015.8.5"
     },
     "description": "lightweight swagger-ui crud-middleware backed by mongodb",
