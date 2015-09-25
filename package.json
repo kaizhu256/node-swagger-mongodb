@@ -10,7 +10,7 @@
     "devDependencies": {
         "phantomjs-lite": "^2015.7.1"
     },
-    "engines": { "node": ">=0.10 <=0.12" },
+    "engines": { "node": ">=0.12" },
     "keywords": [
         "api",
         "browser",
