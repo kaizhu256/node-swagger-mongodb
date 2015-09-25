@@ -163,7 +163,7 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>SwaggerClient
         2
     ));
     // init crud-api
-    local.swmg.api = new local.<span class="docApiCodeKeywordSpan">swmg.SwaggerClient</span>({
+    local.swmg.api = new local.swmg.<span class="docApiCodeKeywordSpan">SwaggerClient</span>({
         url: 'http://localhost:' + local.utility2.serverPortInit()
     });
     local.swmg.api.buildFromSpec(local.utility2.jsonCopy(local.swmg.swaggerJson));
@@ -289,7 +289,7 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>apiUpdate
             });
         });
     });
-    local.<span class="docApiCodeKeywordSpan">swmg.apiUpdate</span>(options);
+    local.swmg.<span class="docApiCodeKeywordSpan">apiUpdate</span>(options);
 }());
 // init petstore-middleware
 local.middleware.middlewareList.push(function (request, response, nextMiddleware) {
@@ -397,7 +397,7 @@ modeNext = error
 switch (modeNext) {
 case 1:
     // test null schema handling-behavior
-    local.<span class="docApiCodeKeywordSpan">swmg.collectionCreate</span>({
+    local.swmg.<span class="docApiCodeKeywordSpan">collectionCreate</span>({
         _collectionName: 'SwmgTestMisc',
         // test _collectionReadonly handling-behavior
         _collectionReadonly: true
@@ -447,7 +447,7 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>middlewareBody
     onParallel.counter += 1;
     // test swmgBodyParsed exists handling-behavior
     onParallel.counter += 1;
-    local.<span class="docApiCodeKeywordSpan">swmg.middlewareBodyParse</span>({
+    local.swmg.<span class="docApiCodeKeywordSpan">middlewareBodyParse</span>({
         swmgBodyParsed: {},
         swmgMethodPath: { parameters: [] }
     }, {}, onParallel);
@@ -607,7 +607,7 @@ local.swmg.validateByParamDefList({
     paramDefList: options.paramDefList
 });
 // convert id to mongodb format
-local.<span class="docApiCodeKeywordSpan">swmg.normalizeIdMongodb</span>(options);
+local.swmg.<span class="docApiCodeKeywordSpan">normalizeIdMongodb</span>(options);
 // init body
 options.data.body = options.data.body || {};
 // init id
@@ -643,7 +643,7 @@ options.message = error.message;
 options.stack = error.stack;
 options.statusCode = Number(error.statusCode) || 500;
 options.errors = local.utility2
-    .jsonCopy(local.<span class="docApiCodeKeywordSpan">swmg.normalizeIdSwagger</span>(error));
+    .jsonCopy(local.swmg.<span class="docApiCodeKeywordSpan">normalizeIdSwagger</span>(error));
 local.utility2.objectSetDefault(options.errors, {
     code: options.statusCode,
     detail: options.stack,
@@ -711,7 +711,7 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>normalizeParam
     break;
 case 3:
     // normalize params
-    local.<span class="docApiCodeKeywordSpan">swmg.normalizeParamDictSwagger</span>(request
+    local.swmg.<span class="docApiCodeKeywordSpan">normalizeParamDictSwagger</span>(request
         .swmgParamDict, request.swmgMethodPath);
     // validate params
     local.swmg.validateByParamDefList({
@@ -785,7 +785,7 @@ case 'node':
          * this function will run the low-level crud-api on the given options.data
          */
         var modeNext, onNext;
-        options.onError2 = local.<span class="docApiCodeKeywordSpan">swmg.onErrorJsonapi</span>(function () {
+        options.onError2 = local.swmg.<span class="docApiCodeKeywordSpan">onErrorJsonapi</span>(function () {
             return options.response;
         }, onError);
         modeNext = 0;
@@ -822,7 +822,7 @@ if (tmp) {
         circularList: options.circularList,
         data: data,
         key: tmp,
-        schema: local.<span class="docApiCodeKeywordSpan">swmg.schemaDereference</span>(tmp)
+        schema: local.swmg.<span class="docApiCodeKeywordSpan">schemaDereference</span>(tmp)
     });
     return;
 }
@@ -870,7 +870,7 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>validateByPara
     options.paramDefList = local.swmg.swaggerJson
         .paths['/_test/' + options.key][options.method]
         .parameters;
-    local.<span class="docApiCodeKeywordSpan">swmg.validateByParamDefList</span>(options);
+    local.swmg.<span class="docApiCodeKeywordSpan">validateByParamDefList</span>(options);
 });
 // test validateByParamDefList's error handling-behavior
 [{
@@ -1006,7 +1006,7 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>validateByProp
         local.utility2.assert(error, error);
     });
     // test validateByPropertyDef's circular-reference handling-behavior
-    local.<span class="docApiCodeKeywordSpan">swmg.validateByPropertyDef</span>({
+    local.swmg.<span class="docApiCodeKeywordSpan">validateByPropertyDef</span>({
         data: { propObject: {} },
         propertyDef: { propObject: { type: 'object' } }
     });
@@ -1075,7 +1075,7 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>validateBySche
         optionsCopy.propArraySubdoc = optionsCopy.propArraySubdoc || [optionsCopy];
         optionsCopy.propObject = optionsCopy.propObject || optionsCopy;
         optionsCopy.propObjectSubdoc = optionsCopy.propObjectSubdoc || optionsCopy;
-        local.<span class="docApiCodeKeywordSpan">swmg.validateBySchema</span>({ data: optionsCopy, schema: options.schema });
+        local.swmg.<span class="docApiCodeKeywordSpan">validateBySchema</span>({ data: optionsCopy, schema: options.schema });
     });
     onError();
 };
@@ -1123,7 +1123,7 @@ local.utility2.testMock([
 ], function (onError) {
     [null, {}].forEach(function (element) {
         try {
-            local.<span class="docApiCodeKeywordSpan">swmg.validateBySwagger</span>(element);
+            local.swmg.<span class="docApiCodeKeywordSpan">validateBySwagger</span>(element);
         } catch (errorCaught) {
             error = errorCaught;
         }
