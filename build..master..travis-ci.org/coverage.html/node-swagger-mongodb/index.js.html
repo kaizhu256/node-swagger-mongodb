@@ -1,38 +1,26 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>Code coverage report for node-swagger-mongodb/index.js</title>
+    <title>Code coverage report for home/travis/build/kaizhu256/node-swagger-mongodb/index.js</title>
     <meta charset="utf-8">
     <link rel="stylesheet" href="../base.css">
-    <style type="text/css">
-        div.coverage-summary .sorter {
-            background-image: url(../sort-arrow-sprite.png);
-        }
-    </style>
 </head>
 <body>
 <div class="header high">
-    <h1>Code coverage report for <span class="entity">node-swagger-mongodb/index.js</span></h1>
+    <h1>Code coverage report for <span class="entity">home/travis/build/kaizhu256/node-swagger-mongodb/index.js</span></h1>
     <h2>
-        
         Statements: <span class="metric">100% <small>(517 / 517)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
-        
-        
-        Branches: <span class="metric">100% <small>(306 / 306)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
-        
-        
+        Branches: <span class="metric">100% <small>(309 / 309)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
         Functions: <span class="metric">100% <small>(71 / 71)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
-        
-        
         Lines: <span class="metric">100% <small>(517 / 517)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
-        
         Ignored: <span class="metric"><span class="ignore-none">none</span></span> &nbsp;&nbsp;&nbsp;&nbsp;
     </h2>
     <div class="path"><a href="../index.html">All files</a> &#187; <a href="index.html">node-swagger-mongodb/</a> &#187; index.js</div>
 </div>
 <div class="body">
 <pre><table class="coverage">
-<tr><td class="line-count">1
+<tr>
+<td class="line-count">1
 2
 3
 4
@@ -1699,7 +1687,10 @@
 1665
 1666
 1667
-1668</td><td class="line-coverage"><span class="cline-any cline-neutral">&nbsp;</span>
+1668
+1669
+</td>
+<td class="line-coverage"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1734,9 +1725,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">714</span>
-<span class="cline-any cline-yes">8171</span>
-<span class="cline-any cline-yes">1255</span>
-<span class="cline-any cline-yes">1255</span>
+<span class="cline-any cline-yes">10121</span>
+<span class="cline-any cline-yes">1405</span>
+<span class="cline-any cline-yes">1405</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">714</span>
@@ -2268,10 +2259,6 @@
 <span class="cline-any cline-yes">15</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">120</span>
-<span class="cline-any cline-yes">120</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">114</span>
 <span class="cline-any cline-yes">114</span>
@@ -2280,6 +2267,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">108</span>
 <span class="cline-any cline-yes">108</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">120</span>
+<span class="cline-any cline-yes">120</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3</span>
 <span class="cline-any cline-yes">3</span>
@@ -3019,6 +3010,7 @@
 <span class="cline-any cline-yes">3</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3</span>
 <span class="cline-any cline-yes">3</span>
 <span class="cline-any cline-yes">3</span>
@@ -3366,7 +3358,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/*jslint
+<span class="cline-any cline-neutral">&nbsp;</span>
+</td>
+<td class="text"><pre class="prettyprint lang-js">/*jslint
     bitwise: true,
     browser: true,
     maxerr: 8,
@@ -3933,20 +3927,20 @@
                                 }) }
                             }).toArray(onNext);
                             return;
-                        case 'crudDeleteByIdOne':
-                        case 'crudDeleteByQueryMany':
-                            options.response.meta = data;
-                            break;
                         case 'crudCreateOne':
                         case 'crudReplaceOne':
                         case 'crudUpdateOne':
                             options.response.meta = data;
-                            if (options.response.meta.n !== 1) {
+                            if ((data.n || (data.result &amp;&amp; data.result.n)) !== 1) {
                                 onNext(new Error(options.operationId + ' failed'));
                                 return;
                             }
                             options.collection.findOne(options.optionsId, onNext);
                             return;
+                        case 'crudDeleteByIdOne':
+                        case 'crudDeleteByQueryMany':
+                            options.response.meta = data;
+                            break;
                         case 'crudExistsByIdOne':
                             options.response.data = !!data;
                             break;
@@ -4286,7 +4280,7 @@
 &nbsp;
         local.swmg.middlewareSwagger = function (request, response, nextMiddleware) {
             /*
-             * this function will parse the request's header / path / query
+             * this function will run the main swagger-mongodb middleware
              */
             var modeNext, onNext, tmp;
             modeNext = 0;
@@ -4686,6 +4680,7 @@
     (function () {
         // init local
         local = {};
+        // init js-env
         local.modeJs = (function () {
             try {
                 return module.exports &amp;&amp;
@@ -5033,11 +5028,12 @@ local.swmg.cacheDict.methodPathCrudDefault = {
     }());
     return local;
 }())));
-&nbsp;</pre></td></tr>
+&nbsp;</pre></td>
+</tr>
 </table></pre>
 </div>
 <div class="footer">
-    <div class="meta">Generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Fri Jul 31 2015 11:18:36 GMT+0000 (UTC)</div>
+    <div class="meta">Generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Fri Nov 20 2015 12:42:53 GMT+0000 (UTC)</div>
 </div>
 </body>
 </html>
