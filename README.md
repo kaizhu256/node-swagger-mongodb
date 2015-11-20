@@ -656,13 +656,13 @@ instruction
     "author": "kai zhu <kaizhu256@gmail.com>",
     "bin": { "swagger-mongodb": "index.js" },
     "dependencies": {
-        "mongodb-minimal": "^2015.8.1",
-        "swagger-ui-lite": "^2015.6.2",
+        "mongodb-minimal": "2015.8.1",
+        "swagger-ui-lite": "2015.6.2",
         "utility2": "~2015.8.5"
     },
     "description": "lightweight swagger-ui crud-middleware backed by mongodb",
     "devDependencies": {
-        "phantomjs-lite": "^2015.7.1"
+        "phantomjs-lite": "2015.7.1"
     },
     "engines": { "node": ">=0.10 <=0.12" },
     "keywords": [
@@ -691,7 +691,7 @@ moduleDict:{'swagger-mongodb':{aliasList:['swmg'],exports:require('./index.js')}
         "test": "node_modules/.bin/utility2 shRun shReadmeExportPackageJson && \
 node_modules/.bin/utility2 test test.js"
     },
-    "version": "2015.8.2"
+    "version": "2015.8.3"
 }
 ```
 
@@ -710,11 +710,9 @@ node_modules/.bin/utility2 test test.js"
 
 
 
-# change since fbc24cce
-- npm publish 2015.8.2
-- fix tests for testCase_crudCreateMany_default
-- merge response.meta into response.data
-- add npm-script build-doc
+# change since af87c5b9
+- npm publish 2015.8.3
+- lockdown npm dependencies
 - none
 
 
