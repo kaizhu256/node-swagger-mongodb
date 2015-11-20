@@ -2,30 +2,30 @@
 <rect height="510" fill="#555" width="720"></rect>
 <text fill="#7f7" font-family="Courier New" font-size="12" xml:space="preserve">
 <tspan x="10" y="26"></tspan>
-<tspan x="10" y="42">[MODE_BUILD=testExampleJs] - 2015-09-03T02:54:35Z - testing example.js</tspan>
+<tspan x="10" y="42">[MODE_BUILD=testExampleJs] - 2015-11-20T12:39:28Z - testing example.js</tspan>
 <tspan x="10" y="58"></tspan>
-<tspan x="10" y="74">jslint-lite@2015.8.1 node_modules/jslint-lite</tspan>
+<tspan x="10" y="74">jslint-lite@2015.9.1 node_modules/jslint-lite</tspan>
 <tspan x="10" y="90">npm install swagger-mongodb &amp;&amp; npm_config_server_port=1337 node example.js</tspan>
 <tspan x="10" y="106"></tspan>
 <tspan x="10" y="122"></tspan>
-<tspan x="10" y="138">&gt; mongodb-minimal@2015.8.1 postinstall /tmp/app/node_modules/swagger-mongodb/node_modules/mongod\</tspan>
-<tspan x="10" y="154">b-minimal</tspan>
-<tspan x="10" y="170">&gt; mkdir -p node_modules &amp;&amp; printf "module.exports = require('../bson/browser_build/bson.js')(); \</tspan>
-<tspan x="10" y="186">module.exports.native = module.exports.pure = function () {     return module.exports; }; module\</tspan>
-<tspan x="10" y="202">.exports.ObjectId = module.exports.ObjectID; " &gt; node_modules/bson.js &amp;&amp; printf "module.exports \</tspan>
-<tspan x="10" y="218">= require('../es6-promise');" &gt; node_modules/es6-promise.js &amp;&amp; printf " module.exports = require\</tspan>
-<tspan x="10" y="234">('../mongodb'); module.exports.bson = require('bson'); module.exports.core = require('mongodb-co\</tspan>
-<tspan x="10" y="250">re'); " &gt; node_modules/mongodb.js &amp;&amp; printf "module.exports = require('../mongodb-core');" &gt; nod\</tspan>
-<tspan x="10" y="266">e_modules/mongodb-core.js</tspan>
-<tspan x="10" y="282"></tspan>
-<tspan x="10" y="298"></tspan>
-<tspan x="10" y="314">&gt; utility2@2015.8.5 postinstall /tmp/app/node_modules/swagger-mongodb/node_modules/utility2</tspan>
-<tspan x="10" y="330">&gt; ./index.sh shRun shReadmeExportPackageJson</tspan>
+<tspan x="10" y="138">&gt; utility2@2015.8.6 postinstall /tmp/app/node_modules/swagger-mongodb/node_modules/utility2</tspan>
+<tspan x="10" y="154">&gt; ./index.sh shRun shReadmeExportPackageJson</tspan>
+<tspan x="10" y="170"></tspan>
+<tspan x="10" y="186"></tspan>
+<tspan x="10" y="202">&gt; mongodb-minimal@2015.8.1 postinstall /tmp/app/node_modules/swagger-mongodb/node_modules/mongod\</tspan>
+<tspan x="10" y="218">b-minimal</tspan>
+<tspan x="10" y="234">&gt; mkdir -p node_modules &amp;&amp; printf "module.exports = require('../bson/browser_build/bson.js')(); \</tspan>
+<tspan x="10" y="250">module.exports.native = module.exports.pure = function () {     return module.exports; }; module\</tspan>
+<tspan x="10" y="266">.exports.ObjectId = module.exports.ObjectID; " &gt; node_modules/bson.js &amp;&amp; printf "module.exports \</tspan>
+<tspan x="10" y="282">= require('../es6-promise');" &gt; node_modules/es6-promise.js &amp;&amp; printf " module.exports = require\</tspan>
+<tspan x="10" y="298">('../mongodb'); module.exports.bson = require('bson'); module.exports.core = require('mongodb-co\</tspan>
+<tspan x="10" y="314">re'); " &gt; node_modules/mongodb.js &amp;&amp; printf "module.exports = require('../mongodb-core');" &gt; nod\</tspan>
+<tspan x="10" y="330">e_modules/mongodb-core.js</tspan>
 <tspan x="10" y="346"></tspan>
-<tspan x="10" y="362">swagger-mongodb@2015.8.2 node_modules/swagger-mongodb</tspan>
-<tspan x="10" y="378">├── swagger-ui-lite@2015.8.1</tspan>
-<tspan x="10" y="394">├── mongodb-minimal@2015.8.1</tspan>
-<tspan x="10" y="410">└── utility2@2015.8.5 (istanbul-lite@2015.8.1)</tspan>
+<tspan x="10" y="362">swagger-mongodb@2015.8.3 node_modules/swagger-mongodb</tspan>
+<tspan x="10" y="378">├── swagger-ui-lite@2015.6.2</tspan>
+<tspan x="10" y="394">├── utility2@2015.8.6 (istanbul-lite@2015.9.1)</tspan>
+<tspan x="10" y="410">└── mongodb-minimal@2015.8.1</tspan>
 <tspan x="10" y="426">server starting on port 1337</tspan>
 <tspan x="10" y="442">dropping collection SwmgOrder ...</tspan>
 <tspan x="10" y="458">dropping collection SwmgUser ...</tspan>
