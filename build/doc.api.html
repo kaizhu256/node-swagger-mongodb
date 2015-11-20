@@ -145,7 +145,6 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>SwaggerClient
   this.resourceCount = 0;
   this.url = null;
   this.useJQuery = false;
-  this.swaggerObject = {}
 
   this.clientAuthorizations = new auth.SwaggerAuthorizations();
 
@@ -326,8 +325,7 @@ function <span class="docApiSignatureSpan">swagger-mongodb.</span>collectionCrea
                 return;
             }
             // drop collection on init
-            if (schema._collectionDrop &&
-                    local.utility2.envDict.npm_config_mode_collection_drop !== '0') {
+            if (schema._collectionDrop) {
                 console.warn('dropping collection ' + schema._collectionName + ' ...');
                 local.swmg.db.command({ drop: schema._collectionName }, function () {
                     onNext();
